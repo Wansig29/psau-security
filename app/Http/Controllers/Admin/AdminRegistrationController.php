@@ -28,6 +28,10 @@ class AdminRegistrationController extends Controller
             'approved_by' => auth()->id(),
         ]);
 
+        $user = $registration->user;
+        $message = "Congratulations! Your sticker application for {$registration->vehicle->make} {$registration->vehicle->model} has been APPROVED! Please check your dashboard for scheduling instructions.";
+        $user->notify(new \App\Notifications\RegistrationStatusUpdated($registration, 'approved', $message));
+
         return back()->with('success', 'Registration approved successfully. QR Sticker generated.');
     }
 
@@ -49,6 +53,11 @@ class AdminRegistrationController extends Controller
             'rejected_by' => auth()->id(),
             'rejection_reason' => $request->input('reason', 'Document details do not match or are invalid.'),
         ]);
+
+        $user = $registration->user;
+        $reason = $registration->rejection_reason;
+        $message = "Your sticker application for {$registration->vehicle->make} {$registration->vehicle->model} was REJECTED. Reason: {$reason}";
+        $user->notify(new \App\Notifications\RegistrationStatusUpdated($registration, 'rejected', $message));
 
         return back()->with('success', 'Registration rejected.');
     }

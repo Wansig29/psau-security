@@ -18,6 +18,45 @@
 </div>
 @endif
 
+{{-- ── Live Application Status Banner ────────────────────────────────── --}}
+@php
+    $latestRegistration = $registrations->sortByDesc('updated_at')->first();
+@endphp
+
+@if($latestRegistration)
+    @if($latestRegistration->status === 'approved')
+        <div class="alert shadow-sm mb-4" style="background:#d4edda;border:2px solid #28a745;color:#155724;border-radius:10px;animation: fadeIn 0.5s">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle fa-3x mr-3"></i>
+                <div>
+                    <h5 class="font-weight-bold mb-1">✅ Application Approved!</h5>
+                    <p class="mb-0">Congratulations! Your sticker application for <strong>{{ $latestRegistration->vehicle->make }} {{ $latestRegistration->vehicle->model }} ({{ $latestRegistration->vehicle->plate_number }})</strong> is ready. Please proceed to the Security Office to claim your physical sticker.</p>
+                </div>
+            </div>
+        </div>
+    @elseif($latestRegistration->status === 'pending')
+        <div class="alert shadow-sm mb-4" style="background:#fff3cd;border:2px solid #ffc107;color:#856404;border-radius:10px">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-clock fa-3x mr-3"></i>
+                <div>
+                    <h5 class="font-weight-bold mb-1">⏳ Under Review</h5>
+                    <p class="mb-0">Your application for <strong>{{ $latestRegistration->vehicle->make }} {{ $latestRegistration->vehicle->model }} ({{ $latestRegistration->vehicle->plate_number }})</strong> was submitted and is currently waiting for admin approval.</p>
+                </div>
+            </div>
+        </div>
+    @elseif($latestRegistration->status === 'rejected')
+        <div class="alert shadow-sm mb-4" style="background:#f8d7da;border:2px solid #dc3545;color:#721c24;border-radius:10px">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-times-circle fa-3x mr-3"></i>
+                <div>
+                    <h5 class="font-weight-bold mb-1">❌ Application Rejected</h5>
+                    <p class="mb-0">Your application for <strong>{{ $latestRegistration->vehicle->make }} {{ $latestRegistration->vehicle->model }}</strong> requires attention. Reason: <em>{{ $latestRegistration->rejection_reason }}</em></p>
+                </div>
+            </div>
+        </div>
+    @endif
+@endif
+
 {{-- ═══════════════════════════════════════════════════════ --}}
 {{-- PROFILE HERO CARD                                       --}}
 {{-- ═══════════════════════════════════════════════════════ --}}
@@ -399,6 +438,24 @@ document.querySelectorAll('#userTabs .nav-link').forEach(function(tab) {
         this.style.color = '#7b1113';
         this.style.borderBottom = '3px solid #7b1113';
     });
+});
+
+// ── Native Phone/Web Push Notification Engine ─────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    if ("Notification" in window) {
+        if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+        
+        @if(Auth::user() && Auth::user()->unreadNotifications->count() > 0)
+            if (Notification.permission === "granted") {
+                new Notification("PSAU Security Alert", {
+                    body: "You have {{ Auth::user()->unreadNotifications->count() }} new application update(s)!",
+                    icon: "https://upload.wikimedia.org/wikipedia/en/thumb/5/5f/Pampanga_State_Agricultural_University_logo.svg/150px-Pampanga_State_Agricultural_University_logo.svg.png"
+                });
+            }
+        @endif
+    }
 });
 </script>
 @endsection

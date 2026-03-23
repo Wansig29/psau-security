@@ -39,6 +39,47 @@
         </ul>
         
         <ul class="navbar-nav ml-auto">
+            <!-- Notifications Dropdown Menu -->
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#" style="position:relative">
+                    <i class="far fa-bell" style="font-size:1.2rem"></i>
+                    @if(Auth::user() && Auth::user()->unreadNotifications->count() > 0)
+                        <span class="badge badge-danger navbar-badge" style="position:absolute;top:2px;right:2px;font-size:0.6rem;padding:2px 4px;border-radius:50%">
+                            {{ Auth::user()->unreadNotifications->count() }}
+                        </span>
+                    @endif
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right shadow-lg border-0" style="min-width:320px;border-radius:8px;padding:0">
+                    <div style="background:#f8f9fa;padding:12px 16px;font-weight:700;border-bottom:1px solid #dee2e6;border-radius:8px 8px 0 0">
+                        <i class="fas fa-bell mr-2 text-primary"></i>Notifications
+                    </div>
+                    <div style="max-height:350px;overflow-y:auto">
+                        @if(Auth::user())
+                            @forelse(Auth::user()->notifications->take(10) as $notification)
+                                <a href="#" class="dropdown-item py-3 border-bottom" style="white-space:normal;line-height:1.4;background:{{ $notification->read_at ? '#fff' : '#f0fdf4' }}">
+                                    @if($notification->data['status'] === 'approved')
+                                        <i class="fas fa-check-circle text-success mr-2 mt-1 float-left" style="font-size:1.2rem"></i>
+                                    @else
+                                        <i class="fas fa-times-circle text-danger mr-2 mt-1 float-left" style="font-size:1.2rem"></i>
+                                    @endif
+                                    <div style="overflow:hidden">
+                                        <div class="text-sm font-weight-bold" style="color:#111827">Application {{ ucfirst($notification->data['status'] ?? '') }}</div>
+                                        <div class="text-xs text-muted mt-1">{{ mb_strimwidth($notification->data['message'] ?? '', 0, 80, "...") }}</div>
+                                        <div class="text-xs mt-1" style="color:#9ca3af"><i class="far fa-clock mr-1"></i>{{ $notification->created_at->diffForHumans() }}</div>
+                                    </div>
+                                </a>
+                                @php $notification->markAsRead(); @endphp
+                            @empty
+                                <div class="dropdown-item text-center text-muted py-4">
+                                    <i class="fas fa-bell-slash fa-2x mb-2" style="opacity:0.3"></i><br>
+                                    <span class="text-sm">You have no new notifications</span>
+                                </div>
+                            @endforelse
+                        @endif
+                    </div>
+                </div>
+            </li>
+            
             <li class="nav-item dropdown">
                 <a class="nav-link" data-toggle="dropdown" href="#">
                     <i class="far fa-user"></i> {{ Auth::user()->name ?? 'Account' }}
