@@ -77,13 +77,19 @@
                 </p>
                 <form action="{{ route('security.search') }}" method="GET">
                     <div class="input-group input-group-lg mb-3">
+                        <div class="input-group-prepend">
+                            <button type="button" class="btn btn-lg font-weight-bold" id="openScannerBtn"
+                                style="background:#1a1a2e;color:#fff;border-radius:0.3rem 0 0 0.3rem" title="Open Camera Scanner">
+                                <i class="fas fa-camera"></i> <span class="d-none d-sm-inline ml-1">Scan</span>
+                            </button>
+                        </div>
                         <input type="text"
                                class="form-control"
                                name="query"
                                id="searchInput"
                                placeholder="e.g. ABC-1234 or QR-XXXXX"
                                required autofocus
-                               style="font-size:1.1rem;letter-spacing:1px">
+                               style="font-size:1.1rem;letter-spacing:1px;border-left:0;">
                         <div class="input-group-append">
                             <button class="btn btn-lg text-white font-weight-bold" type="submit"
                                 style="background:#7b1113;min-width:60px">
@@ -91,7 +97,7 @@
                             </button>
                         </div>
                     </div>
-                    <p class="text-muted small"><i class="fas fa-info-circle mr-1"></i>Partial matches are supported. Search is not case-sensitive.</p>
+                    <p class="text-muted small"><i class="fas fa-info-circle mr-1"></i>Partial matches are supported. Tap <strong>Scan</strong> to use device camera.</p>
                 </form>
 
                 <hr>
@@ -191,6 +197,40 @@
     </div>
 </div>
 
+{{-- ── Camera Scanner Modal ────────────────────────────────────────────── --}}
+<div class="modal fade" id="scannerModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius:12px;overflow:hidden;border:none">
+            <div class="modal-header" style="background:#1a1a2e;color:#fff;border:none">
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-camera mr-2"></i>Live Vehicle Scanner</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0" style="background:#000;position:relative">
+                <div id="qr-reader" style="width:100%;min-height:300px"></div>
+                
+                {{-- UI Overlay for OCR --}}
+                <div id="ocrOverlay" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;color:#fff;flex-direction:column;z-index:999">
+                    <div class="spinner-border text-light mb-3" role="status" style="width:3rem;height:3rem"></div>
+                    <h5 class="font-weight-bold">AI Processing...</h5>
+                    <p class="small text-center px-4" id="ocrStatusText">Extracting text from image...</p>
+                </div>
+            </div>
+            <div class="modal-footer" style="background:#f8f9fa;justify-content:center;flex-direction:column;gap:5px">
+                <p class="text-muted small mb-1 w-100 text-center">
+                    <strong>QR Codes</strong> are scanned automatically.<br>
+                    Aim at a <strong>License Plate</strong> and tap below:
+                </p>
+                <button type="button" class="btn btn-lg btn-block font-weight-bold" id="capturePlateBtn"
+                    style="background:#7b1113;color:#fff;border-radius:8px;box-shadow:0 4px 10px rgba(123,17,19,0.3)">
+                    <i class="fas fa-object-group mr-2"></i>Capture License Plate
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
@@ -236,5 +276,90 @@
     if (markers.length > 0) {
         map.fitBounds(new L.featureGroup(markers).getBounds().pad(0.1));
     }
+</script>
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<script>
+    // ── Scanner Logic ──
+    let html5QrcodeScanner = null;
+
+    $('#openScannerBtn').on('click', function() {
+        $('#scannerModal').modal('show');
+    });
+
+    $('#scannerModal').on('shown.bs.modal', function () {
+        if (!html5QrcodeScanner) {
+            html5QrcodeScanner = new Html5Qrcode("qr-reader");
+        }
+        
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+        .catch(err => {
+            console.error("Camera start failed:", err);
+            alert("Camera access denied or unavailable. Please ensure you are on HTTPS and have granted permission.");
+        });
+    });
+
+    $('#scannerModal').on('hidden.bs.modal', function () {
+        if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+            html5QrcodeScanner.stop().catch(console.error);
+        }
+        $('#ocrOverlay').css('display', 'none');
+    });
+
+    function onScanSuccess(decodedText) {
+        if (html5QrcodeScanner && html5QrcodeScanner.isScanning) html5QrcodeScanner.stop();
+        $('#scannerModal').modal('hide');
+        $('#searchInput').val(decodedText);
+        $('#searchInput').closest('form').submit();
+    }
+
+    // ── OCR License Plate Capture ──
+    $('#capturePlateBtn').on('click', async function() {
+        const videoElement = document.querySelector('#qr-reader video');
+        if (!videoElement) return;
+
+        $('#ocrOverlay').css('display', 'flex');
+        $('#ocrStatusText').text("Reading license plate...");
+
+        const canvas = document.createElement('canvas');
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+        try {
+            const result = await Tesseract.recognize(canvas, 'eng', {
+                logger: m => {
+                    if (m.status === 'recognizing text') {
+                        $('#ocrStatusText').text(`Analyzing AI: ${Math.round(m.progress * 100)}%`);
+                    }
+                }
+            });
+            
+            const text = result.data.text.trim();
+            const cleaned = text.replace(/[^A-Z0-9-]/gi, '').toUpperCase();
+            
+            // Match PH plates: 3 letters, 3-4 numbers
+            const plateRegex = /[A-Z]{3}[-]?[0-9]{3,4}/;
+            const match = cleaned.match(plateRegex);
+            
+            if (match) {
+                onScanSuccess(match[0]);
+            } else if (cleaned.length >= 4) {
+               onScanSuccess(cleaned.substring(0, 8));
+            } else {
+                alert("Could not detect a clear license plate. Please try again.");
+                $('#ocrOverlay').css('display', 'none');
+            }
+        } catch (err) {
+            console.error(err);
+            alert("OCR Processing failed.");
+            $('#ocrOverlay').css('display', 'none');
+        }
+    });
 </script>
 @endsection

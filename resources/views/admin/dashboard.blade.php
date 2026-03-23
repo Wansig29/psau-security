@@ -165,6 +165,9 @@
     <a class="nav-item" href="{{ route('admin.sanctions.index') }}">
         <span class="nav-icon">⚖️</span> Violations & Sanctions
     </a>
+    <a class="nav-item" href="{{ route('admin.users.index') }}">
+        <span class="nav-icon">👥</span> User Management
+    </a>
 
     <div class="sidebar-footer">
         <div class="user-info">

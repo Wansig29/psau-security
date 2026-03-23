@@ -19,6 +19,11 @@ Route::get('/dashboard', function () {
 // Admin Routes
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('dashboard');
+    
+    // User Accounts Management
+    Route::get('/users', [\App\Http\Controllers\Admin\AdminUserController::class, 'index'])->name('users.index');
+    Route::post('/users', [\App\Http\Controllers\Admin\AdminUserController::class, 'store'])->name('users.store');
+    Route::delete('/users/{user}', [\App\Http\Controllers\Admin\AdminUserController::class, 'destroy'])->name('users.destroy');
     Route::post('/registration/{id}/approve', [\App\Http\Controllers\Admin\AdminRegistrationController::class, 'approve'])->name('registration.approve');
     Route::post('/registration/{id}/reject', [\App\Http\Controllers\Admin\AdminRegistrationController::class, 'reject'])->name('registration.reject');
     
