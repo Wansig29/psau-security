@@ -1,169 +1,205 @@
 @extends('layouts.adminlte')
 
-@section('title', 'Security Enforcement Panel')
+@section('title', 'Security Dashboard')
 
 @section('content')
 
-{{-- ── Stats Bar ─────────────────────────────────────────────────────── --}}
-<div class="row mb-3">
-    <div class="col-sm-6 col-lg-3 mb-3">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-exclamation-triangle"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text font-weight-bold">My Violations Today</span>
-                <span class="info-box-number">
-                    {{ $recentViolations->where('created_at', '>=', now()->startOfDay())->count() }}
+{{-- ── Alerts ─────────────────────────────────────────────────────────── --}}
+@if(session('status'))
+<div class="alert alert-success alert-dismissible fade show shadow-sm">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <i class="fas fa-check-circle mr-2"></i><strong>Done!</strong> {{ session('status') }}
+</div>
+@endif
+@if(session('error'))
+<div class="alert alert-danger alert-dismissible fade show shadow-sm">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
+</div>
+@endif
+
+{{-- ═══════════════════════════════════════════════════════ --}}
+{{-- SECURITY PROFILE HERO CARD                              --}}
+{{-- ═══════════════════════════════════════════════════════ --}}
+<div class="card shadow-lg mb-4" style="border:none;overflow:visible">
+    {{-- Maroon banner --}}
+    <div style="height:120px;background:linear-gradient(135deg,#7b1113 0%,#b22222 60%,#c0392b 100%);
+                position:relative;border-radius:4px 4px 0 0;overflow:hidden">
+        <div style="position:absolute;top:-20px;right:-20px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
+        <div style="position:absolute;bottom:-30px;left:40%;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.05)"></div>
+    </div>
+
+    {{-- White body area --}}
+    <div style="background:#fff;border:1px solid #e3e6f0;border-top:none;border-radius:0 0 4px 4px;padding:0 24px 20px">
+
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:-46px">
+            {{-- Avatar --}}
+            <div style="position:relative;flex-shrink:0">
+                <div style="width:92px;height:92px;border-radius:50%;border:4px solid #fff;overflow:hidden;
+                            background:#e9ecef;box-shadow:0 4px 15px rgba(0,0,0,0.2)">
+                    @if(auth()->user()->profile_photo_path)
+                        <img src="{{ asset('storage/' . auth()->user()->profile_photo_path) }}"
+                             style="width:100%;height:100%;object-fit:cover" alt="Profile Photo">
+                    @else
+                        <div style="width:100%;height:100%;display:flex;align-items:center;
+                                    justify-content:center;background:linear-gradient(135deg,#1a1a2e,#2980b9)">
+                            <span style="font-size:2.5rem;font-weight:900;color:#fff;text-transform:uppercase">
+                                {{ substr(auth()->user()->name, 0, 1) }}
+                            </span>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Action Button --}}
+            <div style="padding-bottom:4px">
+                <a href="{{ route('security.violation.create', ['vehicle_id' => '']) }}"
+                   class="btn font-weight-bold"
+                   style="background:#e67e22;color:#fff;border-radius:8px;padding:9px 20px;
+                          box-shadow:0 3px 10px rgba(230,126,34,0.3);white-space:nowrap;font-size:.95rem">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Log Violation Manually
+                </a>
+            </div>
+        </div>
+
+        {{-- Name / Badges --}}
+        <div style="padding-top:12px">
+            <h2 style="font-size:1.45rem;font-weight:900;color:#1a1a2e;margin-bottom:2px;line-height:1.2">
+                {{ auth()->user()->name }}
+            </h2>
+            <div style="color:#666;font-size:.87rem;margin-bottom:10px">
+                <i class="fas fa-envelope mr-1"></i>{{ auth()->user()->email }}
+            </div>
+            <div class="d-flex flex-wrap" style="gap:6px;margin-bottom:8px">
+                <span class="badge badge-pill" style="background:#1a1a2e;color:#fff;font-size:.76rem;padding:4px 10px">
+                    <i class="fas fa-user-shield mr-1"></i>Security Officer
+                </span>
+                <span class="badge badge-pill" style="background:#fff3cd;color:#856404;border:1px solid #ffeeba;font-size:.76rem;padding:4px 10px">
+                    <i class="fas fa-clipboard-list mr-1"></i>{{ $recentViolations->count() }} Total Logged
+                </span>
+                <span class="badge badge-pill" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;font-size:.76rem;padding:4px 10px">
+                    <i class="fas fa-exclamation-circle mr-1"></i>{{ $recentViolations->where('created_at', '>=', now()->startOfDay())->count() }} Today
+                </span>
+                <span class="badge badge-pill" style="background:#d1ecf1;color:#0c5460;border:1px solid #bee5eb;font-size:.76rem;padding:4px 10px">
+                    <i class="fas fa-map-marked-alt mr-1"></i>{{ $mapViolations->count() }} GPS Pins
                 </span>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3 mb-3">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-clipboard-list"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text font-weight-bold">Total Logged (Me)</span>
-                <span class="info-box-number">{{ $recentViolations->count() }}</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3 mb-3">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-map-marked-alt"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text font-weight-bold">GPS-Tagged Violations</span>
-                <span class="info-box-number">{{ $mapViolations->count() }}</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3 mb-3">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon elevation-1" style="background:#7b1113"><i class="fas fa-user-shield"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text font-weight-bold">Officer</span>
-                <span class="info-box-number" style="font-size:1rem;line-height:1.6">{{ auth()->user()->name }}</span>
-            </div>
-        </div>
+
+    {{-- Tabs row --}}
+    <div style="background:#fff;border:1px solid #e3e6f0;border-top:1px solid #dee2e6;border-radius:0 0 4px 4px;margin-top:4px">
+        <ul class="nav nav-tabs border-0" id="securityTabs">
+            <li class="nav-item">
+                <a class="nav-link active font-weight-bold px-4 py-3" data-toggle="tab" href="#tab-scanner"
+                   style="color:#7b1113;border-bottom:3px solid #7b1113;border-top:none;border-left:none;border-right:none">
+                    <i class="fas fa-camera mr-2"></i>Scanner
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link font-weight-bold px-4 py-3 text-secondary" data-toggle="tab" href="#tab-violations"
+                   style="border:none">
+                    <i class="fas fa-history mr-2"></i>My Logs
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link font-weight-bold px-4 py-3 text-secondary" data-toggle="tab" href="#tab-map"
+                   style="border:none">
+                    <i class="fas fa-map-marked-alt mr-2"></i>Campus Map
+                </a>
+            </li>
+        </ul>
     </div>
 </div>
 
-{{-- ── Alert messages ────────────────────────────────────────────────── --}}
-@if(session('status'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        <i class="fas fa-check-circle mr-2"></i><strong>Done!</strong> {{ session('status') }}
-    </div>
-@endif
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
-    </div>
-@endif
+{{-- ═══════════════════════════════════════════════════════ --}}
+{{-- TAB CONTENT                                              --}}
+{{-- ═══════════════════════════════════════════════════════ --}}
+<div class="tab-content">
 
-{{-- ── Two-column layout ─────────────────────────────────────────────── --}}
-<div class="row">
-
-    {{-- LEFT: Vehicle Search ──────────────────────────────────────────── --}}
-    <div class="col-lg-5 mb-4">
-        <div class="card card-outline shadow h-100" style="border-top:4px solid #7b1113">
-            <div class="card-header" style="background:#7b1113">
-                <h3 class="card-title text-white font-weight-bold">
-                    <i class="fas fa-search mr-2"></i>Vehicle Check
-                </h3>
-            </div>
-            <div class="card-body">
-                <p class="text-muted mb-3" style="font-size:0.95rem">
-                    Enter a <strong>Plate Number</strong> or scan a <strong>QR Sticker ID</strong> to verify the vehicle.
-                </p>
-                <form action="{{ route('security.search') }}" method="GET">
-                    <div class="input-group input-group-lg mb-3">
+    {{-- ── TAB 1: VEHICLE SCANNER ─────────────────────────── --}}
+    <div class="tab-pane fade show active" id="tab-scanner">
+        <div class="card card-outline shadow" style="border-top:4px solid #7b1113; border-radius:12px">
+            <div class="card-body p-5 text-center">
+                <div class="mb-4">
+                    <div style="width:80px;height:80px;background:#f8f9fa;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto">
+                        <i class="fas fa-qrcode fa-2x" style="color:#7b1113"></i>
+                    </div>
+                </div>
+                <h3 class="font-weight-bold text-dark">Live Vehicle Check</h3>
+                <p class="text-muted mb-4 px-3" style="font-size:1.1rem">Tap the Scan button to engage the live camera, or manually enter a license plate to verify the vehicle.</p>
+                
+                <form action="{{ route('security.search') }}" method="GET" class="mx-auto" style="max-width:550px">
+                    <div class="input-group input-group-lg mb-2 shadow-lg rounded" style="border:1px solid #dee2e6">
                         <div class="input-group-prepend">
-                            <button type="button" class="btn btn-lg font-weight-bold" id="openScannerBtn"
+                            <button type="button" class="btn btn-lg font-weight-bold px-4" id="openScannerBtn"
                                 style="background:#1a1a2e;color:#fff;border-radius:0.3rem 0 0 0.3rem" title="Open Camera Scanner">
-                                <i class="fas fa-camera"></i> <span class="d-none d-sm-inline ml-1">Scan</span>
+                                <i class="fas fa-camera mr-2"></i>Scan
                             </button>
                         </div>
                         <input type="text"
                                class="form-control"
                                name="query"
                                id="searchInput"
-                               placeholder="e.g. ABC-1234 or QR-XXXXX"
+                               placeholder="e.g. ABC-1234 or QR-XXX"
                                required autofocus
-                               style="font-size:1.1rem;letter-spacing:1px;border-left:0;">
+                               style="font-size:1.2rem;letter-spacing:1px;border:none;box-shadow:none">
                         <div class="input-group-append">
-                            <button class="btn btn-lg text-white font-weight-bold" type="submit"
-                                style="background:#7b1113;min-width:60px">
+                            <button class="btn btn-lg text-white font-weight-bold px-4" type="submit"
+                                style="background:#7b1113;border-radius:0 0.3rem 0.3rem 0">
                                 <i class="fas fa-search"></i>
                             </button>
                         </div>
                     </div>
-                    <p class="text-muted small"><i class="fas fa-info-circle mr-1"></i>Partial matches are supported. Tap <strong>Scan</strong> to use device camera.</p>
                 </form>
-
-                <hr>
-
-                <div class="text-center">
-                    <p class="text-muted small mb-2">Already know the vehicle? Go directly to:</p>
-                    <a href="{{ route('security.violation.create', ['vehicle_id' => '']) }}"
-                       class="btn btn-outline-danger btn-lg btn-block"
-                       style="font-size:1rem;letter-spacing:.5px">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                        Log a New Violation
-                    </a>
-                </div>
             </div>
         </div>
     </div>
 
-    {{-- RIGHT: Recent Violations ─────────────────────────────────────── --}}
-    <div class="col-lg-7 mb-4">
-        <div class="card card-outline shadow h-100" style="border-top:4px solid #e67e22">
-            <div class="card-header" style="background:#e67e22">
-                <h3 class="card-title text-white font-weight-bold">
-                    <i class="fas fa-history mr-2"></i>My Recent Violations
-                </h3>
-                <div class="card-tools">
-                    <span class="badge badge-light badge-pill text-dark">Last {{ $recentViolations->count() }}</span>
-                </div>
+    {{-- ── TAB 2: MY LOGGED VIOLATIONS ────────────────────── --}}
+    <div class="tab-pane fade" id="tab-violations">
+        <div class="card shadow" style="border-radius:12px;border-top:4px solid #e67e22">
+            <div class="card-header bg-white border-bottom-0 pb-0 pt-4 px-4">
+                <h4 class="font-weight-bold mb-0 text-dark"><i class="fas fa-history mr-2 text-warning"></i>Recent Violations</h4>
+                <p class="text-muted small">Showing the violations you have logged across campus.</p>
             </div>
             <div class="card-body p-0">
                 @if($recentViolations->isEmpty())
                     <div class="text-center py-5 text-muted">
-                        <i class="fas fa-clipboard-check fa-3x mb-3 text-success"></i>
-                        <h6>No violations logged yet.</h6>
-                        <p class="small">Violations you log will appear here.</p>
+                        <i class="fas fa-clipboard-check fa-4x mb-3" style="opacity:0.2"></i>
+                        <h5>No violations logged yet.</h5>
                     </div>
                 @else
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="bg-light">
                                 <tr>
-                                    <th style="font-size:.8rem">Date</th>
-                                    <th style="font-size:.8rem">Plate</th>
-                                    <th style="font-size:.8rem">Offense</th>
-                                    <th style="font-size:.8rem">Sanction</th>
+                                    <th class="px-4" style="font-size:.85rem;font-weight:600;color:#666">Date & Time</th>
+                                    <th style="font-size:.85rem;font-weight:600;color:#666">License Plate</th>
+                                    <th style="font-size:.85rem;font-weight:600;color:#666">Offense Type</th>
+                                    <th style="font-size:.85rem;font-weight:600;color:#666">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($recentViolations as $v)
                                 <tr>
-                                    <td style="font-size:.85rem;white-space:nowrap">
-                                        {{ $v->created_at->format('M d') }}<br>
-                                        <span class="text-muted" style="font-size:.75rem">{{ $v->created_at->format('g:i A') }}</span>
+                                    <td class="px-4" style="font-size:.9rem;white-space:nowrap">
+                                        <div class="font-weight-bold">{{ $v->created_at->format('M d, Y') }}</div>
+                                        <div class="text-muted small">{{ $v->created_at->format('g:i A') }}</div>
                                     </td>
-                                    <td>
-                                        <span class="badge badge-info" style="font-family:monospace;font-size:.8rem">
+                                    <td class="align-middle">
+                                        <span class="badge badge-info shadow-sm" style="font-family:monospace;font-size:.85rem;padding:5px 8px">
                                             {{ $v->vehicle->plate_number ?? 'N/A' }}
                                         </span>
                                     </td>
-                                    <td style="font-size:.85rem">
+                                    <td class="align-middle text-dark font-weight-bold" style="font-size:.9rem">
                                         {{ Str::title(str_replace('_',' ', $v->violation_type)) }}
                                     </td>
-                                    <td>
+                                    <td class="align-middle">
                                         @if($v->sanction_applied)
-                                            <span class="badge badge-danger">Applied</span>
+                                            <span class="badge badge-danger px-3 py-2"><i class="fas fa-gavel mr-1"></i>Sanctioned</span>
                                         @else
-                                            <span class="badge badge-secondary">Pending</span>
+                                            <span class="badge badge-secondary px-3 py-2"><i class="fas fa-clock mr-1"></i>Pending</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -176,25 +212,19 @@
         </div>
     </div>
 
-</div>
-
-{{-- ── Campus Violation Map ────────────────────────────────────────────── --}}
-<div class="card card-outline shadow" style="border-top:4px solid #2980b9">
-    <div class="card-header" style="background:#2980b9">
-        <h3 class="card-title text-white font-weight-bold">
-            <i class="fas fa-map-marked-alt mr-2"></i>Live Campus Violation Map
-        </h3>
-        <div class="card-tools">
-            <span class="badge badge-light text-dark badge-pill">{{ $mapViolations->count() }} pins</span>
-            <button type="button" class="btn btn-tool text-white" data-card-widget="collapse">
-                <i class="fas fa-minus"></i>
-            </button>
+    {{-- ── TAB 3: CAMPUS GPS MAP ──────────────────────────── --}}
+    <div class="tab-pane fade" id="tab-map">
+        <div class="card shadow" style="border-radius:12px;border-top:4px solid #2980b9;overflow:hidden">
+            <div class="card-header bg-white pb-3 pt-4 px-4 border-bottom">
+                <h4 class="font-weight-bold mb-0"><i class="fas fa-map-marked-alt mr-2 text-info"></i>Live Incident Map</h4>
+                <p class="text-muted small mb-0 mt-1">Click the red pins to view exactly where the specific violation occurred.</p>
+            </div>
+            <div class="card-body p-0">
+                <div id="violationMap" style="height:600px;width:100%;z-index:1"></div>
+            </div>
         </div>
     </div>
-    <div class="card-body p-0">
-        <p class="text-muted small px-3 pt-2 mb-1">Click any red pin to see the violation details. Use this map to identify campus hotspots.</p>
-        <div id="violationMap" style="height:480px;width:100%"></div>
-    </div>
+
 </div>
 
 {{-- ── Camera Scanner Modal ────────────────────────────────────────────── --}}
@@ -235,6 +265,24 @@
 
 @section('scripts')
 <script>
+    // ── Bootstrap tab active state styling ────────────────────────
+    document.querySelectorAll('#securityTabs .nav-link').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('#securityTabs .nav-link').forEach(function(t) {
+                t.style.color = '#6c757d';
+                t.style.borderBottom = 'none';
+            });
+            this.style.color = '#7b1113';
+            this.style.borderBottom = '3px solid #7b1113';
+            
+            // Fix Leaflet map blank screen bug when rendering inside hidden tab
+            if (this.getAttribute('href') === '#tab-map') {
+                setTimeout(() => { map.invalidateSize(); }, 200);
+            }
+        });
+    });
+
+    // ── Leaflet Map Setup ─────────────────────────────────────
     const map = L.map('violationMap').setView([15.2155, 120.7303], 15);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
