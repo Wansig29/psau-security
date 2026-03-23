@@ -3,7 +3,7 @@ builder = "NIXPACKS"
 buildCommand = "npm run build"
 
 [deploy]
-startCommand = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
+startCommand = "php artisan migrate --force && vendor/bin/heroku-php-apache2 public/"
 
 [phases.setup]
 nixPkgs = ["php82", "php82Packages.composer", "nodejs_20"]
