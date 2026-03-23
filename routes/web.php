@@ -63,4 +63,9 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+Route::get('/seed-db-now', function () {
+    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+    return 'Trial accounts generated! You can now log in with the trial accounts.';
+});
  
