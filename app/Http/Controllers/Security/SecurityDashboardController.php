@@ -15,7 +15,9 @@ class SecurityDashboardController extends Controller
             ->take(10)
             ->get();
 
-        return view('security.dashboard', compact('recentViolations'));
+        $mapViolations = \App\Models\Violation::with(['vehicle'])->whereNotNull('gps_lat')->latest()->take(50)->get();
+
+        return view('security.dashboard', compact('recentViolations', 'mapViolations'));
     }
 
     public function search(Request $request)
