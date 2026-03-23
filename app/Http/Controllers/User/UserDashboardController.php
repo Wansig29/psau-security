@@ -12,10 +12,8 @@ class UserDashboardController extends Controller
         $user = auth()->user();
         
         $vehicles = $user->vehicles;
-        $registrations = $user->registrations()->with(['vehicle', 'documents'])->latest()->get();
-        // Use the newly created relationship to load violations linked to user's vehicles
-        $violations = $user->violations()->with('vehicle')->latest()->get();
+        $registrations = $user->registrations()->with(['vehicle', 'pickupSchedule', 'documents'])->latest()->get();
 
-        return view('user.dashboard', compact('vehicles', 'registrations', 'violations', 'user'));
+        return view('user.dashboard', compact('vehicles', 'registrations'));
     }
 }

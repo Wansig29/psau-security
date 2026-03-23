@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Registration;
+use App\Models\Vehicle;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -22,7 +24,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
         'profile_photo_path',
     ];
 
@@ -57,10 +58,5 @@ class User extends Authenticatable
     public function registrations()
     {
         return $this->hasMany(Registration::class);
-    }
-
-    public function violations()
-    {
-        return $this->hasManyThrough(Violation::class, Vehicle::class);
     }
 }

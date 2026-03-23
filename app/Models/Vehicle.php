@@ -14,7 +14,6 @@ class Vehicle extends Model
         'make',
         'model',
         'color',
-        'photo_path',
     ];
 
     public function user()

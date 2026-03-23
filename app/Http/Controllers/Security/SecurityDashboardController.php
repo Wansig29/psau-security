@@ -15,13 +15,7 @@ class SecurityDashboardController extends Controller
             ->take(10)
             ->get();
 
-        // Get all violations across the entire campus that have GPS coordinates
-        $mapViolations = \App\Models\Violation::with('vehicle')
-            ->whereNotNull('gps_lat')
-            ->whereNotNull('gps_lng')
-            ->get();
-
-        return view('security.dashboard', compact('recentViolations', 'mapViolations'));
+        return view('security.dashboard', compact('recentViolations'));
     }
 
     public function search(Request $request)
@@ -34,8 +28,8 @@ class SecurityDashboardController extends Controller
 
         // Search in Vehicle Plate Number or Registration QR Sticker
         $vehicle = \App\Models\Vehicle::with(['registrations' => function($q) {
-            $q->with('documents')->latest()->limit(1); // Get the most recent registration config and its docs
-        }, 'user', 'violations'])->where('plate_number', 'like', "%{$query}%")
+            $q->latest()->limit(1); // Get the most recent registration config
+        }, 'user'])->where('plate_number', 'like', "%{$query}%")
         ->orWhereHas('registrations', function ($q) use ($query) {
             $q->where('qr_sticker_id', 'like', "%{$query}%");
         })->first();

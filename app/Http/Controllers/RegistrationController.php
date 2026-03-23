@@ -14,79 +14,92 @@ class RegistrationController extends Controller
     public function store(\Illuminate\Http\Request $request)
     {
         $request->validate([
-            'make' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
-            'color' => 'required|string|max:255',
-            'photo_path' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'document_image' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'cor_image' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120',
+            'make'          => 'required|string|max:255',
+            'model'         => 'required|string|max:255',
+            'color'         => 'required|string|max:255',
+            'doc_or'        => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'doc_cr'        => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'doc_cor'       => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'doc_license'   => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'doc_school_id' => 'required|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         $user = $request->user();
 
-        // 1. Store the uploaded images
-        $vehiclePhotoPath = $request->file('photo_path')->store('vehicles', 'public');
-        $orcrImagePath = $request->file('document_image')->store('registrations', 'public');
-        $corImagePath = $request->file('cor_image')->store('registrations', 'public');
-        
-        $fullOrcrImagePath = storage_path('app/public/' . $orcrImagePath);
+        // Helper: compress and store an uploaded image
+        $storeAndCompress = function ($file, $folder) {
+            $path     = $file->store($folder, 'public');
+            $fullPath = storage_path('app/public/' . $path);
+            try {
+                $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                $img     = $manager->read($fullPath);
+                if ($img->width() > 1200) { $img->scale(width: 1200); }
+                $img->toJpeg(70)->save($fullPath);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Image compression failed: ' . $e->getMessage());
+            }
+            return ['path' => $path, 'full' => $fullPath];
+        };
 
-        // 2. Perform OCR on the OR/CR image (fail gracefully if Tesseract not installed)
-        $ocrText = '';
-        try {
-            $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($fullOrcrImagePath))
-                ->run();
-        } catch (\Exception $e) {
-            // Tesseract not installed or failed — admin will manually verify the document
-            \Illuminate\Support\Facades\Log::warning('OCR failed during registration: ' . $e->getMessage());
-        }
+        // 1. Store all five documents
+        $docs = [
+            'or'        => $storeAndCompress($request->file('doc_or'),        'registrations/or'),
+            'cr'        => $storeAndCompress($request->file('doc_cr'),        'registrations/cr'),
+            'cor'       => $storeAndCompress($request->file('doc_cor'),       'registrations/cor'),
+            'license'   => $storeAndCompress($request->file('doc_license'),   'registrations/license'),
+            'school_id' => $storeAndCompress($request->file('doc_school_id'), 'registrations/school_id'),
+        ];
 
-        // 3. Extract Plate Number (Basic PH format regex: 3 letters, 3/4 numbers)
-        // Matches ABC 123, ABC 1234, ABC-123, ABC-1234
+        // 2. Run OCR on the OR document to extract the plate number
+        $ocrText     = '';
         $plateNumber = 'UNKNOWN';
-        if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($ocrText), $matches)) {
-            $plateNumber = str_replace([' ', '-'], '', $matches[0]); // Normalize to ABC1234 format
+        try {
+            $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['or']['full']))->run();
+            if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($ocrText), $matches)) {
+                $plateNumber = str_replace([' ', '-'], '', $matches[0]);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('OCR failed on OR document: ' . $e->getMessage());
         }
 
-        // 4. Create Vehicle (Or find if user already registered it... this assumes fresh)
+        // 3. Create Vehicle
         $vehicle = \App\Models\Vehicle::create([
-            'user_id' => $user->id,
+            'user_id'      => $user->id,
             'plate_number' => $plateNumber,
-            'make' => $request->make,
-            'model' => $request->model,
-            'color' => $request->color,
-            'photo_path' => $vehiclePhotoPath,
+            'make'         => $request->make,
+            'model'        => $request->model,
+            'color'        => $request->color,
         ]);
 
-        // 5. Create Registration (Assume current school year roughly matches current year)
-        $currentYear = date('Y') . '-' . (date('Y') + 1);
+        // 4. Create Registration
+        $currentYear  = date('Y') . '-' . (date('Y') + 1);
         $registration = \App\Models\Registration::create([
-            'user_id' => $user->id,
-            'vehicle_id' => $vehicle->id,
+            'user_id'     => $user->id,
+            'vehicle_id'  => $vehicle->id,
             'school_year' => $currentYear,
-            'status' => 'pending',
+            'status'      => 'pending',
         ]);
 
-        // 6. Save OR/CR Document reference and OCR raw text
-        \App\Models\RegistrationDocument::create([
-            'registration_id' => $registration->id,
-            'document_type' => 'OR/CR',
-            'image_path' => $orcrImagePath,
-            'ocr_extracted_text' => $ocrText,
-            'match_score' => 0, // Admin will manually review this
-            'flagged_fields' => $plateNumber === 'UNKNOWN' ? ['plate_number' => 'Not found in OCR'] : null,
-        ]);
+        // 5. Save each document record
+        $docTypes = [
+            'or'        => ['type' => 'or',        'ocr' => $ocrText, 'flagged' => $plateNumber === 'UNKNOWN' ? ['plate_number' => 'Not found in OCR'] : null],
+            'cr'        => ['type' => 'cr',        'ocr' => null, 'flagged' => null],
+            'cor'       => ['type' => 'cor',       'ocr' => null, 'flagged' => null],
+            'license'   => ['type' => 'license',   'ocr' => null, 'flagged' => null],
+            'school_id' => ['type' => 'school_id', 'ocr' => null, 'flagged' => null],
+        ];
 
-        // 7. Save COR / Student ID Document reference
-        \App\Models\RegistrationDocument::create([
-            'registration_id' => $registration->id,
-            'document_type' => 'COR',
-            'image_path' => $corImagePath,
-            'ocr_extracted_text' => null, // Not currently running OCR on COR
-            'match_score' => 0,
-            'flagged_fields' => null,
-        ]);
+        foreach ($docTypes as $key => $meta) {
+            \App\Models\RegistrationDocument::create([
+                'registration_id'   => $registration->id,
+                'document_type'     => $meta['type'],
+                'image_path'        => $docs[$key]['path'],
+                'ocr_extracted_text'=> $meta['ocr'],
+                'match_score'       => 0,
+                'flagged_fields'    => $meta['flagged'],
+            ]);
+        }
 
-        return redirect()->route('dashboard')->with('status', 'Registration submitted successfully! It is now pending admin review.');
+        return redirect()->route('user.dashboard')->with('status', 'Registration submitted! It is now pending admin review.');
     }
 }

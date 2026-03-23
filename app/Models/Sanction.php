@@ -16,8 +16,8 @@ class Sanction extends Model
         'start_date',
         'end_date',
         'is_active',
-        'source',       // 'auto' or 'manual'
-        'description',  // Human-readable reason for the sanction
+        'source',
+        'description',
     ];
 
     protected $casts = [

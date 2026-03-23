@@ -36,7 +36,6 @@
             </div>
             <div class="card-body">
 
-                {{-- Plate Number (large & easy to read) --}}
                 <div class="text-center mb-3">
                     <div class="d-inline-block border border-dark rounded px-4 py-2"
                          style="font-family:monospace;font-size:2rem;font-weight:900;letter-spacing:6px;background:#f8f9fa">
@@ -44,7 +43,6 @@
                     </div>
                 </div>
 
-                {{-- Vehicle photo --}}
                 <div class="text-center mb-3">
                     @if($vehicle->photo_path)
                         <img src="{{ asset('storage/' . $vehicle->photo_path) }}"
@@ -62,7 +60,6 @@
                     @endif
                 </div>
 
-                {{-- Vehicle details table --}}
                 <table class="table table-sm table-bordered mb-0">
                     <tr>
                         <th class="bg-light" style="width:35%">Make / Model</th>
@@ -97,7 +94,6 @@
     {{-- ── RIGHT: Status + Documents + Actions ──────────────────────────── --}}
     <div class="col-lg-7 mb-4">
 
-        {{-- Registration Status Card --}}
         <div class="card shadow mb-3">
             <div class="card-header bg-light">
                 <h3 class="card-title font-weight-bold">
@@ -106,22 +102,18 @@
             </div>
             <div class="card-body p-3">
                 @if($isApproved)
-                    <div class="d-flex align-items-center p-3 rounded"
-                         style="background:#d4edda;border:2px solid #28a745">
+                    <div class="d-flex align-items-center p-3 rounded" style="background:#d4edda;border:2px solid #28a745">
                         <i class="fas fa-check-circle fa-3x text-success mr-3"></i>
                         <div>
                             <div class="font-weight-bold text-success" style="font-size:1.15rem">✅ VALID ENTRY</div>
                             <div class="text-muted small">School Year: <strong>{{ $registration->school_year }}</strong></div>
                             @if($registration->qr_sticker_id)
-                                <div class="mt-1">
-                                    QR Sticker: <span class="badge badge-success font-mono" style="font-size:.85rem">{{ $registration->qr_sticker_id }}</span>
-                                </div>
+                                <div class="mt-1">QR Sticker: <span class="badge badge-success font-mono" style="font-size:.85rem">{{ $registration->qr_sticker_id }}</span></div>
                             @endif
                         </div>
                     </div>
                 @elseif($isPending)
-                    <div class="d-flex align-items-center p-3 rounded"
-                         style="background:#fff3cd;border:2px solid #ffc107">
+                    <div class="d-flex align-items-center p-3 rounded" style="background:#fff3cd;border:2px solid #ffc107">
                         <i class="fas fa-clock fa-3x text-warning mr-3"></i>
                         <div>
                             <div class="font-weight-bold text-warning" style="font-size:1.15rem">⏳ PENDING APPROVAL</div>
@@ -129,8 +121,7 @@
                         </div>
                     </div>
                 @else
-                    <div class="d-flex align-items-center p-3 rounded"
-                         style="background:#f8d7da;border:2px solid #dc3545">
+                    <div class="d-flex align-items-center p-3 rounded" style="background:#f8d7da;border:2px solid #dc3545">
                         <i class="fas fa-times-circle fa-3x text-danger mr-3"></i>
                         <div>
                             <div class="font-weight-bold text-danger" style="font-size:1.15rem">❌ NOT REGISTERED</div>
@@ -141,7 +132,6 @@
             </div>
         </div>
 
-        {{-- Violation History Card --}}
         @if($allViolations->count() > 0)
         <div class="card shadow mb-3" style="border-top:4px solid #dc3545">
             <div class="card-header bg-light">
@@ -153,11 +143,7 @@
                 <div class="table-responsive">
                     <table class="table table-sm table-hover mb-0">
                         <thead class="bg-light">
-                            <tr>
-                                <th>Date</th>
-                                <th>Offense</th>
-                                <th>Sanction</th>
-                            </tr>
+                            <tr><th>Date</th><th>Offense</th><th>Sanction</th></tr>
                         </thead>
                         <tbody>
                             @foreach($allViolations->sortByDesc('created_at') as $v)
@@ -167,9 +153,7 @@
                                     <span class="text-muted" style="font-size:.75rem">{{ $v->created_at->format('g:i A') }}</span>
                                 </td>
                                 <td style="font-size:.85rem">
-                                    <span class="badge badge-warning text-dark">
-                                        {{ Str::title(str_replace('_',' ',$v->violation_type)) }}
-                                    </span>
+                                    <span class="badge badge-warning text-dark">{{ Str::title(str_replace('_',' ',$v->violation_type)) }}</span>
                                     @if($v->location_notes)
                                         <div class="text-muted" style="font-size:.75rem">{{ Str::limit($v->location_notes, 50) }}</div>
                                     @endif
@@ -195,23 +179,16 @@
         </div>
         @endif
 
-        {{-- Documents Card --}}
         @if($registration && $registration->documents->isNotEmpty())
         <div class="card shadow mb-3">
             <div class="card-header bg-light">
-                <h3 class="card-title font-weight-bold">
-                    <i class="fas fa-file-alt mr-2"></i>Verification Documents
-                </h3>
+                <h3 class="card-title font-weight-bold"><i class="fas fa-file-alt mr-2"></i>Verification Documents</h3>
             </div>
             <div class="card-body py-2">
                 @foreach($registration->documents as $doc)
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                    <div>
-                        <i class="fas fa-file-image text-muted mr-2"></i>
-                        <span class="font-weight-bold">{{ $doc->document_type }}</span>
-                    </div>
-                    <a href="{{ asset('storage/' . $doc->image_path) }}" target="_blank"
-                       class="btn btn-sm btn-outline-secondary">
+                    <div><i class="fas fa-file-image text-muted mr-2"></i><span class="font-weight-bold">{{ $doc->document_type }}</span></div>
+                    <a href="{{ asset('storage/' . $doc->image_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
                         <i class="fas fa-eye mr-1"></i>View
                     </a>
                 </div>
@@ -220,11 +197,9 @@
         </div>
         @endif
 
-        {{-- Action Buttons --}}
         <div class="row mt-2">
             <div class="col-6">
-                <a href="{{ route('security.dashboard') }}"
-                   class="btn btn-outline-secondary btn-block btn-lg">
+                <a href="{{ route('security.dashboard') }}" class="btn btn-outline-secondary btn-block btn-lg">
                     <i class="fas fa-arrow-left mr-2"></i>Back
                 </a>
             </div>
@@ -236,7 +211,7 @@
             </div>
         </div>
 
-    </div>{{-- /.col --}}
-</div>{{-- /.row --}}
+    </div>
+</div>
 
 @endsection

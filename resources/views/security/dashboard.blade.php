@@ -96,7 +96,6 @@
 
                 <hr>
 
-                {{-- Quick-action: Log Violation without Search --}}
                 <div class="text-center">
                     <p class="text-muted small mb-2">Already know the vehicle? Go directly to:</p>
                     <a href="{{ route('security.violation.create', ['vehicle_id' => '']) }}"
@@ -171,9 +170,9 @@
         </div>
     </div>
 
-</div>{{-- /.row --}}
+</div>
 
-{{-- ── Campus Violation Map (full-width) ──────────────────────────────── --}}
+{{-- ── Campus Violation Map ────────────────────────────────────────────── --}}
 <div class="card card-outline shadow" style="border-top:4px solid #2980b9">
     <div class="card-header" style="background:#2980b9">
         <h3 class="card-title text-white font-weight-bold">
@@ -196,7 +195,6 @@
 
 @section('scripts')
 <script>
-    // ── Leaflet Map ──────────────────────────────────────────────────────
     const map = L.map('violationMap').setView([15.2155, 120.7303], 15);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

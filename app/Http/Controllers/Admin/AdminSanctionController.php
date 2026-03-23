@@ -39,7 +39,6 @@ class AdminSanctionController extends Controller
             'start_date'    => $request->start_date,
             'end_date'      => $request->end_date,
             'is_active'     => true,
-            'source'        => 'manual',
         ]);
         
         // Mark violation as sanctioned
