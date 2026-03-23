@@ -13,7 +13,8 @@ class UserDashboardController extends Controller
         
         $vehicles = $user->vehicles;
         $registrations = $user->registrations()->with(['vehicle', 'pickupSchedule', 'documents'])->latest()->get();
+        $violations = \App\Models\Violation::whereIn('vehicle_id', $vehicles->pluck('id'))->with(['vehicle', 'sanctions'])->latest()->get();
 
-        return view('user.dashboard', compact('vehicles', 'registrations'));
+        return view('user.dashboard', compact('user', 'vehicles', 'registrations', 'violations'));
     }
 }
