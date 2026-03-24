@@ -132,6 +132,20 @@
             </div>
         </div>
 
+        {{-- Live Map --}}
+        <div class="card shadow mb-3" style="border-top:4px solid #17a2b8">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h3 class="card-title font-weight-bold text-info"><i class="fas fa-map-marker-alt mr-2"></i>Live Location</h3>
+                <span id="location-status" class="badge badge-secondary">Checking...</span>
+            </div>
+            <div class="card-body p-0">
+                <div id="live-map" style="height: 300px; width: 100%; background: #e9ecef; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #6c757d;">
+                    <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                    <small>Connecting to GPS...</small>
+                </div>
+            </div>
+        </div>
+
         @if($allViolations->count() > 0)
         <div class="card shadow mb-3" style="border-top:4px solid #dc3545">
             <div class="card-header bg-light">
@@ -213,5 +227,60 @@
 
     </div>
 </div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let map = null;
+    let marker = null;
+    const userId = {{ $vehicle->user->id }};
+    const mapContainer = document.getElementById('live-map');
+    const statusBadge = document.getElementById('location-status');
+
+    function fetchLocation() {
+        fetch(`/security/user-location/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.lat && data.lng) {
+                    if (data.is_online) {
+                        statusBadge.className = 'badge badge-success';
+                        statusBadge.textContent = 'Live (' + data.last_update + ')';
+                    } else {
+                        statusBadge.className = 'badge badge-warning';
+                        statusBadge.textContent = 'Offline (Last seen ' + data.last_update + ')';
+                    }
+
+                    if (!map) {
+                        mapContainer.innerHTML = ''; // Clear loading
+                        map = L.map('live-map').setView([data.lat, data.lng], 16);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap'
+                        }).addTo(map);
+                        marker = L.marker([data.lat, data.lng]).addTo(map);
+                        marker.bindPopup("<b>{{ addslashes($vehicle->user->name) }}</b><br>Last seen: " + data.last_update).openPopup();
+                    } else {
+                        const newLatLng = new L.LatLng(data.lat, data.lng);
+                        marker.setLatLng(newLatLng);
+                        map.panTo(newLatLng);
+                        marker.setPopupContent("<b>{{ addslashes($vehicle->user->name) }}</b><br>Last seen: " + data.last_update);
+                    }
+                } else {
+                    statusBadge.className = 'badge badge-secondary';
+                    statusBadge.textContent = 'No Data';
+                    mapContainer.innerHTML = '<div class="d-flex flex-column align-items-center justify-content-center h-100"><i class="fas fa-map-marker-slash fa-2x mb-2 text-muted"></i><div>Location sharing disabled by user</div></div>';
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching location', err);
+                statusBadge.className = 'badge badge-danger';
+                statusBadge.textContent = 'Error';
+            });
+    }
+
+    fetchLocation();
+    setInterval(fetchLocation, 10000); // Poll every 10 seconds
+});
+</script>
 
 @endsection

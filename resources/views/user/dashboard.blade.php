@@ -4,6 +4,18 @@
 
 @section('content')
 
+<style>
+    @media (max-width: 576px) {
+        .profile-hero .avatar-row { flex-direction: column !important; align-items: center !important; }
+        .profile-hero .button-wrap { width: 100%; text-align: center; margin-top: 8px; }
+        .profile-hero .button-wrap a { width: 100%; display: block; }
+        .profile-hero .user-info { text-align: center; }
+        .profile-hero .user-info .badges { justify-content: center; }
+        .profile-hero-tabs .nav-tabs { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; padding-bottom: 2px; }
+        .profile-hero-tabs .nav-tabs::-webkit-scrollbar { display: none; }
+    }
+</style>
+
 {{-- ── Alerts ─────────────────────────────────────────────────────────── --}}
 @if(session('status'))
 <div class="alert alert-success alert-dismissible fade show shadow-sm">
@@ -60,7 +72,7 @@
 {{-- ═══════════════════════════════════════════════════════ --}}
 {{-- PROFILE HERO CARD                                       --}}
 {{-- ═══════════════════════════════════════════════════════ --}}
-<div class="card shadow-lg mb-4" style="border:none;overflow:visible">
+<div class="card shadow-lg mb-4 profile-hero" style="border:none;overflow:visible">
 
     {{-- Maroon banner (the avatar hangs below it, not over the text) --}}
     <div style="height:120px;background:linear-gradient(135deg,#7b1113 0%,#b22222 60%,#c0392b 100%);
@@ -74,7 +86,7 @@
     <div style="background:#fff;border:1px solid #e3e6f0;border-top:none;border-radius:0 0 4px 4px;padding:0 24px 20px">
 
         {{-- Avatar row: avatar floats over the top edge of this white area --}}
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:-46px">
+        <div class="avatar-row" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:-46px">
 
             {{-- Avatar --}}
             <div style="position:relative;flex-shrink:0">
@@ -111,7 +123,7 @@
             </div>
 
             {{-- Register Vehicle button sits on same row as avatar, aligned to bottom --}}
-            <div style="padding-bottom:4px">
+            <div class="button-wrap" style="padding-bottom:4px">
                 <a href="{{ route('user.registration.create') }}"
                    class="btn font-weight-bold"
                    style="background:#7b1113;color:#fff;border-radius:8px;padding:9px 20px;
@@ -122,14 +134,14 @@
         </div>
 
         {{-- Name / email / badges — these appear BELOW the avatar, no overlap --}}
-        <div style="padding-top:12px">
+        <div class="user-info" style="padding-top:12px">
             <h2 style="font-size:1.45rem;font-weight:900;color:#1a1a2e;margin-bottom:2px;line-height:1.2">
                 {{ $user->name }}
             </h2>
             <div style="color:#666;font-size:.87rem;margin-bottom:10px">
                 <i class="fas fa-envelope mr-1"></i>{{ $user->email }}
             </div>
-            <div class="d-flex flex-wrap" style="gap:6px;margin-bottom:12px">
+            <div class="badges d-flex flex-wrap" style="gap:6px;margin-bottom:12px">
                 <span class="badge badge-pill"
                       style="background:#d4edda;color:#155724;border:1px solid #c3e6cb;font-size:.76rem;padding:4px 10px">
                     <i class="fas fa-shield-alt mr-1"></i>Verified User
@@ -165,7 +177,7 @@
     </div>
 
     {{-- Tabs row --}}
-    <div style="background:#fff;border:1px solid #e3e6f0;border-top:1px solid #dee2e6;border-radius:0 0 4px 4px;margin-top:4px">
+    <div class="profile-hero-tabs" style="background:#fff;border:1px solid #e3e6f0;border-top:1px solid #dee2e6;border-radius:0 0 4px 4px;margin-top:4px">
         <ul class="nav nav-tabs border-0" id="userTabs">
             <li class="nav-item">
                 <a class="nav-link active font-weight-bold px-4 py-3" data-toggle="tab" href="#tab-vehicles"
@@ -439,6 +451,29 @@ document.querySelectorAll('#userTabs .nav-link').forEach(function(tab) {
         this.style.borderBottom = '3px solid #7b1113';
     });
 });
+
+// ── Live GPS Tracking ─────────────────────────────────────────
+if (navigator.geolocation && {{ Auth::check() ? 'true' : 'false' }}) {
+    setInterval(() => {
+        navigator.geolocation.getCurrentPosition(position => {
+            fetch('{{ route("user.location.update") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                })
+            }).catch(console.error);
+        }, err => console.warn('GPS Error:', err), {
+            enableHighAccuracy: true,
+            maximumAge: 10000,
+            timeout: 5000
+        });
+    }, 10000); // Ping every 10 seconds
+}
 
 // ── Native Phone/Web Push Notification Engine ─────────────────
 document.addEventListener('DOMContentLoaded', function() {

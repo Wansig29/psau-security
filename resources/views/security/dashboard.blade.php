@@ -4,6 +4,18 @@
 
 @section('content')
 
+<style>
+    @media (max-width: 576px) {
+        .profile-hero .avatar-row { flex-direction: column !important; align-items: center !important; }
+        .profile-hero .button-wrap { width: 100%; text-align: center; margin-top: 8px; }
+        .profile-hero .button-wrap a { width: 100%; display: block; }
+        .profile-hero .user-info { text-align: center; }
+        .profile-hero .user-info .badges { justify-content: center; }
+        .profile-hero-tabs .nav-tabs { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; padding-bottom: 2px; }
+        .profile-hero-tabs .nav-tabs::-webkit-scrollbar { display: none; }
+    }
+</style>
+
 {{-- ── Alerts ─────────────────────────────────────────────────────────── --}}
 @if(session('status'))
 <div class="alert alert-success alert-dismissible fade show shadow-sm">
@@ -21,7 +33,7 @@
 {{-- ═══════════════════════════════════════════════════════ --}}
 {{-- SECURITY PROFILE HERO CARD                              --}}
 {{-- ═══════════════════════════════════════════════════════ --}}
-<div class="card shadow-lg mb-4" style="border:none;overflow:visible">
+<div class="card shadow-lg mb-4 profile-hero" style="border:none;overflow:visible">
     {{-- Maroon banner --}}
     <div style="height:120px;background:linear-gradient(135deg,#7b1113 0%,#b22222 60%,#c0392b 100%);
                 position:relative;border-radius:4px 4px 0 0;overflow:hidden">
@@ -32,7 +44,7 @@
     {{-- White body area --}}
     <div style="background:#fff;border:1px solid #e3e6f0;border-top:none;border-radius:0 0 4px 4px;padding:0 24px 20px">
 
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:-46px">
+        <div class="avatar-row" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:-46px">
             {{-- Avatar --}}
             <div style="position:relative;flex-shrink:0">
                 <div style="width:92px;height:92px;border-radius:50%;border:4px solid #fff;overflow:hidden;
@@ -52,7 +64,7 @@
             </div>
 
             {{-- Action Button --}}
-            <div style="padding-bottom:4px">
+            <div class="button-wrap" style="padding-bottom:4px">
                 <a href="{{ route('security.violation.create', ['vehicle_id' => '']) }}"
                    class="btn font-weight-bold"
                    style="background:#e67e22;color:#fff;border-radius:8px;padding:9px 20px;
@@ -63,14 +75,14 @@
         </div>
 
         {{-- Name / Badges --}}
-        <div style="padding-top:12px">
+        <div class="user-info" style="padding-top:12px">
             <h2 style="font-size:1.45rem;font-weight:900;color:#1a1a2e;margin-bottom:2px;line-height:1.2">
                 {{ auth()->user()->name }}
             </h2>
             <div style="color:#666;font-size:.87rem;margin-bottom:10px">
                 <i class="fas fa-envelope mr-1"></i>{{ auth()->user()->email }}
             </div>
-            <div class="d-flex flex-wrap" style="gap:6px;margin-bottom:8px">
+            <div class="badges d-flex flex-wrap" style="gap:6px;margin-bottom:8px">
                 <span class="badge badge-pill" style="background:#1a1a2e;color:#fff;font-size:.76rem;padding:4px 10px">
                     <i class="fas fa-user-shield mr-1"></i>Security Officer
                 </span>
@@ -88,7 +100,7 @@
     </div>
 
     {{-- Tabs row --}}
-    <div style="background:#fff;border:1px solid #e3e6f0;border-top:1px solid #dee2e6;border-radius:0 0 4px 4px;margin-top:4px">
+    <div class="profile-hero-tabs" style="background:#fff;border:1px solid #e3e6f0;border-top:1px solid #dee2e6;border-radius:0 0 4px 4px;margin-top:4px">
         <ul class="nav nav-tabs border-0" id="securityTabs">
             <li class="nav-item">
                 <a class="nav-link active font-weight-bold px-4 py-3" data-toggle="tab" href="#tab-scanner"

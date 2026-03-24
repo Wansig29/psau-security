@@ -188,12 +188,20 @@
         .detail-val.notes { white-space: pre-wrap; word-break: break-word; }
 
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+            .sidebar.show { transform: translateX(0); }
             .main { margin-left: 0; }
             .stat-grid { grid-template-columns: 1fr 1fr; }
             .form-grid { grid-template-columns: 1fr; }
             table { display: block; overflow-x: auto; white-space: nowrap; }
+            .mobile-menu-btn { display: block !important; }
+            .tab-nav { overflow-x: auto; width: 100%; max-width: 100%; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+            .tab-nav::-webkit-scrollbar { display: none; }
+            .topbar-right span { display: none; }
         }
+        .mobile-menu-btn { display: none; background: none; border: none; font-size: 24px; cursor: pointer; color: #111827; margin-right: 12px; padding: 0; }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 150; }
+        .sidebar-overlay.show { display: block; }
     </style>
     @stack('styles')
 </head>
@@ -249,10 +257,15 @@
     </div>
 </aside>
 
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 {{-- ── Main Content ── --}}
 <div class="main">
     <header class="topbar">
-        <div class="topbar-title">@yield('topbar-title', 'Admin Portal')</div>
+        <div style="display:flex; align-items:center;">
+            <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+            <div class="topbar-title">@yield('topbar-title', 'Admin Portal')</div>
+        </div>
         <div class="topbar-right">
             @yield('topbar-right')
             <span style="font-size:13px;color:#6b7280;">{{ now()->format('M d, Y') }}</span>
@@ -284,6 +297,12 @@
     </div>
 </div>
 
+<script>
+    function toggleSidebar() {
+        document.querySelector('.sidebar').classList.toggle('show');
+        document.querySelector('.sidebar-overlay').classList.toggle('show');
+    }
+</script>
 @stack('scripts')
 </body>
 </html>
