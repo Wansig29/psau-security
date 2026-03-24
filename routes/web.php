@@ -37,6 +37,17 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/sanctions', [\App\Http\Controllers\Admin\AdminSanctionController::class, 'index'])->name('sanctions.index');
     Route::post('/sanctions/{violation}', [\App\Http\Controllers\Admin\AdminSanctionController::class, 'store'])->name('sanctions.store');
     Route::post('/sanctions/{sanction}/resolve', [\App\Http\Controllers\Admin\AdminSanctionController::class, 'resolve'])->name('sanctions.resolve');
+
+    // Database Utilities (Protected for Admins Only)
+    Route::get('/seed-db-now', function () {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        return 'Trial accounts generated! You can now log in with the trial accounts.';
+    });
+
+    Route::get('/migrate-db-now', function () {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return 'Database migrated successfully! You can now return to the dashboard.';
+    });
 });
 
 // Security Personnel Routes
@@ -72,14 +83,3 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
-
-Route::get('/seed-db-now', function () {
-    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-    return 'Trial accounts generated! You can now log in with the trial accounts.';
-});
-
-Route::get('/migrate-db-now', function () {
-    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-    return 'Database migrated successfully! You can now return to the dashboard.';
-});
- 
