@@ -16,5 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Database\QueryException $e, \Illuminate\Http\Request $request) {
+            if (str_contains($e->getMessage(), 'SQLSTATE[HY000] [2002]')) {
+                return response()->view('errors.database', [], 500);
+            }
+        });
+        $exceptions->render(function (\PDOException $e, \Illuminate\Http\Request $request) {
+            if (str_contains($e->getMessage(), 'SQLSTATE[HY000] [2002]')) {
+                return response()->view('errors.database', [], 500);
+            }
+        });
     })->create();
