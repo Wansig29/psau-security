@@ -229,42 +229,138 @@
 </div>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let map = null;
     let marker = null;
+    let guardMarker = null;
+    let routingControl = null;
+    
+    let guardLat = null;
+    let guardLng = null;
+    let targetLat = null;
+    let targetLng = null;
+
     const userId = {{ $vehicle->user->id }};
     const mapContainer = document.getElementById('live-map');
     const statusBadge = document.getElementById('location-status');
+
+    // Create custom dynamic markers for the map
+    const onlineIcon = L.divIcon({
+        className: 'custom-pin',
+        html: '<div style="background-color: #28a745; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.5);"></div>',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9]
+    });
+
+    const offlineIcon = L.divIcon({
+        className: 'custom-pin',
+        html: '<div style="background-color: #dc3545; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.5);"></div>',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9]
+    });
+
+    function updateRoute() {
+        if (!map || !guardLat || !guardLng || !targetLat || !targetLng) return;
+
+        if (routingControl) {
+            routingControl.setWaypoints([
+                L.latLng(guardLat, guardLng),
+                L.latLng(targetLat, targetLng)
+            ]);
+        } else {
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(guardLat, guardLng),
+                    L.latLng(targetLat, targetLng)
+                ],
+                routeWhileDragging: false,
+                addWaypoints: false,
+                show: false, // Hide turn-by-turn text box
+                lineOptions: {
+                    styles: [{color: '#007bff', opacity: 0.8, weight: 6}] // Waze-style thick blue line
+                },
+                createMarker: function() { return null; } // Prevent default markers since we use custom
+            }).addTo(map);
+        }
+    }
+
+    // Guard's own live tracking
+    if ("geolocation" in navigator) {
+        navigator.geolocation.watchPosition(
+            (pos) => {
+                guardLat = pos.coords.latitude;
+                guardLng = pos.coords.longitude;
+                
+                if (map && !guardMarker) {
+                    guardMarker = L.circleMarker([guardLat, guardLng], {
+                        radius: 8, fillColor: "#007bff", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1
+                    }).bindPopup("<b>Your Location</b>").addTo(map);
+                } else if (guardMarker) {
+                    guardMarker.setLatLng([guardLat, guardLng]);
+                }
+                updateRoute();
+            },
+            (err) => console.log("Guard GPS: ", err),
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+    }
 
     function fetchLocation() {
         fetch(`/security/user-location/${userId}`)
             .then(res => res.json())
             .then(data => {
                 if (data.lat && data.lng) {
+                    targetLat = data.lat;
+                    targetLng = data.lng;
+
+                    const iconToUse = data.is_online ? onlineIcon : offlineIcon;
+                    const timestampDisplay = data.last_seen_time || data.last_update;
+                    const popupHTML = `<b>{{ addslashes($vehicle->user->name) }}</b><br>
+                                       <span style="color: ${data.is_online ? '#28a745' : '#dc3545'}">
+                                       ${data.is_online ? '🟢 Live' : '🔴 Offline'}
+                                       </span><br>
+                                       <small>Seen: ${timestampDisplay}</small>`;
+
                     if (data.is_online) {
                         statusBadge.className = 'badge badge-success';
                         statusBadge.textContent = 'Live (' + data.last_update + ')';
                     } else {
-                        statusBadge.className = 'badge badge-warning';
-                        statusBadge.textContent = 'Offline (Last seen ' + data.last_update + ')';
+                        statusBadge.className = 'badge badge-danger'; // Changed from warning to danger
+                        statusBadge.textContent = 'Offline (Last seen: ' + timestampDisplay + ')';
                     }
 
                     if (!map) {
-                        mapContainer.innerHTML = ''; // Clear loading
+                        mapContainer.innerHTML = ''; // Clear loading spinner
                         map = L.map('live-map').setView([data.lat, data.lng], 16);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             attribution: '© OpenStreetMap'
                         }).addTo(map);
-                        marker = L.marker([data.lat, data.lng]).addTo(map);
-                        marker.bindPopup("<b>{{ addslashes($vehicle->user->name) }}</b><br>Last seen: " + data.last_update).openPopup();
+                        marker = L.marker([data.lat, data.lng], {icon: iconToUse}).addTo(map);
+                        marker.bindPopup(popupHTML).openPopup();
+                        
+                        // If guard location was fetched before map initialized
+                        if (guardLat && guardLng && !guardMarker) {
+                            guardMarker = L.circleMarker([guardLat, guardLng], {
+                                radius: 8, fillColor: "#007bff", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1
+                            }).bindPopup("<b>Your Location</b>").addTo(map);
+                        }
                     } else {
                         const newLatLng = new L.LatLng(data.lat, data.lng);
                         marker.setLatLng(newLatLng);
-                        map.panTo(newLatLng);
-                        marker.setPopupContent("<b>{{ addslashes($vehicle->user->name) }}</b><br>Last seen: " + data.last_update);
+                        marker.setIcon(iconToUse); // Update color dynamically
+                        
+                        // Only pan map if no routing is active to prevent fighting the route bounding box
+                        if (!routingControl) {
+                            map.panTo(newLatLng);
+                        }
+                        marker.setPopupContent(popupHTML);
                     }
+                    
+                    updateRoute();
                 } else {
                     statusBadge.className = 'badge badge-secondary';
                     statusBadge.textContent = 'No Data';
@@ -274,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => {
                 console.error('Error fetching location', err);
                 statusBadge.className = 'badge badge-danger';
-                statusBadge.textContent = 'Error';
+                statusBadge.textContent = 'Error fetching data';
             });
     }
 

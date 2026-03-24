@@ -52,6 +52,7 @@ class SecurityDashboardController extends Controller
             'lat' => $user->current_lat,
             'lng' => $user->current_lng,
             'last_update' => $user->last_location_update ? $user->last_location_update->diffForHumans() : null,
+            'last_seen_time' => $user->last_location_update ? $user->last_location_update->format('M d, Y g:i A') : null,
             'is_online' => $user->last_location_update && $user->last_location_update->diffInMinutes(now()) <= 5
         ]);
     }
