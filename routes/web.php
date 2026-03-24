@@ -73,4 +73,9 @@ Route::get('/seed-db-now', function () {
     \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
     return 'Trial accounts generated! You can now log in with the trial accounts.';
 });
+
+Route::get('/migrate-db-now', function () {
+    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+    return 'Database migrated successfully! You can now return to the dashboard.';
+});
  
