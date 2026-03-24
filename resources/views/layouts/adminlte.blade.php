@@ -12,38 +12,154 @@
 
     <title>{{ config('app.name', 'PSAU Security') }}</title>
 
-    <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Theme style (AdminLTE v3) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
-    <!-- Leaflet CSS for Maps -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    
+
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { -webkit-overflow-scrolling: touch; -webkit-tap-highlight-color: transparent; }
-        .map-wrapper { height: 600px; width: 100%; border-radius: 4px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
-        .sidebar-dark-maroon { background-color: #7b1113; }
-        .sidebar-dark-maroon .nav-sidebar > .nav-item > .nav-link.active { background-color: rgba(255,255,255,.1); color: #fff; }
-        .sidebar-dark-maroon .nav-sidebar > .nav-item > .nav-link { color: #c2c7d0; }
-        .sidebar-dark-maroon .brand-link { color: #fff; border-bottom: 1px solid #941719; }
-        /* Sticky toolbar fix for mobile */
-        .main-header { position: sticky !important; top: 0; z-index: 1030; }
+        :root {
+            --maroon: #7b1113; --maroon-dark: #5a0d0f; --maroon-light: #9b1224;
+            --sidebar-w: 240px;
+        }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; display: flex; overflow: hidden; height: 100vh; }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: var(--sidebar-w); background: var(--maroon-dark);
+            display: flex; flex-direction: column; position: fixed;
+            top: 0; left: 0; height: 100vh; z-index: 200;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+        }
+        .sidebar-brand {
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .brand-logo { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .brand-icon {
+            width: 38px; height: 38px; background: rgba(255,255,255,0.12);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .brand-name { color: #fff; font-size: 14px; font-weight: 700; line-height: 1.2; }
+        .brand-sub { color: rgba(255,255,255,0.5); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sidebar-section { padding: 16px 12px 8px; color: rgba(255,255,255,0.35); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+            color: rgba(255,255,255,0.65); text-decoration: none; font-size: 13px; font-weight: 500;
+            border-radius: 8px; margin: 1px 8px; transition: all 0.15s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .nav-item.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 600; }
+        .nav-item .nav-icon { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
+        .sidebar-footer {
+            margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .user-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: rgba(255,255,255,0.2); display: flex; align-items: center;
+            justify-content: center; font-weight: 700; color: #fff; font-size: 14px; flex-shrink: 0;
+        }
+        .user-name { color: #fff; font-size: 13px; font-weight: 600; }
+        .user-role { color: rgba(255,255,255,0.45); font-size: 11px; }
+        .logout-btn {
+            display: flex; align-items: center; gap: 8px; width: 100%;
+            background: rgba(255,255,255,0.07); border: none; border-radius: 8px;
+            padding: 8px 12px; color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 500;
+            cursor: pointer; transition: all 0.15s; text-align: left; font-family: inherit;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+        /* ── Main ── */
+        .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+        .topbar {
+            background: #fff; height: 60px; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 28px;
+            border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .topbar-title { font-size: 17px; font-weight: 700; color: #111827; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+        .content { padding: 28px; flex: 1; }
+
+        /* ── Notification Bell ── */
+        .notif-bell { position: relative; cursor: pointer; }
+        .notif-badge {
+            position: absolute; top: -4px; right: -4px;
+            background: #dc2626; color: #fff; font-size: 9px; font-weight: 700;
+            width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ── Card ── */
+        .card { background: #fff; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden; margin-bottom: 20px; }
+        .card-header {
+            padding: 16px 22px; border-bottom: 1px solid #f3f4f6;
+            display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: #fafafa;
+        }
+        .card-title { font-size: 14px; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 8px; }
+
+        /* ── Table ── */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead th { background: #f9fafb; color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        tbody tr { border-bottom: 1px solid #f3f4f6; transition: background 0.12s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #fafafa; }
+        td { padding: 14px 16px; vertical-align: middle; }
+
+        /* ── Buttons ── */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; text-decoration: none; font-family: inherit; }
+        .btn-primary { background: var(--maroon); color: #fff; box-shadow: 0 2px 4px rgba(123,17,19,0.2); }
+        .btn-primary:hover { background: var(--maroon-light); transform: translateY(-1px); }
+        .btn-success { background: #dcfce7; color: #166534; } .btn-success:hover { background: #16a34a; color: #fff; }
+        .btn-danger  { background: #fee2e2; color: #991b1b; } .btn-danger:hover  { background: #dc2626; color: #fff; }
+        .btn-gray    { background: #f3f4f6; color: #374151; } .btn-gray:hover    { background: #e5e7eb; }
+        .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+
+        /* ── Alerts ── */
+        .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+        .alert-success { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+        .alert-error   { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+        .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+
+        /* ── Misc ── */
+        .map-wrapper { height: 500px; width: 100%; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+        .badge-success  { background: #dcfce7; color: #166534; }
+        .badge-danger   { background: #fee2e2; color: #991b1b; }
+        .badge-warning  { background: #fef9c3; color: #854d0e; }
+        .badge-info     { background: #eff6ff; color: #1d4ed8; }
+        .badge-secondary{ background: #f3f4f6; color: #374151; font-family: monospace; }
+
+        /* ── Mobile hamburger & overlay ── */
+        .menu-toggle { display: none; background: none; border: none; cursor: pointer; color: #111827; align-items: center; justify-content: center; padding: 4px; }
+        .sidebar-close { display: none; background: rgba(255,255,255,0.12); border: none; border-radius: 6px; color: #fff; width: 28px; height: 28px; cursor: pointer; align-items: center; justify-content: center; flex-shrink: 0; margin-left: auto; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; }
+        body.sidebar-open .sidebar-overlay { display: block; }
+        body.sidebar-open .sidebar { transform: translateX(0); }
+
         @media (max-width: 768px) {
-            .content-wrapper { min-height: unset !important; }
-            .main-footer { display: none; }
+            .menu-toggle { display: flex; }
+            .sidebar-close { display: flex; }
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); max-width: 80vw; }
+            .main { margin-left: 0; }
+            .content { padding: 14px; }
+            .topbar { padding: 0 14px; }
+            table { display: block; overflow-x: auto; white-space: nowrap; }
         }
     </style>
 
-    {{-- FIX 5 — BFCache Back-Button Handler --}}
+    @stack('styles')
+
+    {{-- BFCache Back-Button Handler --}}
     <script>
         window.addEventListener('pageshow', function(event) {
-            if (event.persisted ||
-                (window.performance &&
-                 window.performance.navigation &&
-                 window.performance.navigation.type === 2))
-            {
+            if (event.persisted || (window.performance && window.performance.navigation && window.performance.navigation.type === 2)) {
                 window.location.reload(true);
             }
         });
@@ -52,211 +168,126 @@
         }
     </script>
 </head>
-<body class="hold-transition sidebar-mini">
-<div class="wrapper">
+<body>
 
-    <!-- Navbar -->
-    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
-            </li>
-            <li class="nav-item d-none d-sm-inline-block">
-                <a href="{{ route('dashboard') }}" class="nav-link">Home</a>
-            </li>
-        </ul>
-        
-        <ul class="navbar-nav ml-auto">
-            <!-- Notifications Dropdown Menu -->
-            <li class="nav-item dropdown">
-                <a class="nav-link" data-toggle="dropdown" href="#" style="position:relative">
-                    <i class="far fa-bell" style="font-size:1.2rem"></i>
-                    @if(Auth::user() && Auth::user()->unreadNotifications->count() > 0)
-                        <span class="badge badge-danger navbar-badge" style="position:absolute;top:2px;right:2px;font-size:0.6rem;padding:2px 4px;border-radius:50%">
-                            {{ Auth::user()->unreadNotifications->count() }}
-                        </span>
-                    @endif
-                </a>
-                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right shadow-lg border-0" style="min-width:320px;border-radius:8px;padding:0">
-                    <div style="background:#f8f9fa;padding:12px 16px;font-weight:700;border-bottom:1px solid #dee2e6;border-radius:8px 8px 0 0">
-                        <i class="fas fa-bell mr-2 text-primary"></i>Notifications
-                    </div>
-                    <div style="max-height:350px;overflow-y:auto">
-                        @if(Auth::user())
-                            @forelse(Auth::user()->notifications->take(10) as $notification)
-                                <a href="#" class="dropdown-item py-3 border-bottom" style="white-space:normal;line-height:1.4;background:{{ $notification->read_at ? '#fff' : '#f0fdf4' }}">
-                                    @if($notification->data['status'] === 'approved')
-                                        <i class="fas fa-check-circle text-success mr-2 mt-1 float-left" style="font-size:1.2rem"></i>
-                                    @else
-                                        <i class="fas fa-times-circle text-danger mr-2 mt-1 float-left" style="font-size:1.2rem"></i>
-                                    @endif
-                                    <div style="overflow:hidden">
-                                        <div class="text-sm font-weight-bold" style="color:#111827">Application {{ ucfirst($notification->data['status'] ?? '') }}</div>
-                                        <div class="text-xs text-muted mt-1">{{ mb_strimwidth($notification->data['message'] ?? '', 0, 80, "...") }}</div>
-                                        <div class="text-xs mt-1" style="color:#9ca3af"><i class="far fa-clock mr-1"></i>{{ $notification->created_at->diffForHumans() }}</div>
-                                    </div>
-                                </a>
-                                @php $notification->markAsRead(); @endphp
-                            @empty
-                                <div class="dropdown-item text-center text-muted py-4">
-                                    <i class="fas fa-bell-slash fa-2x mb-2" style="opacity:0.3"></i><br>
-                                    <span class="text-sm">You have no new notifications</span>
-                                </div>
-                            @endforelse
-                        @endif
-                    </div>
-                </div>
-            </li>
-            
-            <li class="nav-item dropdown">
-                <a class="nav-link" data-toggle="dropdown" href="#">
-                    <i class="far fa-user"></i> {{ Auth::user()->name ?? 'Account' }}
-                </a>
-                <div class="dropdown-menu dropdown-menu-right">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <a href="{{ route('logout') }}" class="dropdown-item" onclick="event.preventDefault(); this.closest('form').submit();">
-                            <i class="fas fa-sign-out-alt mr-2"></i> Log Out
-                        </a>
-                    </form>
-                </div>
-            </li>
-        </ul>
-    </nav>
-    <!-- /.navbar -->
-
-    <!-- Main Sidebar Container -->
-    <aside class="main-sidebar sidebar-dark-maroon elevation-4">
-        <!-- Brand Logo -->
-        <a href="/" class="brand-link flex items-center">
-            <span class="brand-text font-weight-bold ml-3">PSAU CMS</span>
-        </a>
-
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-                <div class="info">
-                    <a href="#" class="d-block text-white font-weight-bold">{{ Auth::user()->name ?? 'User' }}</a>
-                    <span class="text-sm text-light"><i class="fas fa-circle text-success text-xs mr-1"></i> Online</span>
-                </div>
+{{-- ── Sidebar ── --}}
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">
+            <div class="brand-icon">
+                <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
-
-            <!-- Sidebar Menu -->
-            <nav class="mt-2">
-                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                    
-                    @if(Auth::user() && Auth::user()->role === 'admin')
-                        <li class="nav-header">ADMINISTRATION</li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-tachometer-alt"></i>
-                                <p>Registration Queue</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.approved.index') }}" class="nav-link {{ request()->routeIs('admin.approved.*') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-qrcode"></i>
-                                <p>Approved &amp; QR Stickers</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.sanctions.index') }}" class="nav-link {{ request()->routeIs('admin.sanctions.*') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-gavel"></i>
-                                <p>Violations &amp; Sanctions</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-users-cog"></i>
-                                <p>User Management</p>
-                            </a>
-                        </li>
-                    @endif
-
+            <div>
+                <div class="brand-name">PSAU Parking</div>
+                <div class="brand-sub">
                     @if(Auth::user() && Auth::user()->role === 'security')
-                        <li class="nav-header">SECURITY TASKS</li>
-                        <li class="nav-item">
-                            <a href="{{ route('security.dashboard') }}" class="nav-link {{ request()->routeIs('security.dashboard') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-shield-alt"></i>
-                                <p>Enforcement Panel</p>
-                            </a>
-                        </li>
+                        Security Portal
+                    @else
+                        My Account
                     @endif
-
-                </ul>
-            </nav>
-            <!-- /.sidebar-menu -->
-        </div>
-        <!-- /.sidebar -->
-    </aside>
-
-    <!-- Content Wrapper. Contains page content -->
-    <div class="content-wrapper">
-        <!-- Content Header (Page header) -->
-        <div class="content-header">
-            <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1 class="m-0">@yield('title', 'Dashboard')</h1>
-                    </div>
                 </div>
             </div>
         </div>
-        <!-- /.content-header -->
+        <button class="sidebar-close" onclick="document.body.classList.remove('sidebar-open')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+    </div>
 
-        <!-- Main content -->
-        <div class="content">
-            <div class="container-fluid">
-                <!-- Validation Errors / Session Status -->
-                {{-- FIX 9 — Flash Messages --}}
-                @if (session('success'))
-                    <div class="alert alert-success alert-dismissible fade show">
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
-                    </div>
-                @endif
-                @if (session('status'))
-                    <div class="alert alert-success alert-dismissible fade show">
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        {{ session('status') }}
-                    </div>
-                @endif
-                @if (session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        <i class="fas fa-exclamation-circle mr-2"></i> {{ session('error') }}
-                    </div>
-                @endif
-                @if (session('warning'))
-                    <div class="alert alert-warning alert-dismissible fade show">
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        <i class="fas fa-exclamation-triangle mr-2"></i> {{ session('warning') }}
-                    </div>
-                @endif
+    @if(Auth::user() && Auth::user()->role === 'security')
+        <div class="sidebar-section">Security Tasks</div>
+        <a class="nav-item {{ request()->routeIs('security.dashboard') ? 'active' : '' }}" href="{{ route('security.dashboard') }}">
+            <span class="nav-icon">🛡️</span> Enforcement Panel
+        </a>
+    @else
+        <div class="sidebar-section">My Account</div>
+        <a class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+            <span class="nav-icon">🏠</span> My Dashboard
+        </a>
+        <a class="nav-item {{ request()->routeIs('user.registration.*') ? 'active' : '' }}" href="{{ route('user.registration.create') }}">
+            <span class="nav-icon">🚗</span> Register Vehicle
+        </a>
+    @endif
 
-                @yield('content')
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}</div>
+            <div>
+                <div class="user-name">{{ Str::limit(auth()->user()->name ?? 'User', 18) }}</div>
+                <div class="user-role">
+                    @if(Auth::user() && Auth::user()->role === 'security') Security Officer
+                    @else Student / Faculty @endif
+                </div>
             </div>
         </div>
-        <!-- /.content -->
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="logout-btn">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                Sign Out
+            </button>
+        </form>
     </div>
-    <!-- /.content-wrapper -->
+</aside>
 
-    <footer class="main-footer">
-        <strong>Copyright &copy; {{ date('Y') }} PSAU Security Information Management System.</strong> All rights reserved.
-    </footer>
+{{-- ── Overlay ── --}}
+<div class="sidebar-overlay" onclick="document.body.classList.remove('sidebar-open')"></div>
+
+{{-- ── Main ── --}}
+<div class="main">
+    <header class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <button class="menu-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <div class="topbar-title">@yield('title', 'Dashboard')</div>
+        </div>
+        <div class="topbar-right">
+            {{-- Notifications Bell --}}
+            @if(Auth::check())
+                <div class="notif-bell">
+                    <svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    @if(Auth::user()->unreadNotifications->count() > 0)
+                        <span class="notif-badge">{{ Auth::user()->unreadNotifications->count() }}</span>
+                    @endif
+                </div>
+            @endif
+            <span style="font-size:13px;color:#6b7280;">{{ now()->format('M d, Y') }}</span>
+        </div>
+    </header>
+
+    <div class="content">
+
+        {{-- Flash Messages --}}
+        @if(session('success'))
+            <div class="alert alert-success"><span>✅</span> {{ session('success') }}</div>
+        @endif
+        @if(session('status'))
+            <div class="alert alert-success"><span>✅</span> {{ session('status') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-error"><span>❌</span> {{ session('error') }}</div>
+        @endif
+        @if(session('warning'))
+            <div class="alert alert-warning"><span>⚠️</span> {{ session('warning') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="alert alert-error" style="align-items:flex-start">
+                <span>⚠️</span>
+                <div>@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>
+            </div>
+        @endif
+
+        @yield('content')
+
+    </div>
 </div>
-<!-- ./wrapper -->
 
-<!-- REQUIRED SCRIPTS -->
-<!-- jQuery -->
+{{-- Scripts --}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<!-- Bootstrap 4 -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<!-- AdminLTE App -->
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 @yield('scripts')
+@stack('scripts')
 </body>
 </html>
