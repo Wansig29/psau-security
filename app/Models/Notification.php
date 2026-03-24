@@ -1,28 +1,6 @@
 <?php
 
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-
-class Notification extends Model
-{
-    protected $fillable = [
-        'user_id',
-        'type',
-        'title',
-        'message',
-        'channel',
-        'is_read',
-        'sent_at',
-    ];
-
-    protected $casts = [
-        'is_read' => 'boolean',
-        'sent_at' => 'datetime',
-    ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-}
+// This custom Notification model was removed because it conflicts with Laravel's built-in 
+// Illuminate\Notifications\DatabaseNotification model used by the Notifiable trait.
+// 
+// The system now uses the standard polymorphic `notifications` table structure.
