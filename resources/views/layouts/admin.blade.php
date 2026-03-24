@@ -17,7 +17,7 @@
             --maroon: #6b0a16; --maroon-dark: #4e0710; --maroon-light: #9b1224;
             --sidebar-w: 240px;
         }
-        body { font-family: 'Inter', sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; overflow: hidden; height: 100vh; }
 
         /* ── Sidebar ── */
         .sidebar {
@@ -66,7 +66,7 @@
         .logout-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
 
         /* ── Main ── */
-        .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+        .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
         .topbar {
             background: #fff; height: 60px; display: flex; align-items: center;
             justify-content: space-between; padding: 0 28px;
@@ -200,7 +200,8 @@
 
         @media (max-width: 768px) {
             .menu-toggle { display: flex; }
-            .sidebar { transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); max-width: 80vw; }
+            .sidebar-close { display: flex !important; }
             .main { margin-left: 0; }
             .content { padding: 14px; }
             .topbar { padding: 0 14px; }
@@ -246,6 +247,11 @@
                 <div class="brand-sub">Admin Portal</div>
             </div>
         </div>
+        <button class="sidebar-close" onclick="document.body.classList.remove('sidebar-open')"
+            style="display:none;margin-left:auto;background:rgba(255,255,255,0.12);border:none;border-radius:6px;
+                   color:#fff;width:28px;height:28px;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
     </div>
 
     <div class="sidebar-section">Main Menu</div>

@@ -2,7 +2,12 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+    <meta name="theme-color" content="#7b1113">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PSAU Security">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'PSAU Security') }}</title>
@@ -17,11 +22,18 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <style>
+        html, body { -webkit-overflow-scrolling: touch; -webkit-tap-highlight-color: transparent; }
         .map-wrapper { height: 600px; width: 100%; border-radius: 4px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
         .sidebar-dark-maroon { background-color: #7b1113; }
         .sidebar-dark-maroon .nav-sidebar > .nav-item > .nav-link.active { background-color: rgba(255,255,255,.1); color: #fff; }
         .sidebar-dark-maroon .nav-sidebar > .nav-item > .nav-link { color: #c2c7d0; }
         .sidebar-dark-maroon .brand-link { color: #fff; border-bottom: 1px solid #941719; }
+        /* Sticky toolbar fix for mobile */
+        .main-header { position: sticky !important; top: 0; z-index: 1030; }
+        @media (max-width: 768px) {
+            .content-wrapper { min-height: unset !important; }
+            .main-footer { display: none; }
+        }
     </style>
 
     {{-- FIX 5 — BFCache Back-Button Handler --}}
