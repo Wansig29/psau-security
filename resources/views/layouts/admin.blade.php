@@ -204,6 +204,22 @@
         .sidebar-overlay.show { display: block; }
     </style>
     @stack('styles')
+
+    {{-- FIX 5 — BFCache Back-Button Handler --}}
+    <script>
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted ||
+                (window.performance &&
+                 window.performance.navigation &&
+                 window.performance.navigation.type === 2))
+            {
+                window.location.reload(true);
+            }
+        });
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>
 </head>
 <body>
 

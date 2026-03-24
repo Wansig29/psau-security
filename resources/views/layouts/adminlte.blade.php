@@ -23,6 +23,22 @@
         .sidebar-dark-maroon .nav-sidebar > .nav-item > .nav-link { color: #c2c7d0; }
         .sidebar-dark-maroon .brand-link { color: #fff; border-bottom: 1px solid #941719; }
     </style>
+
+    {{-- FIX 5 — BFCache Back-Button Handler --}}
+    <script>
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted ||
+                (window.performance &&
+                 window.performance.navigation &&
+                 window.performance.navigation.type === 2))
+            {
+                window.location.reload(true);
+            }
+        });
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -180,6 +196,13 @@
         <div class="content">
             <div class="container-fluid">
                 <!-- Validation Errors / Session Status -->
+                {{-- FIX 9 — Flash Messages --}}
+                @if (session('success'))
+                    <div class="alert alert-success alert-dismissible fade show">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+                    </div>
+                @endif
                 @if (session('status'))
                     <div class="alert alert-success alert-dismissible fade show">
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -189,10 +212,16 @@
                 @if (session('error'))
                     <div class="alert alert-danger alert-dismissible fade show">
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        {{ session('error') }}
+                        <i class="fas fa-exclamation-circle mr-2"></i> {{ session('error') }}
                     </div>
                 @endif
-                
+                @if (session('warning'))
+                    <div class="alert alert-warning alert-dismissible fade show">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        <i class="fas fa-exclamation-triangle mr-2"></i> {{ session('warning') }}
+                    </div>
+                @endif
+
                 @yield('content')
             </div>
         </div>
