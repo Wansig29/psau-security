@@ -114,8 +114,13 @@ class ViolationController extends Controller
         // Mark the violation as sanctioned
         $violation->update(['sanction_applied' => true]);
         // ──────────────────────────────────────────────────────────────────────
+        
+        // Notify the user via email and dashboard DB notification
+        if ($violation->vehicle->user) {
+            $violation->vehicle->user->notify(new \App\Notifications\ViolationLogged($violation, $description));
+        }
 
         return redirect()->route('security.dashboard')
-            ->with('status', 'Violation logged and sanction automatically applied.');
+            ->with('status', 'Violation logged, sanction applied, and user notified.');
     }
 }

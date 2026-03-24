@@ -53,7 +53,7 @@ class AdminApprovedRegistrationController extends Controller
             'location'     => 'required|string|max:255',
         ]);
         
-        PickupSchedule::updateOrCreate(
+        $schedule = PickupSchedule::updateOrCreate(
             ['registration_id' => $registration->id],
             [
                 'pickup_date'  => $request->pickup_date,
@@ -63,7 +63,11 @@ class AdminApprovedRegistrationController extends Controller
             ]
         );
         
-        return back()->with('success', 'Pick-up schedule saved successfully.');
+        if ($registration->user) {
+            $registration->user->notify(new \App\Notifications\PickupScheduled($registration, $schedule));
+        }
+        
+        return back()->with('success', 'Pick-up schedule saved successfully and user notified.');
     }
     
     /**
