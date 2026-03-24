@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+    <meta name="theme-color" content="#6b0a16">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PSAU Admin">
+    <style> html, body { -webkit-overflow-scrolling: touch; -webkit-tap-highlight-color: transparent; } </style>
     <title>@yield('title', 'Admin Dashboard — PSAU Parking')</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -187,21 +193,26 @@
         .detail-item .detail-val { font-size: 13px; color: #1f2937; font-weight: 500; line-height: 1.5; }
         .detail-val.notes { white-space: pre-wrap; word-break: break-word; }
 
+        .menu-toggle { display: none; background: none; border: none; cursor: pointer; color: #111827; align-items: center; justify-content: center; padding: 4px; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; transition: opacity 0.3s; }
+        body.sidebar-open .sidebar-overlay { display: block; opacity: 1; }
+        body.sidebar-open .sidebar { transform: translateX(0); }
+
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
-            .sidebar.show { transform: translateX(0); }
+            .menu-toggle { display: flex; }
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
             .main { margin-left: 0; }
-            .stat-grid { grid-template-columns: 1fr 1fr; }
-            .form-grid { grid-template-columns: 1fr; }
+            .content { padding: 14px; }
+            .topbar { padding: 0 14px; }
+            .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+            .stat-card { padding: 14px; gap: 10px; }
+            .stat-value { font-size: 20px; }
+            .form-grid { grid-template-columns: 1fr; padding: 16px; }
             table { display: block; overflow-x: auto; white-space: nowrap; }
-            .mobile-menu-btn { display: block !important; }
             .tab-nav { overflow-x: auto; width: 100%; max-width: 100%; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
             .tab-nav::-webkit-scrollbar { display: none; }
             .topbar-right span { display: none; }
         }
-        .mobile-menu-btn { display: none; background: none; border: none; font-size: 24px; cursor: pointer; color: #111827; margin-right: 12px; padding: 0; }
-        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 150; }
-        .sidebar-overlay.show { display: block; }
     </style>
     @stack('styles')
 
@@ -273,13 +284,15 @@
     </div>
 </aside>
 
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar-overlay" onclick="document.body.classList.remove('sidebar-open')"></div>
 
 {{-- ── Main Content ── --}}
 <div class="main">
     <header class="topbar">
-        <div style="display:flex; align-items:center;">
-            <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <button class="menu-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
             <div class="topbar-title">@yield('topbar-title', 'Admin Portal')</div>
         </div>
         <div class="topbar-right">
