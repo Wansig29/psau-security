@@ -28,7 +28,7 @@ class AdminApprovedRegistrationController extends Controller
      */
     public function generateQr(Registration $registration)
     {
-        if ($registration->status !== 'approved' || !$registration->qr_sticker_id) {
+        if (strtolower($registration->status) !== 'approved' || empty($registration->qr_sticker_id)) {
             return redirect()->route('admin.approved.index')
                 ->with('error', 'No QR sticker assigned or this registration is not yet approved.');
         }

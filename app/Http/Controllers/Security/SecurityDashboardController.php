@@ -28,12 +28,14 @@ class SecurityDashboardController extends Controller
             return back()->with('error', 'Please enter a search term.');
         }
 
-        // Search in Vehicle Plate Number or Registration QR Sticker
+        $queryUpper = strtoupper($query);
+
+        // Search in Vehicle Plate Number or Registration QR Sticker ignoring case
         $vehicle = \App\Models\Vehicle::with(['registrations' => function($q) {
             $q->latest()->limit(1); // Get the most recent registration config
-        }, 'user'])->where('plate_number', 'like', "%{$query}%")
-        ->orWhereHas('registrations', function ($q) use ($query) {
-            $q->where('qr_sticker_id', 'like', "%{$query}%");
+        }, 'user'])->whereRaw('UPPER(plate_number) LIKE ?', ["%{$queryUpper}%"])
+        ->orWhereHas('registrations', function ($q) use ($queryUpper) {
+            $q->whereRaw('UPPER(qr_sticker_id) LIKE ?', ["%{$queryUpper}%"]);
         })->first();
 
         if (!$vehicle) {

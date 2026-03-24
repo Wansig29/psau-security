@@ -13,7 +13,7 @@ class QrScanController extends Controller
     public function show($qr_sticker_id)
     {
         $registration = Registration::with(['user', 'vehicle'])
-            ->where('qr_sticker_id', $qr_sticker_id)
+            ->whereRaw('LOWER(qr_sticker_id) = ?', [strtolower($qr_sticker_id)])
             ->first();
 
         if (!$registration) {
