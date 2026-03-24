@@ -15,7 +15,32 @@ class SecurityDashboardController extends Controller
             ->take(10)
             ->get();
 
-        $mapViolations = \App\Models\Violation::with(['vehicle'])->whereNotNull('gps_lat')->latest()->take(50)->get();
+        $mapViolations = \App\Models\Violation::with(['vehicle.user'])
+            ->whereNotNull('gps_lat')
+            ->latest()
+            ->take(50)
+            ->get()
+            ->append([]) // keep as collection
+            ->map(function ($v) {
+                $data = $v->toArray();
+                // Attach the vehicle owner's live GPS
+                if ($v->vehicle && $v->vehicle->user) {
+                    $u = $v->vehicle->user;
+                    $data['owner_lat']  = $u->current_lat;
+                    $data['owner_lng']  = $u->current_lng;
+                    $data['owner_last_seen'] = $u->last_location_update
+                        ? $u->last_location_update->format('M d, Y g:i A')
+                        : null;
+                    $data['owner_online'] = $u->last_location_update
+                        && $u->last_location_update->diffInMinutes(now()) <= 5;
+                } else {
+                    $data['owner_lat']  = null;
+                    $data['owner_lng']  = null;
+                    $data['owner_last_seen'] = null;
+                    $data['owner_online'] = false;
+                }
+                return $data;
+            });
 
         return view('security.dashboard', compact('recentViolations', 'mapViolations'));
     }

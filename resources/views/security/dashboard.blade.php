@@ -99,12 +99,11 @@
         </div>
     </div>
 
-    {{-- Tabs row --}}
     <div class="profile-hero-tabs" style="background:#fff;border:1px solid #e3e6f0;border-top:1px solid #dee2e6;border-radius:0 0 4px 4px;margin-top:4px">
         <ul class="nav nav-tabs border-0" id="securityTabs">
             <li class="nav-item">
                 <a class="nav-link active font-weight-bold px-4 py-3" data-toggle="tab" href="#tab-scanner"
-                   style="color:#7b1113;border-bottom:3px solid #7b1113;border-top:none;border-left:none;border-right:none">
+                   style="color:#7b1113;border-bottom:3px solid #7b1113;border-top:none;border-left:none;border-right:none" id="tab-scanner-link">
                     <i class="fas fa-camera mr-2"></i>Scanner
                 </a>
             </li>
@@ -116,7 +115,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link font-weight-bold px-4 py-3 text-secondary" data-toggle="tab" href="#tab-map"
-                   style="border:none">
+                   style="border:none" id="tab-map-link">
                     <i class="fas fa-map-marked-alt mr-2"></i>Campus Map
                 </a>
             </li>
@@ -227,9 +226,15 @@
     {{-- ── TAB 3: CAMPUS GPS MAP ──────────────────────────── --}}
     <div class="tab-pane fade" id="tab-map">
         <div class="card shadow" style="border-radius:12px;border-top:4px solid #2980b9;overflow:hidden">
-            <div class="card-header bg-white pb-3 pt-4 px-4 border-bottom">
-                <h4 class="font-weight-bold mb-0"><i class="fas fa-map-marked-alt mr-2 text-info"></i>Live Incident Map</h4>
-                <p class="text-muted small mb-0 mt-1">Click the red pins to view exactly where the specific violation occurred.</p>
+            <div class="card-header bg-white pb-3 pt-4 px-4 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                    <h4 class="font-weight-bold mb-0"><i class="fas fa-map-marked-alt mr-2 text-info"></i>Live Incident Map</h4>
+                    <p class="text-muted small mb-0 mt-1">Click the red pins to view exactly where the specific violation occurred.</p>
+                </div>
+                <div id="directionStatusBar" style="display:none;background:#e0f2fe;color:#0369a1;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">
+                    🧭 <span id="directionStatusText">Routing to violation...</span>
+                    <button onclick="clearRoute()" style="margin-left:10px;background:#0369a1;color:#fff;border:none;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer">✕ Clear</button>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div id="violationMap" style="height:600px;width:100%;z-index:1"></div>
@@ -308,27 +313,62 @@
         iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
     });
 
+    const blueIcon = new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
+
     const violations = @json($mapViolations);
     const markers = [];
+    let officerMarker = null;
+    let routeLine = null;
+    let officerLat = null;
+    let officerLng = null;
 
     violations.forEach(function(v) {
         if (v.gps_lat && v.gps_lng) {
             const type = v.violation_type.replace(/_/g, ' ').toUpperCase();
             const date = new Date(v.created_at).toLocaleString();
+
+            // Determine best destination: live owner GPS or static violation pin
+            const hasLiveLocation = v.owner_lat && v.owner_lng;
+            const destLat = hasLiveLocation ? v.owner_lat : v.gps_lat;
+            const destLng = hasLiveLocation ? v.owner_lng : v.gps_lng;
+
+            // Location badge
+            let locationBadge = '';
+            if (hasLiveLocation && v.owner_online) {
+                locationBadge = `<span style="background:#16a34a;color:#fff;font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700">🟢 LIVE</span>`;
+            } else if (hasLiveLocation && v.owner_last_seen) {
+                locationBadge = `<span style="background:#6b7280;color:#fff;font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700">⏱ Last seen: ${v.owner_last_seen}</span>`;
+            } else {
+                locationBadge = `<span style="background:#dc2626;color:#fff;font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700">📍 Violation Pin Only</span>`;
+            }
+
             const popup = `
-                <div style="min-width:200px;font-family:sans-serif">
+                <div style="min-width:220px;font-family:sans-serif">
                     <div style="background:#7b1113;color:#fff;padding:4px 8px;border-radius:4px;font-weight:bold;margin-bottom:6px;font-size:13px">
                         ⚠️ ${type}
                     </div>
                     <p style="font-size:11px;color:#888;margin-bottom:6px">${date}</p>
-                    <div style="font-size:13px;line-height:1.5">
+                    <div style="font-size:13px;line-height:1.6">
                         <strong>Plate:</strong> <span style="font-family:monospace">${v.vehicle.plate_number}</span><br>
                         <strong>Vehicle:</strong> ${v.vehicle.make} ${v.vehicle.model}
                         ${v.location_notes ? '<hr style="margin:6px 0"><em>' + v.location_notes + '</em>' : ''}
                     </div>
+                    <div style="margin:8px 0 6px">${locationBadge}</div>
+                    <button onclick="getDirectionsTo(${destLat}, ${destLng}, '${v.vehicle.plate_number}')"
+                        style="width:100%;background:#0369a1;color:#fff;border:none;border-radius:6px;padding:8px 0;font-size:12px;font-weight:700;cursor:pointer">
+                        🧭 Get Directions ${hasLiveLocation ? 'to Live Location' : 'to Violation Pin'}
+                    </button>
                 </div>`;
             const marker = L.marker([v.gps_lat, v.gps_lng], {icon: redIcon}).addTo(map);
             marker.bindPopup(popup);
+            // Store dest on marker for scanner auto-routing
+            marker._destLat = destLat;
+            marker._destLng = destLng;
+            marker._hasLive = hasLiveLocation;
             markers.push(marker);
         }
     });
@@ -336,6 +376,89 @@
     if (markers.length > 0) {
         map.fitBounds(new L.featureGroup(markers).getBounds().pad(0.1));
     }
+
+    // ── Get Officer GPS and Draw Route ──────────────────────
+    function getDirectionsTo(destLat, destLng, plateNumber) {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            return;
+        }
+
+        const statusBar = document.getElementById('directionStatusBar');
+        const statusText = document.getElementById('directionStatusText');
+        statusBar.style.display = 'flex';
+        statusText.textContent = 'Getting your location...';
+
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                officerLat = pos.coords.latitude;
+                officerLng = pos.coords.longitude;
+
+                // Clear previous route and officer marker
+                clearRoute();
+
+                // Officer position marker (blue)
+                officerMarker = L.marker([officerLat, officerLng], { icon: blueIcon })
+                    .addTo(map)
+                    .bindPopup('<strong>📍 Your Location</strong>')
+                    .openPopup();
+
+                // Draw route line using OSRM (free, no API key)
+                const url = `https://router.project-osrm.org/route/v1/driving/${officerLng},${officerLat};${destLng},${destLat}?overview=full&geometries=geojson`;
+
+                statusText.textContent = 'Calculating route to ' + plateNumber + '...';
+
+                fetch(url)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.routes && data.routes.length > 0) {
+                            const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                            routeLine = L.polyline(coords, {
+                                color: '#0369a1',
+                                weight: 5,
+                                opacity: 0.85,
+                                dashArray: '10, 6'
+                            }).addTo(map);
+
+                            // Fit map to the route
+                            map.fitBounds(routeLine.getBounds().pad(0.15));
+
+                            const distKm = (data.routes[0].distance / 1000).toFixed(2);
+                            const durMin = Math.ceil(data.routes[0].duration / 60);
+                            statusBar.style.display = 'flex';
+                            statusBar.style.flexDirection = 'row';
+                            statusBar.style.alignItems = 'center';
+                            statusText.textContent = `Route to ${plateNumber} — ${distKm} km · ~${durMin} min`;
+                        } else {
+                            statusText.textContent = 'Could not calculate route. Check connectivity.';
+                        }
+                    })
+                    .catch(() => {
+                        // Fallback: straight line
+                        routeLine = L.polyline(
+                            [[officerLat, officerLng], [destLat, destLng]],
+                            { color: '#0369a1', weight: 4, opacity: 0.8, dashArray: '8,6' }
+                        ).addTo(map);
+                        map.fitBounds(routeLine.getBounds().pad(0.15));
+                        statusText.textContent = `Direct line to ${plateNumber} (offline mode)`;
+                    });
+            },
+            function(err) {
+                statusBar.style.display = 'none';
+                alert('Could not get your location. Please allow GPS access and try again.');
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
+
+    function clearRoute() {
+        if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+        if (officerMarker) { map.removeLayer(officerMarker); officerMarker = null; }
+        document.getElementById('directionStatusBar').style.display = 'none';
+    }
+
+    // Store destination for scanner redirect
+    window._scannerRouteDest = null;
 </script>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -373,8 +496,38 @@
     function onScanSuccess(decodedText) {
         if (html5QrcodeScanner && html5QrcodeScanner.isScanning) html5QrcodeScanner.stop();
         $('#scannerModal').modal('hide');
-        $('#searchInput').val(decodedText);
-        $('#searchInput').closest('form').submit();
+
+        // Check if any violation matches this plate — if so, go to map and route
+        const plateClean = decodedText.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+        const matchedViolation = violations.find(v =>
+            v.vehicle && v.vehicle.plate_number &&
+            v.vehicle.plate_number.replace(/[^A-Z0-9]/gi, '').toUpperCase() === plateClean &&
+            v.gps_lat && v.gps_lng
+        );
+
+        if (matchedViolation) {
+            // Switch to map tab
+            $('#tab-map-link').tab('show');
+            setTimeout(() => {
+                map.invalidateSize();
+                map.setView([matchedViolation.gps_lat, matchedViolation.gps_lng], 17);
+                markers.forEach(m => {
+                    const pos = m.getLatLng();
+                    if (Math.abs(pos.lat - matchedViolation.gps_lat) < 0.0001 &&
+                        Math.abs(pos.lng - matchedViolation.gps_lng) < 0.0001) {
+                        m.openPopup();
+                    }
+                });
+                // Route to live location if available, else violation pin
+                const destLat = matchedViolation.owner_lat || matchedViolation.gps_lat;
+                const destLng = matchedViolation.owner_lng || matchedViolation.gps_lng;
+                getDirectionsTo(destLat, destLng, matchedViolation.vehicle.plate_number);
+            }, 300);
+        } else {
+            // No GPS data — fall back to regular search
+            $('#searchInput').val(decodedText);
+            $('#searchInput').closest('form').submit();
+        }
     }
 
     // ── OCR License Plate Capture ──
