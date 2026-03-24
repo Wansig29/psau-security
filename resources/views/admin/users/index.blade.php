@@ -138,18 +138,36 @@
 
         <script>
             // Real-time Search Filter for Users
-            document.getElementById('userDirectorySearch').addEventListener('input', function(e) {
+            const dirSearch = document.getElementById('userDirectorySearch');
+            const dirContainer = document.getElementById('usersDirectoryContainer');
+            const toggleBtn = document.getElementById('toggleDirBtn');
+
+            dirSearch.addEventListener('input', function(e) {
                 const term = e.target.value.toLowerCase();
                 const rows = document.querySelectorAll('#usersDirectoryTable tbody tr.user-row');
-                
+
+                // Auto-expand when typing
+                if (term.length > 0 && dirContainer.style.display === 'none') {
+                    dirContainer.style.display = 'block';
+                    toggleBtn.innerHTML = 'Collapse List ▴';
+                }
+
+                let visibleCount = 0;
                 rows.forEach(row => {
-                    const textContent = row.innerText.toLowerCase();
-                    if(textContent.includes(term)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+                    const match = row.innerText.toLowerCase().includes(term);
+                    row.style.display = match ? '' : 'none';
+                    if (match) visibleCount++;
                 });
+
+                // Show match count hint
+                let hint = document.getElementById('searchHint');
+                if (!hint) {
+                    hint = document.createElement('div');
+                    hint.id = 'searchHint';
+                    hint.style.cssText = 'font-size:11px;color:#6b7280;margin-top:4px;text-align:right;padding-right:4px;';
+                    dirSearch.parentNode.appendChild(hint);
+                }
+                hint.textContent = term ? `${visibleCount} result${visibleCount !== 1 ? 's' : ''} found` : '';
             });
 
             // Collapse Functionality
