@@ -41,5 +41,16 @@ class SecurityDashboardController extends Controller
         }
 
         return view('security.search-result', compact('vehicle'));
+        return view('security.search-result', compact('vehicle'));
+    }
+
+    public function getUserLocation(\App\Models\User $user)
+    {
+        return response()->json([
+            'lat' => $user->current_lat,
+            'lng' => $user->current_lng,
+            'last_update' => $user->last_location_update ? $user->last_location_update->diffForHumans() : null,
+            'is_online' => $user->last_location_update && $user->last_location_update->diffInMinutes(now()) <= 5
+        ]);
     }
 }

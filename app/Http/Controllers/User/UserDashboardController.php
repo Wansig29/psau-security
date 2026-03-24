@@ -17,4 +17,21 @@ class UserDashboardController extends Controller
 
         return view('user.dashboard', compact('user', 'vehicles', 'registrations', 'violations'));
     }
+
+    public function updateLocation(Request $request)
+    {
+        $request->validate([
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
+        ]);
+
+        $user = auth()->user();
+        $user->update([
+            'current_lat' => $request->lat,
+            'current_lng' => $request->lng,
+            'last_location_update' => now(),
+        ]);
+
+        return response()->json(['status' => 'success']);
+    }
 }

@@ -43,6 +43,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 Route::middleware(['auth', 'verified', 'role:security'])->prefix('security')->name('security.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Security\SecurityDashboardController::class, 'index'])->name('dashboard');
     Route::get('/search', [\App\Http\Controllers\Security\SecurityDashboardController::class, 'search'])->name('search');
+    Route::get('/user-location/{user}', [\App\Http\Controllers\Security\SecurityDashboardController::class, 'getUserLocation'])->name('user.location');
     
     Route::get('/violation/create', [\App\Http\Controllers\Security\ViolationController::class, 'create'])->name('violation.create');
     Route::post('/violation', [\App\Http\Controllers\Security\ViolationController::class, 'store'])->name('violation.store');
@@ -59,6 +60,9 @@ Route::middleware(['auth', 'verified', 'role:vehicle_user'])->prefix('user')->na
     // Profile photo
     Route::post('/profile/photo', [\App\Http\Controllers\User\UserProfileController::class, 'uploadPhoto'])->name('profile.photo.upload');
     Route::delete('/profile/photo', [\App\Http\Controllers\User\UserProfileController::class, 'removePhoto'])->name('profile.photo.remove');
+
+    // Live Location Tracking
+    Route::post('/location', [\App\Http\Controllers\User\UserDashboardController::class, 'updateLocation'])->name('location.update');
 });
 
 Route::middleware('auth')->group(function () {
