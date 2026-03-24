@@ -16,6 +16,9 @@ Route::get('/dashboard', function () {
     };
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Public QR Scan Endpoint
+Route::get('/scan/{qr_sticker_id}', [\App\Http\Controllers\QrScanController::class, 'show'])->name('scan.show');
+
 // Admin Routes
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('dashboard');

@@ -29,14 +29,15 @@ class AdminApprovedRegistrationController extends Controller
     public function generateQr(Registration $registration)
     {
         if ($registration->status !== 'approved' || !$registration->qr_sticker_id) {
-            abort(404, 'No QR Sticker assigned or registration not approved.');
+            return redirect()->route('admin.approved.index')
+                ->with('error', 'No QR sticker assigned or this registration is not yet approved.');
         }
 
-        // URL that the QR code will direct to (e.g. security search page pre-filled with the ID)
-        $url = route('security.search') . '?query=' . urlencode($registration->qr_sticker_id);
+        // URL that the QR code will encode (public scan profile with sticker ID)
+        $url = route('scan.show', $registration->qr_sticker_id);
 
-        // Generate the SVG QR code
-        $qrCodeSvg = QrCode::size(250)->generate($url);
+        // Generate the SVG QR code with High error correction (30% recovery) for lumpy/curved surfaces
+        $qrCodeSvg = QrCode::size(260)->errorCorrection('H')->generate($url);
 
         return view('admin.approved.qr-print', compact('registration', 'qrCodeSvg'));
     }
