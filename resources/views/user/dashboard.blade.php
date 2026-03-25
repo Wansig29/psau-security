@@ -14,6 +14,14 @@
         .profile-hero-tabs .nav-tabs { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; padding-bottom: 2px; }
         .profile-hero-tabs .nav-tabs::-webkit-scrollbar { display: none; }
     }
+    @media (max-width: 420px) {
+        .profile-hero > div:last-of-type { padding: 0 12px 16px !important; }
+        .profile-hero .avatar-row { margin-top: -40px !important; gap: 8px !important; }
+        .profile-hero .user-info h2 { font-size: 1.15rem !important; }
+        .profile-hero .user-info .badges .badge { font-size: .7rem !important; padding: 3px 8px !important; }
+        .profile-hero-tabs .nav-link { padding: 10px 14px !important; font-size: .82rem !important; }
+        .profile-hero-tabs .nav-link i { display: none; }
+    }
 </style>
 
 {{-- ── Alerts ─────────────────────────────────────────────────────────── --}}
@@ -157,21 +165,15 @@
                 @endif
             </div>
 
-            {{-- Hint --}}
-            <p class="text-muted small mb-0">
-                <i class="fas fa-info-circle mr-1"></i>
-                Click the <i class="fas fa-camera"></i> icon on your avatar to change your photo — auto-compressed to ≤300 KB.
-                @if(auth()->user()->profile_photo_path)
-                    &nbsp;|&nbsp;
-                    <form method="POST" action="{{ route('user.profile.photo.remove') }}" class="d-inline"
-                          onsubmit="return confirm('Remove your profile photo?')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="btn btn-link btn-sm text-danger p-0">
-                            <i class="fas fa-trash-alt mr-1"></i>Remove Photo
-                        </button>
-                    </form>
-                @endif
-            </p>
+            @if(auth()->user()->profile_photo_path)
+                <form method="POST" action="{{ route('user.profile.photo.remove') }}" class="d-inline"
+                      onsubmit="return confirm('Remove your profile photo?')">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn btn-link btn-sm text-danger p-0">
+                        <i class="fas fa-trash-alt mr-1"></i>Remove Photo
+                    </button>
+                </form>
+            @endif
         </div>
 
     </div>
