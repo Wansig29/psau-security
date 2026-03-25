@@ -20,7 +20,7 @@
             <i class="fas fa-graduation-cap text-9xl"></i>
         </div>
         <div class="relative z-10">
-            <h1 class="text-sm font-semibold tracking-wider uppercase opacity-90">Pangasinan State University</h1>
+            <h1 class="text-sm font-semibold tracking-wider uppercase opacity-90">Pampanga State Agricultural University</h1>
             <h2 class="text-xs font-medium opacity-75 mt-1">Asingan Campus</h2>
             <div class="mt-4">
                 <span class="bg-white/20 px-4 py-1.5 rounded-full text-sm font-bold tracking-wide border border-white/30 backdrop-blur-sm">

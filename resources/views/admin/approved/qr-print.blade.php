@@ -188,6 +188,41 @@
             padding: 5px 20px 20px;
         }
 
+        /* Circle */
+        .sticker.shape-circle {
+            width: 280px;
+            height: 280px;
+            display: flex;
+            flex-direction: column;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        .shape-circle .sticker-header {
+            padding: 10px 12px;
+        }
+        .shape-circle .qr-block {
+            padding: 10px 14px;
+        }
+        .shape-circle .details-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        .shape-circle .info-block {
+            display: none !important; /* Keep circle printable; hide extra details */
+        }
+        .shape-circle .plate-block {
+            padding: 6px 12px 6px;
+        }
+        .shape-circle .plate {
+            font-size: 20px;
+            letter-spacing: 2px;
+        }
+        .shape-circle .sticker-footer {
+            padding: 6px 12px;
+        }
+
         /* ── Internal Elements ── */
         .sticker-header {
             background: linear-gradient(135deg, #6b0a16 0%, #4e0710 100%);
@@ -288,6 +323,12 @@
                 print-color-adjust: exact;
                 border-radius: 8px;
             }
+            .sticker.shape-circle {
+                border-radius: 50% !important;
+                width: 80mm;
+                height: 80mm;
+                border-radius: 50% !important;
+            }
             .sticker-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .qr-frame { border-color: #6b0a16; }
             [contenteditable="true"] { background: transparent !important; box-shadow: none !important; }
@@ -316,6 +357,9 @@
                 <button class="btn-shape" onclick="setShape('square')" id="btn-square">
                     <i class="fas fa-square"></i> Square
                 </button>
+                <button class="btn-shape" onclick="setShape('circle')" id="btn-circle">
+                    <i class="fas fa-circle"></i> Circle
+                </button>
             </div>
             
             <div class="actions">
@@ -336,7 +380,7 @@
             <div class="sticker-header">
                 <div class="seal">🎓</div>
                 <div class="header-text">
-                    <div class="school" contenteditable="true">Pangasinan State University</div>
+                    <div class="school" contenteditable="true">Pampanga State Agricultural University</div>
                     <div class="title" contenteditable="true">Vehicle Parking Sticker</div>
                     <div class="sy" contenteditable="true">A.Y. {{ $registration->school_year }}</div>
                 </div>
