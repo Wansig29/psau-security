@@ -190,37 +190,55 @@
 
         /* Circle */
         .sticker.shape-circle {
-            width: 280px;
-            height: 280px;
+            width: 320px;
+            height: 320px;
             display: flex;
             flex-direction: column;
             border-radius: 50%;
             overflow: hidden;
+            position: relative;
         }
         .shape-circle .sticker-header {
-            padding: 10px 12px;
-        }
-        .shape-circle .qr-block {
             padding: 10px 14px;
         }
-        .shape-circle .details-wrapper {
+        .shape-circle .qr-block {
+            padding: 10px 16px 6px;
             flex: 1;
+            align-items: center;
+            display: flex;
+            justify-content: center;
+        }
+        .shape-circle .qr-frame {
+            border-width: 2px;
+            border-radius: 12px;
+            padding: 6px;
+        }
+        .shape-circle .qr-frame svg {
+            max-width: 190px;
+        }
+        .shape-circle .details-wrapper {
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
+            padding-bottom: 34px; /* reserve space for footer */
         }
         .shape-circle .info-block {
             display: none !important; /* Keep circle printable; hide extra details */
         }
         .shape-circle .plate-block {
-            padding: 6px 12px 6px;
+            padding: 6px 16px 8px;
         }
         .shape-circle .plate {
             font-size: 20px;
             letter-spacing: 2px;
+            border-width: 2px;
         }
         .shape-circle .sticker-footer {
-            padding: 6px 12px;
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 6px 14px;
         }
 
         /* ── Internal Elements ── */
@@ -325,9 +343,8 @@
             }
             .sticker.shape-circle {
                 border-radius: 50% !important;
-                width: 80mm;
-                height: 80mm;
-                border-radius: 50% !important;
+                width: 85mm;
+                height: 85mm;
             }
             .sticker-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .qr-frame { border-color: #6b0a16; }
