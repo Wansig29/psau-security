@@ -190,8 +190,8 @@
 
         /* Circle */
         .sticker.shape-circle {
-            width: 320px;
-            height: 320px;
+            width: 380px;
+            height: 380px;
             display: flex;
             flex-direction: column;
             border-radius: 50%;
@@ -199,11 +199,19 @@
             position: relative;
         }
         .shape-circle .sticker-header {
-            padding: 10px 14px;
+            padding: 10px 14px 8px;
         }
+        .shape-circle .seal {
+            width: 34px;
+            height: 34px;
+            font-size: 18px;
+        }
+        .shape-circle .header-text .school { font-size: 7px; }
+        .shape-circle .header-text .title { font-size: 11px; }
+        .shape-circle .header-text .sy { font-size: 8px; }
         .shape-circle .qr-block {
-            padding: 10px 16px 6px;
-            flex: 1;
+            padding: 8px 16px 6px;
+            flex: 0 0 auto;
             align-items: center;
             display: flex;
             justify-content: center;
@@ -214,13 +222,13 @@
             padding: 6px;
         }
         .shape-circle .qr-frame svg {
-            max-width: 190px;
+            max-width: 200px;
         }
         .shape-circle .details-wrapper {
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
-            padding-bottom: 34px; /* reserve space for footer */
+            padding-bottom: 42px; /* reserve space for footer */
         }
         .shape-circle .info-block {
             display: none !important; /* Keep circle printable; hide extra details */
@@ -343,8 +351,8 @@
             }
             .sticker.shape-circle {
                 border-radius: 50% !important;
-                width: 85mm;
-                height: 85mm;
+                width: 90mm;
+                height: 90mm;
             }
             .sticker-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .qr-frame { border-color: #6b0a16; }
