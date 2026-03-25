@@ -438,7 +438,14 @@
                 },
                 body: JSON.stringify({ lat: lat, lng: lng }),
                 keepalive: true
-            }).catch(err => console.warn('GPS sync failed:', err));
+            })
+            .then(res => {
+                if (!res.ok) {
+                    console.error('GPS sync failed with status:', res.status);
+                    res.text().then(text => console.error('Server error details:', text));
+                }
+            })
+            .catch(err => console.error('GPS sync network failed:', err));
         }
 
         const options = { enableHighAccuracy: true, maximumAge: 10000, timeout: 8000 };
