@@ -57,8 +57,18 @@ class SecurityDashboardController extends Controller
 
         // Search in Vehicle Plate Number or Registration QR Sticker ignoring case
         $vehicle = \App\Models\Vehicle::with(['registrations' => function($q) {
-            $q->latest()->limit(1); // Get the most recent registration config
-        }, 'user'])->whereRaw('UPPER(plate_number) LIKE ?', ["%{$queryUpper}%"])
+            // Prefer approved over pending so the security card shows "valid entry" when available.
+            // Also uses LOWER(status) to handle DB enum values like "Approved"/"Pending".
+            $q->orderByRaw("CASE
+                WHEN LOWER(status) = 'approved' THEN 0
+                WHEN LOWER(status) = 'pending' THEN 1
+                ELSE 2
+            END")
+                ->orderByDesc('approved_at')
+                ->orderByDesc('created_at')
+                ->limit(1);
+        }, 'user'])
+        ->whereRaw('UPPER(plate_number) LIKE ?', ["%{$queryUpper}%"])
         ->orWhereHas('registrations', function ($q) use ($queryUpper) {
             $q->whereRaw('UPPER(qr_sticker_id) LIKE ?', ["%{$queryUpper}%"]);
         })->first();
@@ -67,7 +77,6 @@ class SecurityDashboardController extends Controller
             return back()->with('error', "No vehicle found matching '{$query}'.");
         }
 
-        return view('security.search-result', compact('vehicle'));
         return view('security.search-result', compact('vehicle'));
     }
 

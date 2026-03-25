@@ -16,7 +16,7 @@ class AdminApprovedRegistrationController extends Controller
     public function index()
     {
         $approvedRegistrations = Registration::with(['user', 'vehicle', 'pickupSchedule'])
-            ->where('status', 'approved')
+            ->whereRaw('LOWER(status) = ?', ['approved'])
             ->orderBy('approved_at', 'desc')
             ->paginate(15);
             

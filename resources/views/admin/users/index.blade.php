@@ -53,6 +53,10 @@
                         <input type="email" name="email" class="form-control" placeholder="e.g. officer@psau.edu.ph" required>
                     </div>
                     <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" name="contact_number" class="form-control" placeholder="e.g. +63XXXXXXXXXX">
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Access Role</label>
                         <select name="role" class="form-select" required>
                             <option value="security">🛡️ Security Officer</option>

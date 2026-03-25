@@ -34,7 +34,7 @@
     <div class="max-w-md mx-auto px-4">
 
         <!-- Status Alert -->
-        @if($registration->status === 'approved')
+        @if(strtolower((string) $registration->status) === 'approved')
             <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-5 flex items-start shadow-sm">
                 <i class="fas fa-check-circle text-green-600 text-2xl mr-3 mt-0.5"></i>
                 <div>
@@ -119,6 +119,12 @@
                 <div>
                     <h4 class="font-bold text-gray-900 text-lg">{{ $registration->user->name }}</h4>
                     <p class="text-sm text-gray-500 mt-0.5">{{ $registration->user->email }}</p>
+                    @if(!empty($registration->user->contact_number))
+                        @php $phoneHref = preg_replace('/\s+/', '', $registration->user->contact_number); @endphp
+                        <a href="tel:{{ $phoneHref }}" class="text-sm font-semibold text-blue-700 mt-1 inline-flex items-center" style="text-decoration:none;">
+                            <i class="fas fa-phone-alt mr-1"></i>{{ $registration->user->contact_number }}
+                        </a>
+                    @endif
                     <span class="inline-block mt-2 text-xs font-semibold px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
                         Vehicle Owner
                     </span>

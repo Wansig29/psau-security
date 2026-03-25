@@ -43,12 +43,13 @@
         label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
         label span.required { color: #dc2626; margin-left: 2px; }
 
-        input[type="text"], input[type="file"] {
+        input[type="text"], input[type="tel"], input[type="file"] {
             width: 100%; border: 1.5px solid #d1d5db; border-radius: 8px; padding: 9px 12px;
             font-size: 13px; font-family: 'Inter', sans-serif; color: #111827;
             background: #fafafa; transition: border-color 0.2s, box-shadow 0.2s; outline: none;
         }
-        input[type="text"]:focus { border-color: #6b0a16; box-shadow: 0 0 0 3px rgba(107,10,22,0.1); }
+        input[type="text"]:focus,
+        input[type="tel"]:focus { border-color: #6b0a16; box-shadow: 0 0 0 3px rgba(107,10,22,0.1); }
         input[type="file"] { cursor: pointer; padding: 7px 10px; }
         input[type="file"]:focus { border-color: #6b0a16; box-shadow: 0 0 0 3px rgba(107,10,22,0.1); }
 
@@ -165,6 +166,17 @@
                             <label for="color">Vehicle Color <span class="required">*</span></label>
                             <input type="text" id="color" name="color" value="{{ old('color') }}" placeholder="e.g. White, Black, Red" required>
                             @error('color')<div class="field-error">{{ $message }}</div>@enderror
+                        </div>
+                        <div>
+                            <label for="contact_number">Contact Number</label>
+                            <input type="tel"
+                                   id="contact_number"
+                                   name="contact_number"
+                                   value="{{ old('contact_number', auth()->user()->contact_number) }}"
+                                   placeholder="e.g. +63XXXXXXXXXX"
+                                   autocomplete="tel" />
+                            @error('contact_number')<div class="field-error">{{ $message }}</div>@enderror
+                            <div class="field-hint">Used for security coordination (tap-to-call).</div>
                         </div>
                     </div>
                 </div>

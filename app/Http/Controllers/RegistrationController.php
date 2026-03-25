@@ -14,6 +14,7 @@ class RegistrationController extends Controller
     public function store(\Illuminate\Http\Request $request)
     {
         $request->validate([
+            'contact_number' => 'nullable|string|max:50',
             'make'          => 'required|string|max:255',
             'model'         => 'required|string|max:255',
             'color'         => 'required|string|max:255',
@@ -25,6 +26,12 @@ class RegistrationController extends Controller
         ]);
 
         $user = $request->user();
+        // Capture/update the owner's phone number so security can tap-to-call.
+        if ($request->filled('contact_number')) {
+            $user->update([
+                'contact_number' => $request->input('contact_number'),
+            ]);
+        }
 
         // Helper: compress and store an uploaded image
         $storeAndCompress = function ($file, $folder) {

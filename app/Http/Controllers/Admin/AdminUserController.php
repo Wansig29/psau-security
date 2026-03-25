@@ -33,6 +33,7 @@ class AdminUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'contact_number' => ['nullable', 'string', 'max:50'],
             'password' => ['required', Rules\Password::defaults()],
             'role' => ['required', 'in:admin,security,vehicle_user'],
         ]);
@@ -40,6 +41,7 @@ class AdminUserController extends Controller
         User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'contact_number' => $request->input('contact_number'),
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'email_verified_at' => now(), // Auto-verify internal accounts

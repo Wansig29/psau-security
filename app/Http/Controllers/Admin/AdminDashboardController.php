@@ -10,7 +10,7 @@ class AdminDashboardController extends Controller
     public function index()
     {
         $pendingRegistrations = \App\Models\Registration::with(['user', 'vehicle', 'documents'])
-            ->where('status', 'pending')
+            ->whereRaw('LOWER(status) = ?', ['pending'])
             ->latest()
             ->get();
 

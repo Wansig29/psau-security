@@ -9,8 +9,9 @@
     $allViolations      = $vehicle->violations ?? collect();
     $activeViolations   = $allViolations->where('sanction_applied', true);
     $totalViolations    = $allViolations->count();
-    $isApproved         = $registration && $registration->status === 'approved';
-    $isPending          = $registration && $registration->status === 'pending';
+    $statusLower        = $registration ? strtolower((string) $registration->status) : null;
+    $isApproved         = $statusLower === 'approved';
+    $isPending          = $statusLower === 'pending';
 @endphp
 
 {{-- ── Top Alert: Flagged vehicle ─────────────────────────────────────── --}}
@@ -74,6 +75,14 @@
                         <td>
                             <strong>{{ $vehicle->user->name }}</strong><br>
                             <small class="text-muted">{{ $vehicle->user->email }}</small>
+                            @if(!empty($vehicle->user->contact_number))
+                                @php $phoneHref = preg_replace('/\s+/', '', $vehicle->user->contact_number); @endphp
+                                <div class="mt-1">
+                                    <a href="tel:{{ $phoneHref }}" class="text-primary font-weight-bold small" style="text-decoration:none;">
+                                        <i class="fas fa-phone-alt mr-1"></i>{{ $vehicle->user->contact_number }}
+                                    </a>
+                                </div>
+                            @endif
                         </td>
                     </tr>
                     <tr>

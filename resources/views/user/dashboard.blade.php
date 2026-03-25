@@ -44,7 +44,7 @@
 @endphp
 
 @if($latestRegistration)
-    @if($latestRegistration->status === 'approved')
+    @if(strtolower((string) $latestRegistration->status) === 'approved')
         <div class="alert shadow-sm mb-4" style="background:#d4edda;border:2px solid #28a745;color:#155724;border-radius:10px;animation: fadeIn 0.5s">
             <div class="d-flex align-items-center">
                 <i class="fas fa-check-circle fa-3x mr-3"></i>
@@ -54,7 +54,7 @@
                 </div>
             </div>
         </div>
-    @elseif($latestRegistration->status === 'pending')
+    @elseif(strtolower((string) $latestRegistration->status) === 'pending')
         <div class="alert shadow-sm mb-4" style="background:#fff3cd;border:2px solid #ffc107;color:#856404;border-radius:10px">
             <div class="d-flex align-items-center">
                 <i class="fas fa-clock fa-3x mr-3"></i>
@@ -64,7 +64,7 @@
                 </div>
             </div>
         </div>
-    @elseif($latestRegistration->status === 'rejected')
+    @elseif(strtolower((string) $latestRegistration->status) === 'rejected')
         <div class="alert shadow-sm mb-4" style="background:#f8d7da;border:2px solid #dc3545;color:#721c24;border-radius:10px">
             <div class="d-flex align-items-center">
                 <i class="fas fa-times-circle fa-3x mr-3"></i>
@@ -260,11 +260,11 @@
                         </div>
                         @php $reg = $veh->registrations->first(); @endphp
                         <div class="card-footer p-2 text-center" style="font-size:.8rem">
-                            @if($reg && $reg->status === 'approved')
+                            @if($reg && strtolower((string) $reg->status) === 'approved')
                                 <span class="badge badge-success py-2 px-3"><i class="fas fa-check-circle mr-1"></i>Approved – {{ $reg->school_year }}</span>
-                            @elseif($reg && $reg->status === 'pending')
+                            @elseif($reg && strtolower((string) $reg->status) === 'pending')
                                 <span class="badge badge-warning text-dark py-2 px-3"><i class="fas fa-clock mr-1"></i>Pending Review</span>
-                            @elseif($reg && $reg->status === 'rejected')
+                            @elseif($reg && strtolower((string) $reg->status) === 'rejected')
                                 <span class="badge badge-danger py-2 px-3"><i class="fas fa-times mr-1"></i>Rejected</span>
                             @else
                                 <span class="badge badge-secondary py-2 px-3"><i class="fas fa-minus-circle mr-1"></i>No Application</span>
@@ -321,11 +321,11 @@
                                         @endif
                                     </td>
                                     <td>
-                                        @if($reg->status === 'approved')
+                                        @if(strtolower((string) $reg->status) === 'approved')
                                             <span class="badge badge-success py-2 px-3"><i class="fas fa-check mr-1"></i>Approved</span>
-                                        @elseif($reg->status === 'pending')
+                                        @elseif(strtolower((string) $reg->status) === 'pending')
                                             <span class="badge badge-warning text-dark py-2 px-3"><i class="fas fa-clock mr-1"></i>Pending</span>
-                                        @elseif($reg->status === 'rejected')
+                                        @elseif(strtolower((string) $reg->status) === 'rejected')
                                             <div>
                                                 <span class="badge badge-danger py-2 px-3"><i class="fas fa-times mr-1"></i>Rejected</span>
                                                 @if($reg->rejection_reason)

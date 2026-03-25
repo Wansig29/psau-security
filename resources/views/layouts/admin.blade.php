@@ -257,7 +257,7 @@
     <div class="sidebar-section">Main Menu</div>
     <a class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
         <span class="nav-icon">📋</span> Pending Reviews
-        @php $pendingSideCount = \App\Models\Registration::where('status', 'pending')->count(); @endphp
+        @php $pendingSideCount = \App\Models\Registration::whereRaw('LOWER(status) = ?', ['pending'])->count(); @endphp
         @if($pendingSideCount > 0)
             <span style="margin-left:auto;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;">{{ $pendingSideCount }}</span>
         @endif

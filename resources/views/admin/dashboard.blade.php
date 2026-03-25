@@ -14,7 +14,7 @@
         {{-- Stat Cards --}}
         @php
             $totalRegistrations  = \App\Models\Registration::count();
-            $approvedCount       = \App\Models\Registration::where('status','approved')->count();
+            $approvedCount       = \App\Models\Registration::whereRaw('LOWER(status) = ?', ['approved'])->count();
             $pendingCount        = $pendingRegistrations->count();
             $violationsCount     = \App\Models\Violation::count();
         @endphp

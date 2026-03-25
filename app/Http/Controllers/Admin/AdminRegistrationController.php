@@ -17,12 +17,12 @@ class AdminRegistrationController extends Controller
         $registration = Registration::findOrFail($id);
         
         // Prevent re-approval
-        if ($registration->status !== 'pending') {
+        if (strtolower((string) $registration->status) !== 'pending') {
             return back()->with('error', 'Only pending registrations can be approved.');
         }
 
         $registration->update([
-            'status' => 'approved',
+            'status' => 'Approved',
             'qr_sticker_id' => 'PSAU-' . strtoupper(Str::random(8)),
             'approved_at' => now(),
             'approved_by' => auth()->id(),
@@ -42,13 +42,13 @@ class AdminRegistrationController extends Controller
     {
         $registration = Registration::findOrFail($id);
 
-        if ($registration->status !== 'pending') {
+        if (strtolower((string) $registration->status) !== 'pending') {
             return back()->with('error', 'Only pending registrations can be rejected.');
         }
 
         // We can add validation for a rejection reason later if needed
         $registration->update([
-            'status' => 'rejected',
+            'status' => 'Rejected',
             'rejected_at' => now(),
             'rejected_by' => auth()->id(),
             'rejection_reason' => $request->input('reason', 'Document details do not match or are invalid.'),
