@@ -201,10 +201,28 @@
             border-radius: 50%;
             position: relative;
             background: #fff;
-            border: 6px solid #6b0a16;
+            border: 8px solid #7b1113;
+            box-shadow: inset 0 0 0 4px #eab308, 0 8px 32px rgba(0,0,0,0.15);
             padding: 20px;
             box-sizing: border-box;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15); /* Keep shadow for preview */
+            overflow: hidden;
+        }
+        .shape-circle .watermark {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 260px;
+            color: #7b1113;
+            opacity: 0.04;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .shape-circle .sticker-content {
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
         }
         .shape-circle .sticker-header {
             background: transparent;
@@ -215,40 +233,56 @@
             align-items: center;
             text-align: center;
             gap: 6px;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             width: 100%;
         }
         .shape-circle .seal {
-            width: 44px;
-            height: 44px;
-            background: #6b0a16;
-            border-color: transparent;
+            width: 48px;
+            height: 48px;
+            background: #7b1113;
+            border: 2px solid #eab308;
             color: #fff;
-            font-size: 20px;
+            font-size: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2px;
         }
         .shape-circle .header-text {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        .shape-circle .header-text .school { color: #6b0a16; font-size: 8.5px; font-weight: 800; letter-spacing: 0.5px; }
-        .shape-circle .header-text .title { color: #111; font-size: 15px; font-weight: 900; margin-top: 2px; }
-        .shape-circle .header-text .sy { color: #4b5563; font-size: 9px; font-weight: 600; }
+        .shape-circle .header-text .school { color: #7b1113; font-size: 9.5px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
+        .shape-circle .header-text .title { color: #111; font-size: 16px; font-weight: 900; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .shape-circle .header-text .sy { 
+            background: #7b1113; 
+            color: #fff; 
+            font-size: 10px; 
+            font-weight: 700; 
+            padding: 2px 14px; 
+            border-radius: 12px; 
+            margin-top: 6px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
         .shape-circle .qr-block {
-            padding: 6px 0;
+            padding: 8px 0;
             flex: 0 0 auto;
             align-items: center;
             display: flex;
             justify-content: center;
         }
         .shape-circle .qr-frame {
-            border: 2px solid #6b0a16;
+            border: 3px solid #7b1113;
             border-radius: 8px;
-            padding: 6px;
+            padding: 8px;
             background: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         }
         .shape-circle .qr-frame svg {
-            max-width: 140px;
+            max-width: 130px;
         }
         .shape-circle .details-wrapper {
             display: flex;
@@ -261,18 +295,20 @@
             display: none !important; /* Keep circle printable; hide extra details */
         }
         .shape-circle .plate-block {
-            padding: 6px 0 10px;
+            padding: 2px 0 6px;
             width: 100%;
             text-align: center;
         }
         .shape-circle .plate {
-            font-size: 22px;
+            font-size: 24px;
             padding: 4px 16px;
-            border: 3px solid #111;
-            border-radius: 4px;
+            border: 2px dashed #7b1113;
+            border-radius: 6px;
             color: #111;
-            background: #fff;
+            background: #fdfbfb;
             letter-spacing: 3px;
+            font-weight: 900;
+            font-family: 'Courier New', monospace;
         }
         .shape-circle .sticker-footer {
             background: transparent;
@@ -285,8 +321,18 @@
             gap: 6px;
             width: 100%;
         }
-        .shape-circle .sticker-id-text { font-size: 10px; color: #6b7280; font-family: monospace; letter-spacing: 0.5px; }
-        .shape-circle .valid-badge { background: #dcfce7; color: #15803d; font-size: 10px; padding: 3px 12px; border-radius: 999px; font-weight: 800; }
+        .shape-circle .sticker-id-text { font-size: 10px; color: #6b7280; font-family: monospace; font-weight: 600; letter-spacing: 0.5px; }
+        .shape-circle .valid-badge { 
+            background: #16a34a; 
+            color: #fff; 
+            font-size: 10px; 
+            padding: 3px 14px; 
+            border-radius: 999px; 
+            font-weight: 800; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3);
+        }
 
         /* ── Internal Elements ── */
         .sticker-header {
@@ -392,6 +438,10 @@
                 border-radius: 50% !important;
                 width: 90mm;
                 height: 90mm;
+                box-shadow: inset 0 0 0 4px #eab308 !important;
+                border: 8px solid #7b1113 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
             .sticker-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .qr-frame { border-color: #6b0a16; }
@@ -462,54 +512,57 @@
     <!-- QR Sticker -->
     <div class="sticker-wrap">
         <div class="sticker shape-portrait" id="print-sticker">
-            <!-- Header -->
-            <div class="sticker-header">
-                <div class="seal">🎓</div>
-                <div class="header-text">
-                    <div class="school" contenteditable="true">Pampanga State Agricultural University</div>
-                    <div class="title" contenteditable="true">Vehicle Parking Sticker</div>
-                    <div class="sy" contenteditable="true">A.Y. {{ $registration->school_year }}</div>
-                </div>
-            </div>
-
-            <!-- QR Code -->
-            <div class="qr-block">
-                <div class="qr-frame">
-                    {!! $qrCodeSvg !!}
-                </div>
-            </div>
-
-            <div class="details-wrapper">
-                <!-- Plate Number -->
-                <div class="plate-block">
-                    <div class="plate" contenteditable="true">{{ $registration->vehicle->plate_number }}</div>
-                </div>
-
-                <!-- Info Box -->
-                <div class="info-block">
-                    <div class="info-row">
-                        <span class="info-label">Owner</span>
-                        <span class="info-value" contenteditable="true">{{ $registration->user->name }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Vehicle</span>
-                        <span class="info-value" contenteditable="true">{{ $registration->vehicle->make }} {{ $registration->vehicle->model }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Color</span>
-                        <span class="info-value" contenteditable="true">{{ ucfirst($registration->vehicle->color) }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Valid Thru</span>
-                        <span class="info-value" contenteditable="true">July {{ date('Y') + 1 }}</span>
+            <i class="fas fa-shield-alt watermark"></i>
+            <div class="sticker-content">
+                <!-- Header -->
+                <div class="sticker-header">
+                    <div class="seal"><i class="fas fa-graduation-cap"></i></div>
+                    <div class="header-text">
+                        <div class="school" contenteditable="true">Pampanga State Agricultural University</div>
+                        <div class="title" contenteditable="true">Vehicle Parking Sticker</div>
+                        <div class="sy" contenteditable="true">A.Y. {{ $registration->school_year }}</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Footer -->
-            <div class="sticker-footer">
-                <span class="sticker-id-text">{{ $registration->qr_sticker_id }}</span>
-                <span class="valid-badge">✓ Valid</span>
+                <!-- QR Code -->
+                <div class="qr-block">
+                    <div class="qr-frame">
+                        {!! $qrCodeSvg !!}
+                    </div>
+                </div>
+
+                <div class="details-wrapper">
+                    <!-- Plate Number -->
+                    <div class="plate-block">
+                        <div class="plate" contenteditable="true">{{ $registration->vehicle->plate_number }}</div>
+                    </div>
+
+                    <!-- Info Box -->
+                    <div class="info-block">
+                        <div class="info-row">
+                            <span class="info-label">Owner</span>
+                            <span class="info-value" contenteditable="true">{{ $registration->user->name }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Vehicle</span>
+                            <span class="info-value" contenteditable="true">{{ $registration->vehicle->make }} {{ $registration->vehicle->model }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Color</span>
+                            <span class="info-value" contenteditable="true">{{ ucfirst($registration->vehicle->color) }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Valid Thru</span>
+                            <span class="info-value" contenteditable="true">July {{ date('Y') + 1 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="sticker-footer">
+                    <span class="sticker-id-text">{{ $registration->qr_sticker_id }}</span>
+                    <span class="valid-badge"><i class="fas fa-check-circle mr-1"></i> VALID</span>
+                </div>
             </div>
         </div>
     </div>
