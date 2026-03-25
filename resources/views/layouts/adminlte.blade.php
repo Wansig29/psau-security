@@ -98,6 +98,57 @@
             width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
         }
 
+        .notif-dropdown {
+            display: none;
+            position: absolute;
+            top: 42px;
+            right: 0;
+            width: 360px;
+            max-width: calc(100vw - 28px);
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+            overflow: hidden;
+            z-index: 9999;
+        }
+        .notif-dropdown.open { display: block; }
+        .notif-dropdown-header {
+            padding: 12px 14px;
+            background: #fafafa;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 13px;
+            font-weight: 700;
+            color: #111827;
+        }
+        .notif-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item-title {
+            font-weight: 800;
+            font-size: 12px;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+        .notif-item-msg {
+            color: #4b5563;
+            font-size: 12px;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        .notif-item-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+        .notif-empty {
+            padding: 16px 14px;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
         /* ── Card ── */
         .card { background: #fff; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden; margin-bottom: 20px; }
         .card-header {
@@ -246,11 +297,51 @@
         <div class="topbar-right">
             {{-- Notifications Bell --}}
             @if(Auth::check())
-                <div class="notif-bell">
+                <div class="notif-bell" id="notifBell">
                     <svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                     @if(Auth::user()->unreadNotifications->count() > 0)
                         <span class="notif-badge">{{ Auth::user()->unreadNotifications->count() }}</span>
                     @endif
+
+                    @php
+                        $unread = Auth::user()->unreadNotifications()->take(10)->get();
+                    @endphp
+                    <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-dropdown-header">
+                            @if($unread->count() > 0)
+                                You have {{ $unread->count() }} new update(s)
+                            @else
+                                No new notifications
+                            @endif
+                        </div>
+
+                        @if($unread->count() > 0)
+                            @foreach($unread as $n)
+                                @php
+                                    $data = $n->data ?? [];
+                                    $status = strtolower((string) ($data['status'] ?? ''));
+                                    $message = (string) ($data['message'] ?? '');
+                                    $title = $status === 'approved'
+                                        ? 'Application Approved'
+                                        : ($status === 'pending' ? 'Application Under Review' : ($status === 'rejected' ? 'Application Rejected' : 'Update'));
+                                @endphp
+                                <div class="notif-item">
+                                    <div class="notif-item-title">{{ $title }}</div>
+                                    <div class="notif-item-msg">{{ $message }}</div>
+                                    <div class="notif-item-actions">
+                                        <form method="POST" action="{{ route('notifications.read', $n->id) }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-gray btn-sm" style="padding:6px 10px;">
+                                                Mark as read
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="notif-empty">You’re all caught up.</div>
+                        @endif
+                    </div>
                 </div>
             @endif
             <span style="font-size:13px;color:#6b7280;">{{ now()->format('M d, Y') }}</span>
@@ -291,5 +382,22 @@
 
 @yield('scripts')
 @stack('scripts')
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const bell = document.getElementById('notifBell');
+        const dropdown = document.getElementById('notifDropdown');
+        if (!bell || !dropdown) return;
+
+        bell.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('open');
+        });
+
+        document.addEventListener('click', function() {
+            dropdown.classList.remove('open');
+        });
+    });
+</script>
 </body>
 </html>

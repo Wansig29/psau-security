@@ -77,12 +77,20 @@ Route::middleware(['auth', 'verified', 'role:vehicle_user'])->prefix('user')->na
 
     // Live Location Tracking
     Route::post('/location', [\App\Http\Controllers\User\UserDashboardController::class, 'updateLocation'])->name('location.update');
+
+    // Update contact number (tap-to-call)
+    Route::post('/contact-number', [\App\Http\Controllers\User\UserDashboardController::class, 'updateContactNumber'])
+        ->name('contact-number.update');
 });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // User notifications
+    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])
+        ->name('notifications.read');
 });
 
 require __DIR__.'/auth.php';

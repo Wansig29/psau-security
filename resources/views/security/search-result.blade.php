@@ -73,16 +73,34 @@
                     <tr>
                         <th class="bg-light">Owner</th>
                         <td>
-                            <strong>{{ $vehicle->user->name }}</strong><br>
-                            <small class="text-muted">{{ $vehicle->user->email }}</small>
-                            @if(!empty($vehicle->user->contact_number))
-                                @php $phoneHref = preg_replace('/\s+/', '', $vehicle->user->contact_number); @endphp
-                                <div class="mt-1">
-                                    <a href="tel:{{ $phoneHref }}" class="text-primary font-weight-bold small" style="text-decoration:none;">
-                                        <i class="fas fa-phone-alt mr-1"></i>{{ $vehicle->user->contact_number }}
-                                    </a>
+                            <div class="d-flex align-items-start" style="gap:10px;">
+                                @if(!empty($vehicle->user->profile_photo_path))
+                                    <img src="{{ asset('storage/' . $vehicle->user->profile_photo_path) }}"
+                                         alt="Owner Photo"
+                                         style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid #e5e7eb;flex-shrink:0;">
+                                @else
+                                    <div class="bg-light border rounded-circle d-flex align-items-center justify-content-center"
+                                         style="width:40px;height:40px;flex-shrink:0;">
+                                        <i class="fas fa-user text-muted"></i>
+                                    </div>
+                                @endif
+
+                                <div>
+                                    <strong>{{ $vehicle->user->name }}</strong><br>
+                                    <small class="text-muted">{{ $vehicle->user->email }}</small>
+
+                                    @if(!empty($vehicle->user->contact_number))
+                                        @php $phoneHref = preg_replace('/\s+/', '', $vehicle->user->contact_number); @endphp
+                                        <div class="mt-1">
+                                            <a href="tel:{{ $phoneHref }}"
+                                               class="text-primary font-weight-bold small"
+                                               style="text-decoration:none;">
+                                                <i class="fas fa-phone-alt mr-1"></i>{{ $vehicle->user->contact_number }}
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
-                            @endif
+                            </div>
                         </td>
                     </tr>
                     <tr>

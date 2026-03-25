@@ -38,45 +38,6 @@
 </div>
 @endif
 
-{{-- ── Live Application Status Banner ────────────────────────────────── --}}
-@php
-    $latestRegistration = $registrations->sortByDesc('updated_at')->first();
-@endphp
-
-@if($latestRegistration)
-    @if(strtolower((string) $latestRegistration->status) === 'approved')
-        <div class="alert shadow-sm mb-4" style="background:#d4edda;border:2px solid #28a745;color:#155724;border-radius:10px;animation: fadeIn 0.5s">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-check-circle fa-3x mr-3"></i>
-                <div>
-                    <h5 class="font-weight-bold mb-1">✅ Application Approved!</h5>
-                    <p class="mb-0">Congratulations! Your sticker application for <strong>{{ $latestRegistration->vehicle->make }} {{ $latestRegistration->vehicle->model }} ({{ $latestRegistration->vehicle->plate_number }})</strong> is ready. Please proceed to the Security Office to claim your physical sticker.</p>
-                </div>
-            </div>
-        </div>
-    @elseif(strtolower((string) $latestRegistration->status) === 'pending')
-        <div class="alert shadow-sm mb-4" style="background:#fff3cd;border:2px solid #ffc107;color:#856404;border-radius:10px">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-clock fa-3x mr-3"></i>
-                <div>
-                    <h5 class="font-weight-bold mb-1">⏳ Under Review</h5>
-                    <p class="mb-0">Your application for <strong>{{ $latestRegistration->vehicle->make }} {{ $latestRegistration->vehicle->model }} ({{ $latestRegistration->vehicle->plate_number }})</strong> was submitted and is currently waiting for admin approval.</p>
-                </div>
-            </div>
-        </div>
-    @elseif(strtolower((string) $latestRegistration->status) === 'rejected')
-        <div class="alert shadow-sm mb-4" style="background:#f8d7da;border:2px solid #dc3545;color:#721c24;border-radius:10px">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-times-circle fa-3x mr-3"></i>
-                <div>
-                    <h5 class="font-weight-bold mb-1">❌ Application Rejected</h5>
-                    <p class="mb-0">Your application for <strong>{{ $latestRegistration->vehicle->make }} {{ $latestRegistration->vehicle->model }}</strong> requires attention. Reason: <em>{{ $latestRegistration->rejection_reason }}</em></p>
-                </div>
-            </div>
-        </div>
-    @endif
-@endif
-
 {{-- ═══════════════════════════════════════════════════════ --}}
 {{-- PROFILE HERO CARD                                       --}}
 {{-- ═══════════════════════════════════════════════════════ --}}
@@ -149,6 +110,33 @@
             <div style="color:#666;font-size:.87rem;margin-bottom:10px">
                 <i class="fas fa-envelope mr-1"></i>{{ $user->email }}
             </div>
+
+            <form method="POST" action="{{ route('user.contact-number.update') }}" class="mt-2">
+                @csrf
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">
+                    Contact Number
+                </label>
+                <div class="d-flex align-items-center" style="gap:10px;">
+                    <input type="tel"
+                           name="contact_number"
+                           value="{{ old('contact_number', $user->contact_number) }}"
+                           placeholder="e.g. +63XXXXXXXXXX"
+                           style="flex:1;border:1.5px solid #d1d5db;border-radius:8px;padding:9px 12px;font-size:13px;background:#fafafa;outline:none;"
+                    />
+                    <button type="submit"
+                            class="btn btn-primary btn-sm"
+                            style="padding:9px 14px;border-radius:10px;white-space:nowrap;">
+                        <i class="fas fa-save mr-1"></i>Update
+                    </button>
+                </div>
+                @error('contact_number')
+                    <div class="text-danger" style="font-size:12px;margin-top:6px;">{{ $message }}</div>
+                @enderror
+                <div style="font-size:11px;color:#9ca3af;margin-top:6px;">
+                    Used for security coordination (tap-to-call).
+                </div>
+            </form>
+
             <div class="badges d-flex flex-wrap" style="gap:6px;margin-bottom:12px">
                 <span class="badge badge-pill"
                       style="background:#d4edda;color:#155724;border:1px solid #c3e6cb;font-size:.76rem;padding:4px 10px">
@@ -477,22 +465,6 @@ if (navigator.geolocation && {{ Auth::check() ? 'true' : 'false' }}) {
     }, 10000); // Ping every 10 seconds
 }
 
-// ── Native Phone/Web Push Notification Engine ─────────────────
-document.addEventListener('DOMContentLoaded', function() {
-    if ("Notification" in window) {
-        if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-            Notification.requestPermission();
-        }
-        
-        @if(Auth::user() && Auth::user()->unreadNotifications->count() > 0)
-            if (Notification.permission === "granted") {
-                new Notification("PSAU Security Alert", {
-                    body: "You have {{ Auth::user()->unreadNotifications->count() }} new application update(s)!",
-                    icon: "https://upload.wikimedia.org/wikipedia/en/thumb/5/5f/Pampanga_State_Agricultural_University_logo.svg/150px-Pampanga_State_Agricultural_University_logo.svg.png"
-                });
-            }
-        @endif
-    }
-});
+// Notifications are shown via the bell button (unread count + dropdown).
 </script>
 @endsection
