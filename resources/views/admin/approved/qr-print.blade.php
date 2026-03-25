@@ -201,7 +201,8 @@
             position: relative;
         }
         .shape-circle .sticker-header {
-            padding: 10px 14px 8px;
+            padding: 28px 14px 8px;
+            justify-content: center;
         }
         .shape-circle .seal {
             width: 34px;
@@ -224,7 +225,7 @@
             padding: 6px;
         }
         .shape-circle .qr-frame svg {
-            max-width: 200px;
+            max-width: 170px;
         }
         .shape-circle .details-wrapper {
             display: flex;
