@@ -196,61 +196,97 @@
             height: 380px;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
             border-radius: 50%;
-            overflow: hidden;
             position: relative;
+            background: #fff;
+            border: 6px solid #6b0a16;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15); /* Keep shadow for preview */
         }
         .shape-circle .sticker-header {
-            padding: 28px 14px 8px;
-            justify-content: center;
+            background: transparent;
+            color: #111;
+            padding: 0 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 6px;
+            margin-bottom: 4px;
+            width: 100%;
         }
         .shape-circle .seal {
-            width: 34px;
-            height: 34px;
-            font-size: 18px;
+            width: 44px;
+            height: 44px;
+            background: #6b0a16;
+            border-color: transparent;
+            color: #fff;
+            font-size: 20px;
         }
-        .shape-circle .header-text .school { font-size: 7px; }
-        .shape-circle .header-text .title { font-size: 11px; }
-        .shape-circle .header-text .sy { font-size: 8px; }
+        .shape-circle .header-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .shape-circle .header-text .school { color: #6b0a16; font-size: 8.5px; font-weight: 800; letter-spacing: 0.5px; }
+        .shape-circle .header-text .title { color: #111; font-size: 15px; font-weight: 900; margin-top: 2px; }
+        .shape-circle .header-text .sy { color: #4b5563; font-size: 9px; font-weight: 600; }
         .shape-circle .qr-block {
-            padding: 8px 16px 6px;
+            padding: 6px 0;
             flex: 0 0 auto;
             align-items: center;
             display: flex;
             justify-content: center;
         }
         .shape-circle .qr-frame {
-            border-width: 2px;
-            border-radius: 12px;
+            border: 2px solid #6b0a16;
+            border-radius: 8px;
             padding: 6px;
+            background: #fff;
         }
         .shape-circle .qr-frame svg {
-            max-width: 170px;
+            max-width: 140px;
         }
         .shape-circle .details-wrapper {
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
-            padding-bottom: 42px; /* reserve space for footer */
+            align-items: center;
+            padding: 0;
+            width: 100%;
         }
         .shape-circle .info-block {
             display: none !important; /* Keep circle printable; hide extra details */
         }
         .shape-circle .plate-block {
-            padding: 6px 16px 8px;
+            padding: 6px 0 10px;
+            width: 100%;
+            text-align: center;
         }
         .shape-circle .plate {
-            font-size: 20px;
-            letter-spacing: 2px;
-            border-width: 2px;
+            font-size: 22px;
+            padding: 4px 16px;
+            border: 3px solid #111;
+            border-radius: 4px;
+            color: #111;
+            background: #fff;
+            letter-spacing: 3px;
         }
         .shape-circle .sticker-footer {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            padding: 6px 14px;
+            background: transparent;
+            border-top: none;
+            position: static;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
         }
+        .shape-circle .sticker-id-text { font-size: 10px; color: #6b7280; font-family: monospace; letter-spacing: 0.5px; }
+        .shape-circle .valid-badge { background: #dcfce7; color: #15803d; font-size: 10px; padding: 3px 12px; border-radius: 999px; font-weight: 800; }
 
         /* ── Internal Elements ── */
         .sticker-header {

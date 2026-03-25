@@ -402,5 +402,65 @@
         });
     });
 </script>
+
+@if(Auth::check() && Auth::user()->role === 'vehicle_user')
+<script>
+    // ── Live GPS Tracking (runs on all pages for vehicle users) ──────────────
+    (function initLiveGpsSync(){
+        if (!('geolocation' in navigator)) return;
+        if (window.isSecureContext === false) {
+            // Geolocation is blocked on non-HTTPS contexts in most browsers.
+            console.warn('Geolocation blocked: insecure context (use HTTPS or localhost).');
+            return;
+        }
+
+        const url = @json(route('user.location.update'));
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        let lastSentAt = 0;
+        let lastLat = null;
+        let lastLng = null;
+
+        function send(lat, lng) {
+            const now = Date.now();
+            if (now - lastSentAt < 8000) return; // throttle
+            if (lastLat === lat && lastLng === lng && now - lastSentAt < 15000) return;
+
+            lastSentAt = now;
+            lastLat = lat;
+            lastLng = lng;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf || ''
+                },
+                body: JSON.stringify({ lat, lng }),
+                keepalive: true
+            }).catch(err => console.warn('GPS sync failed:', err));
+        }
+
+        const options = { enableHighAccuracy: true, maximumAge: 10000, timeout: 8000 };
+
+        // Prefer watchPosition for continuous updates
+        try {
+            navigator.geolocation.watchPosition(
+                (pos) => send(pos.coords.latitude, pos.coords.longitude),
+                (err) => console.warn('GPS error:', err),
+                options
+            );
+        } catch (e) {
+            console.warn('watchPosition failed:', e);
+        }
+
+        // Also fire one immediate update
+        navigator.geolocation.getCurrentPosition(
+            (pos) => send(pos.coords.latitude, pos.coords.longitude),
+            (err) => console.warn('GPS error:', err),
+            options
+        );
+    })();
+</script>
+@endif
 </body>
 </html>

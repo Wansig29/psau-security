@@ -416,28 +416,7 @@ document.querySelectorAll('#userTabs .nav-link').forEach(function(tab) {
     });
 });
 
-// ── Live GPS Tracking ─────────────────────────────────────────
-if (navigator.geolocation && {{ Auth::check() ? 'true' : 'false' }}) {
-    setInterval(() => {
-        navigator.geolocation.getCurrentPosition(position => {
-            fetch('{{ route("user.location.update") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                })
-            }).catch(console.error);
-        }, err => console.warn('GPS Error:', err), {
-            enableHighAccuracy: true,
-            maximumAge: 10000,
-            timeout: 5000
-        });
-    }, 10000); // Ping every 10 seconds
-}
+// Live GPS Tracking runs globally via the shared layout.
 
 // Notifications are shown via the bell button (unread count + dropdown).
 </script>
