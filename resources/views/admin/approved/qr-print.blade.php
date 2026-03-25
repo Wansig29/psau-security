@@ -135,6 +135,8 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.15);
             border: 1px solid #e5e7eb;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scale(var(--sticker-scale, 1));
+            transform-origin: top center;
         }
 
         /* Portrait (Base styling) */
@@ -386,6 +388,28 @@
                     <i class="fas fa-circle"></i> Circle
                 </button>
             </div>
+
+            <div style="width:100%;max-width:420px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <div style="font-size:12px;font-weight:800;color:#111827;">
+                        Sticker size
+                    </div>
+                    <div style="font-size:12px;color:#6b7280;">
+                        <span id="sizeLabel">100%</span>
+                    </div>
+                </div>
+                <input id="sizeRange"
+                       type="range"
+                       min="70"
+                       max="140"
+                       value="100"
+                       step="5"
+                       style="width:100%;accent-color:#6b0a16;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-top:4px;">
+                    <span>Smaller</span>
+                    <span>Larger</span>
+                </div>
+            </div>
             
             <div class="actions">
                 <a href="{{ route('admin.approved.index') }}" class="btn-back">
@@ -479,6 +503,24 @@
             var sticker = document.getElementById('print-sticker');
             sticker.className = 'sticker shape-' + shape;
         }
+
+        // Size Slider (scales on screen and print)
+        (function initStickerSizer(){
+            var slider = document.getElementById('sizeRange');
+            var label = document.getElementById('sizeLabel');
+            var sticker = document.getElementById('print-sticker');
+            if (!slider || !label || !sticker) return;
+
+            function apply() {
+                var pct = parseInt(slider.value, 10) || 100;
+                var scale = Math.max(0.5, Math.min(2, pct / 100));
+                sticker.style.setProperty('--sticker-scale', String(scale));
+                label.textContent = pct + '%';
+            }
+
+            slider.addEventListener('input', apply);
+            apply();
+        })();
     </script>
 </body>
 </html>
