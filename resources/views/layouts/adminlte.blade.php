@@ -414,7 +414,7 @@
             return;
         }
 
-        const url = @json(route('user.location.update'));
+        const url = '/user/location'; // Enforce relative path to avoid Mixed Content HTTP/HTTPS issues on proxy hosts
         const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         let lastSentAt = 0;
         let lastLat = null;
@@ -433,9 +433,10 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': csrf || ''
                 },
-                body: JSON.stringify({ lat, lng }),
+                body: JSON.stringify({ lat: lat, lng: lng }),
                 keepalive: true
             }).catch(err => console.warn('GPS sync failed:', err));
         }

@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchLocation() {
-        fetch(`/security/user-location/${userId}`)
+        fetch(`/security/user-location/${userId}?t=${Date.now()}`)
             .then(res => res.json())
             .then(data => {
                 if (data.lat && data.lng) {
