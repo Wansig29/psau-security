@@ -291,27 +291,51 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function updateRoute() {
-        if (!map || !guardLat || !guardLng || !targetLat || !targetLng) return;
+        if (!map || !targetLat || !targetLng) return;
+        
+        if (!guardLat || !guardLng) {
+            console.warn("Officer location not available yet. Cannot draw route.");
+            return;
+        }
 
-        if (routingControl) {
-            routingControl.setWaypoints([
-                L.latLng(guardLat, guardLng),
-                L.latLng(targetLat, targetLng)
-            ]);
-        } else {
-            routingControl = L.Routing.control({
-                waypoints: [
+        try {
+            if (routingControl) {
+                routingControl.setWaypoints([
                     L.latLng(guardLat, guardLng),
                     L.latLng(targetLat, targetLng)
-                ],
-                routeWhileDragging: false,
-                addWaypoints: false,
-                show: false, // Hide turn-by-turn text box
-                lineOptions: {
-                    styles: [{color: '#007bff', opacity: 0.8, weight: 6}] // Waze-style thick blue line
-                },
-                createMarker: function() { return null; } // Prevent default markers since we use custom
-            }).addTo(map);
+                ]);
+            } else if (typeof L !== 'undefined' && L.Routing) {
+                routingControl = L.Routing.control({
+                    waypoints: [
+                        L.latLng(guardLat, guardLng),
+                        L.latLng(targetLat, targetLng)
+                    ],
+                    routeWhileDragging: false,
+                    addWaypoints: false,
+                    show: false, // Hide turn-by-turn text box
+                    lineOptions: {
+                        styles: [{color: '#007bff', opacity: 0.8, weight: 6}] // Waze-style thick blue line
+                    },
+                    createMarker: function() { return null; } // Prevent default markers since we use custom
+                }).addTo(map);
+            } else {
+                // Fallback: draw a direct dashed line if routing module failed to load
+                if (!window.fallbackRoute) {
+                    window.fallbackRoute = L.polyline([[guardLat, guardLng], [targetLat, targetLng]], {
+                        color: '#007bff', weight: 5, dashArray: '10, 10', opacity: 0.8
+                    }).addTo(map);
+                } else {
+                    window.fallbackRoute.setLatLngs([[guardLat, guardLng], [targetLat, targetLng]]);
+                }
+            }
+        } catch (err) {
+            console.error("Routing error:", err);
+            // Draw fallback if crashed
+            if (!window.fallbackRoute) {
+                window.fallbackRoute = L.polyline([[guardLat, guardLng], [targetLat, targetLng]], {color: '#007bff', weight: 5, dashArray: '10, 10'}).addTo(map);
+            } else {
+                window.fallbackRoute.setLatLngs([[guardLat, guardLng], [targetLat, targetLng]]);
+            }
         }
     }
 
@@ -331,7 +355,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 updateRoute();
             },
-            (err) => console.log("Guard GPS: ", err),
+            (err) => {
+                console.warn("Guard GPS Denied or Unavailable: ", err);
+                if (err.code === 1) {
+                    alert("⚠️ Security Location Access Denied.\n\nPlease allow location access in your browser so the map can draw a route from your location to the vehicle.");
+                }
+            },
             { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
         );
     }
@@ -395,9 +424,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(err => {
-                console.error('Error fetching location', err);
-                statusBadge.className = 'badge badge-danger';
-                statusBadge.textContent = 'Error fetching data';
+                console.error('Network or Parse Error fetching location:', err);
+                // Only overwrite UI if map hasn't loaded (avoid destroying a perfectly good UI because of a minor interval glitch)
+                if (!map) {
+                    statusBadge.className = 'badge badge-danger';
+                    statusBadge.textContent = 'Error fetching data';
+                }
             });
     }
 
