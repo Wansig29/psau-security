@@ -66,6 +66,7 @@ Route::middleware(['auth', 'verified', 'role:security'])->prefix('security')->na
 // Regular User Routes
 Route::middleware(['auth', 'verified', 'role:vehicle_user'])->prefix('user')->name('user.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\User\UserDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/info', [\App\Http\Controllers\User\UserDashboardController::class, 'info'])->name('info');
 
     // Vehicle Registration routes
     Route::get('/registration/create', [\App\Http\Controllers\RegistrationController::class, 'create'])->name('registration.create');

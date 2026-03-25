@@ -18,6 +18,12 @@ class UserDashboardController extends Controller
         return view('user.dashboard', compact('user', 'vehicles', 'registrations', 'violations'));
     }
 
+    public function info()
+    {
+        $user = auth()->user();
+        return view('user.info', compact('user'));
+    }
+
     public function updateLocation(Request $request)
     {
         $request->validate([

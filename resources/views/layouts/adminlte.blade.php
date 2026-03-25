@@ -256,6 +256,9 @@
         <a class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
             <span class="nav-icon">🏠</span> My Dashboard
         </a>
+        <a class="nav-item {{ request()->routeIs('user.info') ? 'active' : '' }}" href="{{ route('user.info') }}">
+            <span class="nav-icon">🛠️</span> Update Info
+        </a>
         <a class="nav-item {{ request()->routeIs('user.registration.*') ? 'active' : '' }}" href="{{ route('user.registration.create') }}">
             <span class="nav-icon">🚗</span> Register Vehicle
         </a>
