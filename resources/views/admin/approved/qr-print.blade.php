@@ -202,20 +202,10 @@
             position: relative;
             background: #fff;
             border: 8px solid #7b1113;
-            box-shadow: inset 0 0 0 4px #eab308, 0 8px 32px rgba(0,0,0,0.15);
-            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15); /* Removed yellow inner ring */
+            padding: 24px; /* More padding to relieve stuffing */
             box-sizing: border-box;
             overflow: hidden;
-        }
-        .shape-circle .watermark {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 260px;
-            color: #7b1113;
-            opacity: 0.04;
-            z-index: 0;
-            pointer-events: none;
         }
         .shape-circle .sticker-content {
             z-index: 1;
@@ -237,35 +227,34 @@
             width: 100%;
         }
         .shape-circle .seal {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             background: #7b1113;
-            border: 2px solid #eab308;
+            border: 2px solid #fff;
             color: #fff;
-            font-size: 22px;
+            font-size: 20px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
         .shape-circle .header-text {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        .shape-circle .header-text .school { color: #7b1113; font-size: 9.5px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
-        .shape-circle .header-text .title { color: #111; font-size: 16px; font-weight: 900; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .shape-circle .header-text .school { color: #7b1113; font-size: 9px; font-weight: 800; letter-spacing: 0.2px; text-transform: uppercase; margin-bottom: 2px; }
+        .shape-circle .header-text .title { color: #111; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2px; }
         .shape-circle .header-text .sy { 
             background: #7b1113; 
             color: #fff; 
-            font-size: 10px; 
-            font-weight: 700; 
-            padding: 2px 14px; 
+            font-size: 9.5px; 
+            font-weight: 600; 
+            padding: 3px 12px; 
             border-radius: 12px; 
-            margin-top: 6px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 5px; 
         }
         .shape-circle .qr-block {
             padding: 8px 0;
@@ -438,7 +427,6 @@
                 border-radius: 50% !important;
                 width: 90mm;
                 height: 90mm;
-                box-shadow: inset 0 0 0 4px #eab308 !important;
                 border: 8px solid #7b1113 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -512,7 +500,6 @@
     <!-- QR Sticker -->
     <div class="sticker-wrap">
         <div class="sticker shape-portrait" id="print-sticker">
-            <i class="fas fa-shield-alt watermark"></i>
             <div class="sticker-content">
                 <!-- Header -->
                 <div class="sticker-header">
