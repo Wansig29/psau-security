@@ -111,32 +111,6 @@
                 <i class="fas fa-envelope mr-1"></i>{{ $user->email }}
             </div>
 
-            <form method="POST" action="{{ route('user.contact-number.update') }}" class="mt-2">
-                @csrf
-                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">
-                    Contact Number
-                </label>
-                <div class="d-flex align-items-center" style="gap:10px;">
-                    <input type="tel"
-                           name="contact_number"
-                           value="{{ old('contact_number', $user->contact_number) }}"
-                           placeholder="e.g. +63XXXXXXXXXX"
-                           style="flex:1;border:1.5px solid #d1d5db;border-radius:8px;padding:9px 12px;font-size:13px;background:#fafafa;outline:none;"
-                    />
-                    <button type="submit"
-                            class="btn btn-primary btn-sm"
-                            style="padding:9px 14px;border-radius:10px;white-space:nowrap;">
-                        <i class="fas fa-save mr-1"></i>Update
-                    </button>
-                </div>
-                @error('contact_number')
-                    <div class="text-danger" style="font-size:12px;margin-top:6px;">{{ $message }}</div>
-                @enderror
-                <div style="font-size:11px;color:#9ca3af;margin-top:6px;">
-                    Used for security coordination (tap-to-call).
-                </div>
-            </form>
-
             <div class="badges d-flex flex-wrap" style="gap:6px;margin-bottom:12px">
                 <span class="badge badge-pill"
                       style="background:#d4edda;color:#155724;border:1px solid #c3e6cb;font-size:.76rem;padding:4px 10px">
