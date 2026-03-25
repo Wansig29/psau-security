@@ -122,6 +122,10 @@
         .btn-back:hover { background: #f9fafb; }
 
         /* ── Sticker Frame / Shapes ── */
+        .sticker-content {
+            display: contents;
+        }
+
         .sticker-wrap {
             display: flex;
             justify-content: center;
