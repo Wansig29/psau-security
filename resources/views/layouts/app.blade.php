@@ -100,4 +100,32 @@
             </main>
         </div>
     </body>
+
+    {{-- Fix 6: Idle Session Timeout (15 minutes) --}}
+    @auth
+    <script>
+        (function () {
+            const IDLE_MS = 15 * 60 * 1000; // 15 minutes
+            const CSRF    = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            let idleTimer;
+
+            function resetIdle() {
+                clearTimeout(idleTimer);
+                idleTimer = setTimeout(function () {
+                    fetch('{{ route('logout') }}', {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': CSRF, 'Content-Type': 'application/json' }
+                    }).finally(function () {
+                        window.location.href = '{{ route('login') }}';
+                    });
+                }, IDLE_MS);
+            }
+
+            ['mousemove','mousedown','keydown','touchstart','scroll','click']
+                .forEach(evt => document.addEventListener(evt, resetIdle, true));
+
+            resetIdle();
+        })();
+    </script>
+    @endauth
 </html>

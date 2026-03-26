@@ -337,6 +337,36 @@
         document.querySelector('.sidebar').classList.toggle('show');
         document.querySelector('.sidebar-overlay').classList.toggle('show');
     }
+
+    /* Fix 6: Idle Session Timeout (15 minutes) */
+    (function () {
+        const IDLE_MS = 15 * 60 * 1000;
+        const CSRF    = document.cookie.match(/XSRF-TOKEN=([^;]+)/) ?
+                        decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)[1]) : '';
+        let idleTimer;
+
+        function resetIdle() {
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(function () {
+                // Use a hidden form to POST logout (avoids CSRF issues with fetch on some setups)
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ route('logout') }}';
+                const csrf = document.createElement('input');
+                csrf.type  = 'hidden';
+                csrf.name  = '_token';
+                csrf.value = '{{ csrf_token() }}';
+                form.appendChild(csrf);
+                document.body.appendChild(form);
+                form.submit();
+            }, IDLE_MS);
+        }
+
+        ['mousemove','mousedown','keydown','touchstart','scroll','click']
+            .forEach(evt => document.addEventListener(evt, resetIdle, true));
+
+        resetIdle();
+    })();
 </script>
 @stack('scripts')
 </body>

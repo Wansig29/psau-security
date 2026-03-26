@@ -173,10 +173,13 @@
                                    id="contact_number"
                                    name="contact_number"
                                    value="{{ old('contact_number', auth()->user()->contact_number) }}"
-                                   placeholder="e.g. +63XXXXXXXXXX"
+                                   placeholder="09XXXXXXXXX or +639XXXXXXXXX"
+                                   maxlength="13"
+                                   pattern="(09\d{9}|\+639\d{9})"
+                                   oninput="enforcePHPhone(this)"
                                    autocomplete="tel" />
                             @error('contact_number')<div class="field-error">{{ $message }}</div>@enderror
-                            <div class="field-hint">Used for security coordination (tap-to-call).</div>
+                            <div class="field-hint">Format: 09XXXXXXXXX (11 digits) or +639XXXXXXXXX. Used for security coordination.</div>
                         </div>
                     </div>
                 </div>
@@ -278,6 +281,8 @@
     </div>
 
     <script>
+        /* ── Fix 5: File-size guard (max 5 MB) ── */
+        const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
         const docs = ['or', 'cr', 'cor', 'license', 'school_id'];
 
         docs.forEach(key => {
@@ -287,9 +292,29 @@
             const img   = document.getElementById('img-' + key);
             const name  = document.getElementById('name-' + key);
 
+            // Remove any previous size-error element
+            function clearSizeError() {
+                const old = card.querySelector('.size-error');
+                if (old) old.remove();
+            }
+
             input.addEventListener('change', function () {
+                clearSizeError();
                 const file = this.files[0];
                 if (!file) return;
+
+                // ⚠️ Block files larger than 5 MB
+                if (file.size > MAX_BYTES) {
+                    this.value = '';
+                    card.classList.remove('has-file');
+                    wrap.style.display = 'none';
+                    const err = document.createElement('div');
+                    err.className = 'field-error size-error';
+                    err.style.marginTop = '8px';
+                    err.textContent = '⚠️ File is too large. Maximum allowed size is 5 MB. Please choose a smaller file.';
+                    card.appendChild(err);
+                    return;
+                }
 
                 // Show preview
                 const reader = new FileReader();
@@ -297,10 +322,41 @@
                 reader.readAsDataURL(file);
 
                 wrap.style.display = 'block';
-                name.textContent = file.name;
+                name.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
                 card.classList.add('has-file');
             });
         });
+
+        /* ── Fix 1: Philippine phone enforcement ── */
+        function enforcePHPhone(input) {
+            let v = input.value.replace(/(?!^\+)[^\d]/g, '');
+            input.value = v.startsWith('+') ? v.slice(0, 13) : v.slice(0, 11);
+        }
+
+        /* ── Fix 6: Idle Session Timeout (15 minutes) ── */
+        (function () {
+            const IDLE_MS   = 15 * 60 * 1000; // 15 minutes
+            const CSRF      = document.querySelector('meta[name="csrf-token"]') &&
+                              document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            let idleTimer;
+
+            function resetIdle() {
+                clearTimeout(idleTimer);
+                idleTimer = setTimeout(function () {
+                    fetch('{{ route('logout') }}', {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': CSRF, 'Content-Type': 'application/json' }
+                    }).finally(function () {
+                        window.location.href = '{{ route('login') }}';
+                    });
+                }, IDLE_MS);
+            }
+
+            ['mousemove','mousedown','keydown','touchstart','scroll','click']
+                .forEach(evt => document.addEventListener(evt, resetIdle, true));
+
+            resetIdle(); // kick off on page load
+        })();
     </script>
 
 </body>
