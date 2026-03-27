@@ -28,14 +28,21 @@
             --maroon: #7b1113; --maroon-dark: #5a0d0f; --maroon-light: #9b1224;
             --sidebar-w: 240px;
         }
-        body { font-family: 'Inter', sans-serif; background: #f0f2f5; display: flex; overflow: hidden; height: 100vh; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; display: flex; overflow: hidden; height: 100dvh; }
 
         /* ── Sidebar ── */
         .sidebar {
             width: var(--sidebar-w); background: var(--maroon-dark);
             display: flex; flex-direction: column; position: fixed;
-            top: 0; left: 0; height: 100vh; z-index: 200;
+            top: 0; left: 0; height: 100dvh; z-index: 200;
             box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .sidebar-nav {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
         }
         .sidebar-brand {
             padding: 20px 20px 16px;
@@ -59,7 +66,12 @@
         .nav-item.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 600; }
         .nav-item .nav-icon { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
         .sidebar-footer {
-            margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,0.08);
+            margin-top: auto;
+            flex-shrink: 0;
+            padding: 16px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom));
+            border-top: 1px solid rgba(255,255,255,0.08);
+            background: var(--maroon-dark);
         }
         .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .user-avatar {
@@ -199,7 +211,13 @@
         @media (max-width: 768px) {
             .menu-toggle { display: flex; }
             .sidebar-close { display: flex; }
-            .sidebar { transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); max-width: 80vw; }
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                max-width: 80vw;
+                width: min(var(--sidebar-w), 80vw);
+                height: 100dvh;
+            }
             .main { margin-left: 0; }
             .content { padding: 14px; }
             .topbar { padding: 0 14px; }
@@ -246,23 +264,25 @@
         </button>
     </div>
 
-    @if(Auth::user() && Auth::user()->role === 'security')
-        <div class="sidebar-section">Security Tasks</div>
-        <a class="nav-item {{ request()->routeIs('security.dashboard') ? 'active' : '' }}" href="{{ route('security.dashboard') }}">
-            <span class="nav-icon">🛡️</span> Enforcement Panel
-        </a>
-    @else
-        <div class="sidebar-section">My Account</div>
-        <a class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-            <span class="nav-icon">🏠</span> My Dashboard
-        </a>
-        <a class="nav-item {{ request()->routeIs('user.info') ? 'active' : '' }}" href="{{ route('user.info') }}">
-            <span class="nav-icon">🛠️</span> Update Info
-        </a>
-        <a class="nav-item {{ request()->routeIs('user.registration.*') ? 'active' : '' }}" href="{{ route('user.registration.create') }}">
-            <span class="nav-icon">🚗</span> Register Vehicle
-        </a>
-    @endif
+    <div class="sidebar-nav">
+        @if(Auth::user() && Auth::user()->role === 'security')
+            <div class="sidebar-section">Security Tasks</div>
+            <a class="nav-item {{ request()->routeIs('security.dashboard') ? 'active' : '' }}" href="{{ route('security.dashboard') }}">
+                <span class="nav-icon">🛡️</span> Enforcement Panel
+            </a>
+        @else
+            <div class="sidebar-section">My Account</div>
+            <a class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                <span class="nav-icon">🏠</span> My Dashboard
+            </a>
+            <a class="nav-item {{ request()->routeIs('user.info') ? 'active' : '' }}" href="{{ route('user.info') }}">
+                <span class="nav-icon">🛠️</span> Update Info
+            </a>
+            <a class="nav-item {{ request()->routeIs('user.registration.*') ? 'active' : '' }}" href="{{ route('user.registration.create') }}">
+                <span class="nav-icon">🚗</span> Register Vehicle
+            </a>
+        @endif
+    </div>
 
     <div class="sidebar-footer">
         <div class="user-info">

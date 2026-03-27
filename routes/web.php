@@ -79,9 +79,9 @@ Route::middleware(['auth', 'verified', 'role:vehicle_user'])->prefix('user')->na
     // Live Location Tracking
     Route::post('/location', [\App\Http\Controllers\User\UserDashboardController::class, 'updateLocation'])->name('location.update');
 
-    // Update contact number (tap-to-call)
-    Route::post('/contact-number', [\App\Http\Controllers\User\UserDashboardController::class, 'updateContactNumber'])
-        ->name('contact-number.update');
+    // Update profile details
+    Route::post('/profile/update', [\App\Http\Controllers\User\UserProfileController::class, 'update'])
+        ->name('profile.update');
 });
 
 Route::middleware('auth')->group(function () {

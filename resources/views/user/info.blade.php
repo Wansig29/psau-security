@@ -28,8 +28,42 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('user.contact-number.update') }}">
+            <form method="POST" action="{{ route('user.profile.update') }}">
                 @csrf
+
+                <div class="form-group">
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">
+                        Full Name
+                    </label>
+                    <input type="text"
+                           name="name"
+                           value="{{ old('name', $user->name) }}"
+                           autocomplete="name"
+                           class="form-control"
+                           style="max-width:420px;"
+                           required
+                    />
+                    @error('name')
+                        <div class="text-danger" style="font-size:12px;margin-top:6px;">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">
+                        Email Address
+                    </label>
+                    <input type="email"
+                           name="email"
+                           value="{{ old('email', $user->email) }}"
+                           autocomplete="email"
+                           class="form-control"
+                           style="max-width:420px;"
+                           required
+                    />
+                    @error('email')
+                        <div class="text-danger" style="font-size:12px;margin-top:6px;">{{ $message }}</div>
+                    @enderror
+                </div>
 
                 <div class="form-group">
                     <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">
@@ -50,6 +84,78 @@
                     <div style="font-size:11px;color:#9ca3af;margin-top:6px;">
                         Used for security coordination (tap-to-call).
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">
+                        Affiliation
+                    </label>
+                    <input type="text"
+                           name="affiliation"
+                           value="{{ old('affiliation', $user->affiliation) }}"
+                           placeholder="e.g. Student, Faculty, Staff"
+                           class="form-control"
+                           style="max-width:420px;"
+                    />
+                    @error('affiliation')
+                        <div class="text-danger" style="font-size:12px;margin-top:6px;">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">
+                        Role
+                    </label>
+                    <input type="text"
+                           value="{{ str_replace('_', ' ', ucfirst($user->role)) }}"
+                           class="form-control"
+                           style="max-width:420px;background:#f9fafb;"
+                           disabled
+                    />
+                </div>
+
+                <hr style="margin: 20px 0;">
+
+                <div class="form-group">
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">
+                        Current Password (required to change password)
+                    </label>
+                    <input type="password"
+                           name="current_password"
+                           autocomplete="current-password"
+                           class="form-control"
+                           style="max-width:420px;"
+                    />
+                    @error('current_password')
+                        <div class="text-danger" style="font-size:12px;margin-top:6px;">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">
+                        New Password
+                    </label>
+                    <input type="password"
+                           name="password"
+                           autocomplete="new-password"
+                           class="form-control"
+                           style="max-width:420px;"
+                    />
+                    @error('password')
+                        <div class="text-danger" style="font-size:12px;margin-top:6px;">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">
+                        Confirm New Password
+                    </label>
+                    <input type="password"
+                           name="password_confirmation"
+                           autocomplete="new-password"
+                           class="form-control"
+                           style="max-width:420px;"
+                    />
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="padding:9px 16px;">

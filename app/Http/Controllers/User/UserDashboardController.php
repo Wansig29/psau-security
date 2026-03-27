@@ -41,16 +41,4 @@ class UserDashboardController extends Controller
         return response()->json(['status' => 'success']);
     }
 
-    public function updateContactNumber(Request $request)
-    {
-        $request->validate([
-            'contact_number' => ['nullable', 'string', 'max:50'],
-        ]);
-
-        $request->user()->update([
-            'contact_number' => $request->input('contact_number'),
-        ]);
-
-        return back()->with('status', 'Contact number updated.');
-    }
 }

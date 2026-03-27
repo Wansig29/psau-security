@@ -5,9 +5,43 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class UserProfileController extends Controller
 {
+    public function update(Request $request)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($request->user()->id),
+            ],
+            'contact_number' => ['nullable', 'string', 'max:50'],
+            'affiliation' => ['nullable', 'string', 'max:100'],
+            'current_password' => ['nullable', 'required_with:password', 'current_password'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $payload = [
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+            'contact_number' => $request->input('contact_number'),
+            'affiliation' => $request->input('affiliation'),
+        ];
+
+        if ($request->filled('password')) {
+            $payload['password'] = $request->input('password');
+        }
+
+        $request->user()->update($payload);
+
+        return back()->with('status', 'Profile information updated.');
+    }
+
     /**
      * Upload and auto-compress profile photo to ≤300KB using PHP GD.
      */
