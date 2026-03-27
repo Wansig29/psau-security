@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Registration;
 use App\Models\PickupSchedule;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AdminApprovedRegistrationController extends Controller
@@ -19,8 +21,21 @@ class AdminApprovedRegistrationController extends Controller
             ->whereRaw('LOWER(status) = ?', ['approved'])
             ->orderBy('approved_at', 'desc')
             ->paginate(15);
-            
-        return view('admin.approved.index', compact('approvedRegistrations'));
+
+        $autoSuggestions = [
+            'day_after_tomorrow' => $this->nextBusinessSlot(
+                Carbon::today()->addDays(2),
+                8,
+                0
+            ),
+            'next_week' => $this->nextBusinessSlot(
+                Carbon::today()->addWeek(),
+                8,
+                0
+            ),
+        ];
+
+        return view('admin.approved.index', compact('approvedRegistrations', 'autoSuggestions'));
     }
 
     /**
@@ -32,6 +47,9 @@ class AdminApprovedRegistrationController extends Controller
             return redirect()->route('admin.approved.index')
                 ->with('error', 'No QR sticker assigned or this registration is not yet approved.');
         }
+
+        $registration->increment('qr_print_count');
+        $registration->update(['last_qr_printed_at' => now()]);
 
         // URL that the QR code will encode (public scan profile with sticker ID)
         $url = route('scan.show', $registration->qr_sticker_id);
@@ -48,16 +66,37 @@ class AdminApprovedRegistrationController extends Controller
     public function schedulePickup(Request $request, Registration $registration)
     {
         $request->validate([
-            'pickup_date'  => 'required|date|after_or_equal:today',
-            'pickup_time'  => 'required|date_format:H:i',
+            'auto_schedule_option' => 'nullable|in:day_after_tomorrow,next_week',
+            'pickup_date'  => 'nullable|date|after_or_equal:today',
+            'pickup_time'  => 'nullable|date_format:H:i',
             'location'     => 'required|string|max:255',
         ]);
+
+        $autoOption = $request->input('auto_schedule_option');
+        $manualDate = $request->input('pickup_date');
+        $manualTime = $request->input('pickup_time');
+
+        if (!$autoOption && (!$manualDate || !$manualTime)) {
+            throw ValidationException::withMessages([
+                'pickup_date' => 'Pick-up date and time are required.',
+            ]);
+        }
+
+        if ($autoOption) {
+            $baseDate = $autoOption === 'next_week'
+                ? Carbon::today()->addWeek()
+                : Carbon::today()->addDays(2);
+            $scheduledAt = $this->nextBusinessSlot($baseDate, 8, 0);
+        } else {
+            $scheduledAt = Carbon::parse($manualDate . ' ' . $manualTime);
+            $this->assertBusinessWindow($scheduledAt);
+        }
         
         $schedule = PickupSchedule::updateOrCreate(
             ['registration_id' => $registration->id],
             [
-                'pickup_date'  => $request->pickup_date,
-                'pickup_time'  => $request->pickup_time,
+                'pickup_date'  => $scheduledAt->toDateString(),
+                'pickup_time'  => $scheduledAt->format('H:i'),
                 'location'     => $request->location,
                 'is_completed' => false,
             ]
@@ -68,6 +107,37 @@ class AdminApprovedRegistrationController extends Controller
         }
         
         return back()->with('success', 'Pick-up schedule saved successfully and user notified.');
+    }
+
+    private function nextBusinessSlot(Carbon $start, int $hour = 8, int $minute = 0): Carbon
+    {
+        $candidate = $start->copy()->setTime($hour, $minute);
+        while (!$this->isBusinessDay($candidate)) {
+            $candidate->addDay()->setTime($hour, $minute);
+        }
+        return $candidate;
+    }
+
+    private function assertBusinessWindow(Carbon $dateTime): void
+    {
+        if (!$this->isBusinessDay($dateTime)) {
+            throw ValidationException::withMessages([
+                'pickup_date' => 'Pick-up is only allowed Monday to Thursday.',
+            ]);
+        }
+
+        $time = $dateTime->format('H:i');
+        if ($time < '08:00' || $time > '16:00') {
+            throw ValidationException::withMessages([
+                'pickup_time' => 'Pick-up time must be between 8:00 AM and 4:00 PM.',
+            ]);
+        }
+    }
+
+    private function isBusinessDay(Carbon $date): bool
+    {
+        // ISO-8601: Monday=1 ... Sunday=7
+        return $date->dayOfWeekIso >= 1 && $date->dayOfWeekIso <= 4;
     }
     
     /**

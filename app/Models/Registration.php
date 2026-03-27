@@ -19,11 +19,14 @@ class Registration extends Model
         'rejected_at',
         'rejected_by',
         'rejection_reason',
+        'qr_print_count',
+        'last_qr_printed_at',
     ];
 
     protected $casts = [
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'last_qr_printed_at' => 'datetime',
     ];
 
     public function user()

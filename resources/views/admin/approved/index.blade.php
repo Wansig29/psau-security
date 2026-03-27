@@ -56,6 +56,16 @@
                                                 <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg> 
                                                 Print QR
                                             </a>
+                                            <div style="margin-top:6px;font-size:11px;color:#4b5563;line-height:1.35">
+                                                @if(($reg->qr_print_count ?? 0) > 0)
+                                                    <span style="color:#166534;font-weight:600;">Printed {{ $reg->qr_print_count }} time{{ $reg->qr_print_count > 1 ? 's' : '' }}</span>
+                                                    @if($reg->last_qr_printed_at)
+                                                        <div style="color:#6b7280;">Last print: {{ $reg->last_qr_printed_at->format('M d, Y g:i A') }}</div>
+                                                    @endif
+                                                @else
+                                                    <span style="color:#9a3412;">Not printed yet</span>
+                                                @endif
+                                            </div>
                                         @else
                                             <span style="font-size:11px;color:#9ca3af;font-style:italic">No QR assigned</span>
                                         @endif
@@ -80,6 +90,28 @@
                                                 <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                                 {{ $reg->pickupSchedule ? 'Reschedule' : 'Schedule Pick-up' }}
                                             </button>
+                                            <form method="POST" action="{{ route('admin.approved.schedule', $reg->id) }}">
+                                                @csrf
+                                                <input type="hidden" name="auto_schedule_option" value="day_after_tomorrow">
+                                                <input type="hidden" name="location" value="{{ $reg->pickupSchedule?->location ?? 'Security Office' }}">
+                                                <button type="submit" class="btn btn-gray btn-sm" style="width:100%">
+                                                    Auto: Day After Tomorrow
+                                                </button>
+                                                <div style="font-size:10px;color:#6b7280;margin-top:2px;">
+                                                    {{ $autoSuggestions['day_after_tomorrow']->format('M d, Y (D) · g:i A') }}
+                                                </div>
+                                            </form>
+                                            <form method="POST" action="{{ route('admin.approved.schedule', $reg->id) }}">
+                                                @csrf
+                                                <input type="hidden" name="auto_schedule_option" value="next_week">
+                                                <input type="hidden" name="location" value="{{ $reg->pickupSchedule?->location ?? 'Security Office' }}">
+                                                <button type="submit" class="btn btn-gray btn-sm" style="width:100%">
+                                                    Auto: Next Week
+                                                </button>
+                                                <div style="font-size:10px;color:#6b7280;margin-top:2px;">
+                                                    {{ $autoSuggestions['next_week']->format('M d, Y (D) · g:i A') }}
+                                                </div>
+                                            </form>
                                             @if($reg->pickupSchedule && !$reg->pickupSchedule->is_completed)
                                                 <form method="POST" action="{{ route('admin.approved.claim', $reg->id) }}">
                                                     @csrf
@@ -112,6 +144,9 @@
                                             <div class="form-group" style="margin-left:auto">
                                                 <button type="submit" class="btn btn-primary btn-sm">Save</button>
                                                 <button type="button" class="btn btn-gray btn-sm" onclick="toggleScheduleForm({{ $reg->id }})">Cancel</button>
+                                            </div>
+                                            <div style="width:100%;font-size:11px;color:#6b7280;margin-top:2px;">
+                                                Business window: Monday to Thursday, 8:00 AM to 4:00 PM.
                                             </div>
                                         </form>
                                     </td>
