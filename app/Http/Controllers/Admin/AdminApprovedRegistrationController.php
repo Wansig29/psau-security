@@ -8,10 +8,13 @@ use App\Models\PickupSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AdminApprovedRegistrationController extends Controller
 {
+    private ?bool $hasQrPrintTrackingColumns = null;
+
     /**
      * Display a listing of approved registrations.
      */
@@ -48,8 +51,10 @@ class AdminApprovedRegistrationController extends Controller
                 ->with('error', 'No QR sticker assigned or this registration is not yet approved.');
         }
 
-        $registration->increment('qr_print_count');
-        $registration->update(['last_qr_printed_at' => now()]);
+        if ($this->supportsQrPrintTracking()) {
+            $registration->increment('qr_print_count');
+            $registration->update(['last_qr_printed_at' => now()]);
+        }
 
         // URL that the QR code will encode (public scan profile with sticker ID)
         $url = route('scan.show', $registration->qr_sticker_id);
@@ -138,6 +143,18 @@ class AdminApprovedRegistrationController extends Controller
     {
         // ISO-8601: Monday=1 ... Sunday=7
         return $date->dayOfWeekIso >= 1 && $date->dayOfWeekIso <= 4;
+    }
+
+    private function supportsQrPrintTracking(): bool
+    {
+        if ($this->hasQrPrintTrackingColumns !== null) {
+            return $this->hasQrPrintTrackingColumns;
+        }
+
+        $this->hasQrPrintTrackingColumns = Schema::hasColumn('registrations', 'qr_print_count')
+            && Schema::hasColumn('registrations', 'last_qr_printed_at');
+
+        return $this->hasQrPrintTrackingColumns;
     }
     
     /**
