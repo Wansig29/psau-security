@@ -9,18 +9,57 @@
         .profile-hero .avatar-row { flex-direction: column !important; align-items: center !important; }
         .profile-hero .button-wrap { width: 100%; text-align: center; margin-top: 8px; }
         .profile-hero .button-wrap a { width: 100%; display: block; }
-        .profile-hero .user-info { text-align: center; }
-        .profile-hero .user-info .badges { justify-content: center; }
-        .profile-hero-tabs .nav-tabs { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; padding-bottom: 2px; }
+        .profile-hero .profile-user-info { text-align: center; }
+        .profile-hero .profile-user-info .badges { justify-content: center; }
+        .profile-hero-tabs .nav-tabs {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+            padding-bottom: 2px;
+        }
         .profile-hero-tabs .nav-tabs::-webkit-scrollbar { display: none; }
     }
     @media (max-width: 420px) {
         .profile-hero > div:last-of-type { padding: 0 12px 16px !important; }
         .profile-hero .avatar-row { margin-top: -40px !important; gap: 8px !important; }
-        .profile-hero .user-info h2 { font-size: 1.15rem !important; }
-        .profile-hero .user-info .badges .badge { font-size: .7rem !important; padding: 3px 8px !important; }
+        .profile-hero .profile-user-info h2 { font-size: 1.15rem !important; }
+        .profile-hero .profile-user-info .badges .badge { font-size: .7rem !important; padding: 3px 8px !important; }
         .profile-hero-tabs .nav-link { padding: 10px 14px !important; font-size: .82rem !important; }
         .profile-hero-tabs .nav-link i { display: none; }
+    }
+
+    /* iOS Safari-specific size tuning (SE, mini, and standard iPhones) */
+    @supports (-webkit-touch-callout: none) {
+        @media (max-width: 430px) {
+            .profile-hero > div:first-of-type { height: 104px !important; }
+            .profile-hero .avatar-row { margin-top: -38px !important; }
+            .profile-hero .avatar-row > div:first-child > div {
+                width: 84px !important;
+                height: 84px !important;
+            }
+            .profile-hero .button-wrap a {
+                font-size: .9rem !important;
+                padding: 8px 14px !important;
+            }
+            .profile-hero .profile-user-info h2 { font-size: 1.1rem !important; }
+            .profile-hero .profile-user-info .badges .badge {
+                font-size: .68rem !important;
+                padding: 3px 7px !important;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .profile-hero > div:last-of-type { padding: 0 10px 14px !important; }
+            .profile-hero .button-wrap a {
+                font-size: .85rem !important;
+                padding: 8px 12px !important;
+            }
+            .profile-hero-tabs .nav-link {
+                padding: 9px 12px !important;
+                font-size: .78rem !important;
+            }
+        }
     }
 </style>
 
@@ -103,15 +142,15 @@
         </div>
 
         {{-- Name / email / badges — these appear BELOW the avatar, no overlap --}}
-        <div class="user-info" style="padding-top:12px">
+        <div class="profile-user-info" style="padding-top:12px">
             <h2 style="font-size:1.45rem;font-weight:900;color:#1a1a2e;margin-bottom:2px;line-height:1.2">
                 {{ $user->name }}
             </h2>
-            <div style="color:#666;font-size:.87rem;margin-bottom:10px">
+            <div style="color:#666;font-size:.87rem;margin-bottom:10px;word-break:break-word;overflow-wrap:anywhere">
                 <i class="fas fa-envelope mr-1"></i>{{ $user->email }}
             </div>
 
-            <div class="badges d-flex flex-wrap" style="gap:6px;margin-bottom:12px">
+            <div class="badges d-flex flex-wrap" style="gap:6px;margin-bottom:12px;max-width:100%">
                 <span class="badge badge-pill"
                       style="background:#d4edda;color:#155724;border:1px solid #c3e6cb;font-size:.76rem;padding:4px 10px">
                     <i class="fas fa-shield-alt mr-1"></i>Verified User

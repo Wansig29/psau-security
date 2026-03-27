@@ -11,8 +11,10 @@ use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Register no-cache headers on ALL web responses (FIX 2)
