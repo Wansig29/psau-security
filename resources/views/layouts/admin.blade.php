@@ -31,6 +31,7 @@
             border-bottom: 1px solid rgba(255,255,255,0.08);
         }
         .brand-logo { display: flex; align-items: center; gap: 10px; }
+        .brand-logo-link { text-decoration: none; color: inherit; }
         .brand-icon {
             width: 38px; height: 38px; background: rgba(255,255,255,0.12);
             border-radius: 10px; display: flex; align-items: center; justify-content: center;
@@ -238,7 +239,7 @@
 {{-- ── Sidebar ── --}}
 <aside class="sidebar">
     <div class="sidebar-brand">
-        <div class="brand-logo">
+        <a class="brand-logo brand-logo-link" href="{{ route('admin.dashboard') }}">
             <div class="brand-icon">
                 <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
@@ -246,7 +247,7 @@
                 <div class="brand-name">PSAU Parking</div>
                 <div class="brand-sub">Admin Portal</div>
             </div>
-        </div>
+        </a>
         <button class="sidebar-close" onclick="document.body.classList.remove('sidebar-open')"
             style="display:none;margin-left:auto;background:rgba(255,255,255,0.12);border:none;border-radius:6px;
                    color:#fff;width:28px;height:28px;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0">
@@ -256,20 +257,20 @@
 
     <div class="sidebar-section">Main Menu</div>
     <a class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
-        <span class="nav-icon">📋</span> Pending Reviews
+        <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span> Pending Reviews
         @php $pendingSideCount = \App\Models\Registration::whereRaw('LOWER(status) = ?', ['pending'])->count(); @endphp
         @if($pendingSideCount > 0)
             <span style="margin-left:auto;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;">{{ $pendingSideCount }}</span>
         @endif
     </a>
     <a class="nav-item {{ request()->routeIs('admin.approved.*') ? 'active' : '' }}" href="{{ route('admin.approved.index') }}">
-        <span class="nav-icon">✅</span> Approved
+        <span class="nav-icon"><i class="fas fa-check-circle"></i></span> Approved
     </a>
     <a class="nav-item {{ request()->routeIs('admin.sanctions.*') ? 'active' : '' }}" href="{{ route('admin.sanctions.index') }}">
-        <span class="nav-icon">⚖️</span> Violations & Sanctions
+        <span class="nav-icon"><i class="fas fa-balance-scale"></i></span> Violations & Sanctions
     </a>
     <a class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
-        <span class="nav-icon">👥</span> User Management
+        <span class="nav-icon"><i class="fas fa-users"></i></span> User Management
     </a>
 
     <div class="sidebar-footer">
@@ -311,14 +312,14 @@
 
         {{-- Alerts --}}
         @if(session('success'))
-            <div class="alert alert-success"><span>✅</span> {{ session('success') }}</div>
+            <div class="alert alert-success"><span><i class="fas fa-check-circle"></i></span> {{ session('success') }}</div>
         @endif
         @if(session('error'))
-            <div class="alert alert-error"><span>❌</span> {{ session('error') }}</div>
+            <div class="alert alert-error"><span><i class="fas fa-times-circle"></i></span> {{ session('error') }}</div>
         @endif
         @if($errors->any())
             <div class="alert alert-error" style="align-items:flex-start">
-                <span>⚠️</span> 
+                <span><i class="fas fa-exclamation-triangle"></i></span> 
                 <div>
                     @foreach($errors->all() as $error)
                         <div>{{ $error }}</div>

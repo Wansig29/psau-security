@@ -6,18 +6,18 @@
 
 @section('content')
         <div class="tab-nav">
-            <a class="tab-btn" href="{{ route('admin.dashboard') }}">⏳ Pending Reviews</a>
-            <a class="tab-btn" href="{{ route('admin.approved.index') }}">✅ Approved</a>
-            <span class="tab-btn active tab-sanctions">⚖️ Violations & Sanctions ({{ $violations->total() }})</span>
+            <a class="tab-btn" href="{{ route('admin.dashboard') }}"><i class="fas fa-hourglass-half"></i> Pending Reviews</a>
+            <a class="tab-btn" href="{{ route('admin.approved.index') }}"><i class="fas fa-check-circle"></i> Approved</a>
+            <span class="tab-btn active tab-sanctions"><i class="fas fa-balance-scale"></i> Violations & Sanctions ({{ $violations->total() }})</span>
         </div>
 
         <div class="card">
             <div class="card-header">
-                <div class="card-title">⚖️ All Logged Violations</div>
+                <div class="card-title"><i class="fas fa-balance-scale"></i> All Logged Violations</div>
             </div>
             @if($violations->isEmpty())
                 <div class="empty-state">
-                    <div style="font-size:40px;margin-bottom:12px">✅</div>
+                    <div style="font-size:40px;margin-bottom:12px"><i class="fas fa-check-circle"></i></div>
                     <p style="font-size:14px;font-weight:600;color:#6b7280">No violations have been logged yet.</p>
                 </div>
             @else
@@ -49,7 +49,7 @@
                                     <td>
                                         <span class="badge badge-orange">{{ Str::title(str_replace('_',' ',$violation->violation_type)) }}</span>
                                         @if($violation->location_notes)
-                                            <div style="font-size:11px;color:#9ca3af;margin-top:4px">📍 {{ Str::limit($violation->location_notes, 28) }}</div>
+                                            <div style="font-size:11px;color:#9ca3af;margin-top:4px"><i class="fas fa-map-marker-alt"></i> {{ Str::limit($violation->location_notes, 28) }}</div>
                                             @if(strlen($violation->location_notes) > 28)
                                                 <button onclick="toggleDetail({{ $violation->id }})" style="background:none;border:none;color:#2563eb;font-size:11px;cursor:pointer;padding:0;margin-top:3px;font-family:inherit;text-decoration:underline">more…</button>
                                             @endif
@@ -72,7 +72,7 @@
                                                     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                                                         <span class="badge {{ $sanction->sanction_type==='Warning'?'badge-warning':($sanction->sanction_type==='Suspended'?'badge-suspend':'badge-revoke') }}">{{ $sanction->sanction_type }}</span>
                                                         @if(($sanction->source ?? 'manual') === 'auto')
-                                                            <span class="badge badge-auto" title="Automatically applied">⚡ AUTO</span>
+                                                            <span class="badge badge-auto" title="Automatically applied"><i class="fas fa-bolt"></i> AUTO</span>
                                                         @endif
                                                         @if($sanction->is_active)
                                                             <span class="badge badge-active" style="font-size:10px">Active</span>
@@ -96,8 +96,8 @@
                                     </td>
                                     <td>
                                         <div style="display:flex;flex-direction:column;gap:6px">
-                                            <button class="btn btn-red" onclick="toggleSanction({{ $violation->id }})">⚖️ Assign Sanction</button>
-                                            <button class="btn btn-outline-primary" style="background:#eff6ff;color:#1d4ed8" onclick="toggleDetail({{ $violation->id }})">📄 View Details</button>
+                                            <button class="btn btn-red" onclick="toggleSanction({{ $violation->id }})"><i class="fas fa-gavel"></i> Assign Sanction</button>
+                                            <button class="btn btn-outline-primary" style="background:#eff6ff;color:#1d4ed8" onclick="toggleDetail({{ $violation->id }})"><i class="fas fa-file-alt"></i> View Details</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -135,7 +135,7 @@
                                                 <div class="detail-item">
                                                     <label>GPS Coordinates</label>
                                                     <div class="detail-val">
-                                                        <a href="https://maps.google.com/?q={{ $violation->gps_lat }},{{ $violation->gps_lng }}" target="_blank" style="color:#2563eb;text-decoration:none">📍 {{ round($violation->gps_lat, 5) }}, {{ round($violation->gps_lng, 5) }}</a>
+                                                        <a href="https://maps.google.com/?q={{ $violation->gps_lat }},{{ $violation->gps_lng }}" target="_blank" style="color:#2563eb;text-decoration:none"><i class="fas fa-map-marker-alt"></i> {{ round($violation->gps_lat, 5) }}, {{ round($violation->gps_lng, 5) }}</a>
                                                     </div>
                                                 </div>
                                                 @endif
@@ -162,9 +162,9 @@
                                                     <label>Sanction Type *</label>
                                                     <select name="sanction_type" required>
                                                         <option value="">-- Select --</option>
-                                                        <option value="Warning">⚠️ Warning</option>
-                                                        <option value="Suspended">🚫 Suspended</option>
-                                                        <option value="Revoked">❌ Revoked</option>
+                                                        <option value="Warning">Warning</option>
+                                                        <option value="Suspended">Suspended</option>
+                                                        <option value="Revoked">Revoked</option>
                                                     </select>
                                                 </div>
                                                 <div>

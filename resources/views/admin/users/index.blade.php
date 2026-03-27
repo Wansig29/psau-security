@@ -59,9 +59,9 @@
                     <div class="form-group">
                         <label class="form-label">Access Role</label>
                         <select name="role" class="form-select" required>
-                            <option value="security">🛡️ Security Officer</option>
-                            <option value="admin">⚙️ Campus Administrator</option>
-                            <option value="vehicle_user">🚗 Standard User</option>
+                            <option value="security">Security Officer</option>
+                            <option value="admin">Campus Administrator</option>
+                            <option value="vehicle_user">Standard User</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -86,7 +86,7 @@
                     Live Database Directory
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <input type="text" id="userDirectorySearch" placeholder="🔍 Search by name, email, or role..." style="padding:6px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; width:220px; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='var(--maroon)'" onblur="this.style.borderColor='#d1d5db'">
+                    <input type="text" id="userDirectorySearch" placeholder="Search by name, email, or role..." style="padding:6px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; width:220px; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='var(--maroon)'" onblur="this.style.borderColor='#d1d5db'">
                     <button type="button" id="toggleDirBtn" onclick="toggleUsersDirectory()" style="background:#f3f4f6; border:1px solid #d1d5db; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; color:#374151; transition:background 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
                         Collapse List ▴
                     </button>

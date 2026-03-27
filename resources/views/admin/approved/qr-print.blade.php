@@ -446,7 +446,7 @@
     <!-- Controls & Instructions (hidden when printing) -->
     <div class="page-header">
         <div class="instruction-alert">
-            <span style="font-size: 20px;">💡</span>
+            <span style="font-size: 20px;"><i class="fas fa-lightbulb"></i></span>
             <div>
                 <strong>Pro Tip:</strong> Select the shape below, and double-click any text inside the sticker to edit or correct it before you press Print.
             </div>
@@ -495,7 +495,7 @@
                     ← Back to List
                 </a>
                 <button class="btn-print" onclick="window.print()">
-                    🖨 Print Sticker
+                    <i class="fas fa-print"></i> Print Sticker
                 </button>
             </div>
         </div>

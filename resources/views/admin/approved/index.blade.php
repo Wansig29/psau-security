@@ -6,9 +6,9 @@
 
 @section('content')
         <div class="tab-nav">
-            <a class="tab-btn" href="{{ route('admin.dashboard') }}">⏳ Pending Reviews</a>
-            <span class="tab-btn active tab-approved">✅ Approved ({{ $approvedRegistrations->total() }})</span>
-            <a class="tab-btn" href="{{ route('admin.sanctions.index') }}">⚖️ Violations & Sanctions</a>
+            <a class="tab-btn" href="{{ route('admin.dashboard') }}"><i class="fas fa-hourglass-half"></i> Pending Reviews</a>
+            <span class="tab-btn active tab-approved"><i class="fas fa-check-circle"></i> Approved ({{ $approvedRegistrations->total() }})</span>
+            <a class="tab-btn" href="{{ route('admin.sanctions.index') }}"><i class="fas fa-balance-scale"></i> Violations & Sanctions</a>
         </div>
 
         <div class="card">
@@ -20,7 +20,7 @@
                 <form id="bulkPrintForm" method="POST" action="{{ route('admin.approved.qr.bulk') }}" style="display:flex;align-items:center;gap:8px;">
                     @csrf
                     <button type="submit" class="btn btn-primary btn-sm" id="bulkPrintBtn" disabled>
-                        🖨 Print Selected
+                        <i class="fas fa-print"></i> Print Selected
                     </button>
                     <span style="font-size:11px;color:#6b7280;" id="bulkSelectedLabel">0 selected</span>
                 </form>
@@ -28,7 +28,7 @@
 
             @if($approvedRegistrations->isEmpty())
                 <div class="empty-state">
-                    <div style="font-size:40px;margin-bottom:12px">✅</div>
+                    <div style="font-size:40px;margin-bottom:12px"><i class="fas fa-check-circle"></i></div>
                     <p style="font-size:15px;font-weight:600;color:#6b7280;">No approved registrations yet.</p>
                 </div>
             @else

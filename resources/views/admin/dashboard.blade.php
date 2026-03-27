@@ -20,28 +20,28 @@
         @endphp
         <div class="stat-grid">
             <div class="stat-card c-maroon">
-                <div class="stat-icon c-maroon">📋</div>
+                <div class="stat-icon c-maroon"><i class="fas fa-clipboard-list"></i></div>
                 <div><div class="stat-value">{{ $pendingCount }}</div><div class="stat-label">Pending Review</div></div>
             </div>
             <div class="stat-card c-green">
-                <div class="stat-icon c-green">✅</div>
+                <div class="stat-icon c-green"><i class="fas fa-check-circle"></i></div>
                 <div><div class="stat-value">{{ $approvedCount }}</div><div class="stat-label">Approved</div></div>
             </div>
             <div class="stat-card c-blue">
-                <div class="stat-icon c-blue">🚗</div>
+                <div class="stat-icon c-blue"><i class="fas fa-car"></i></div>
                 <div><div class="stat-value">{{ $totalRegistrations }}</div><div class="stat-label">Total Registrations</div></div>
             </div>
             <div class="stat-card c-red">
-                <div class="stat-icon c-red">⚠️</div>
+                <div class="stat-icon c-red"><i class="fas fa-exclamation-triangle"></i></div>
                 <div><div class="stat-value">{{ $violationsCount }}</div><div class="stat-label">Violations Logged</div></div>
             </div>
         </div>
 
         {{-- Tab Navigation --}}
         <div class="tab-nav">
-            <span class="tab-btn active tab-pending">⏳ Pending Reviews ({{ $pendingCount }})</span>
-            <a class="tab-btn" href="{{ route('admin.approved.index') }}">✅ Approved</a>
-            <a class="tab-btn" href="{{ route('admin.sanctions.index') }}">⚖️ Violations & Sanctions</a>
+            <span class="tab-btn active tab-pending"><i class="fas fa-hourglass-half"></i> Pending Reviews ({{ $pendingCount }})</span>
+            <a class="tab-btn" href="{{ route('admin.approved.index') }}"><i class="fas fa-check-circle"></i> Approved</a>
+            <a class="tab-btn" href="{{ route('admin.sanctions.index') }}"><i class="fas fa-balance-scale"></i> Violations & Sanctions</a>
         </div>
 
         {{-- Table --}}
@@ -86,7 +86,7 @@
                                     <td>
                                         @php
                                             $docMap = $reg->documents->keyBy('document_type');
-                                            $docDefs = ['or'=>['📄','OR'],'cr'=>['📋','CR'],'cor'=>['🎓','COR'],'license'=>['🪪','Lic.'],'school_id'=>['🏫','ID'],'or_cr'=>['📄','OR/CR']];
+                                            $docDefs = ['or'=>['OR'],'cr'=>['CR'],'cor'=>['COR'],'license'=>['Lic.'],'school_id'=>['ID'],'or_cr'=>['OR/CR']];
                                         @endphp
                                         @if($reg->documents->isNotEmpty())
                                             <div style="display:flex;flex-wrap:wrap;gap:6px">
@@ -98,7 +98,7 @@
                                                             <img src="{{ asset('storage/' . $doc->image_path) }}" alt="{{ $def[1] }}"
                                                                  style="width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;transition:transform 0.2s"
                                                                  onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                                                            <span style="font-size:9px;color:#6b7280;margin-top:2px;text-align:center">{{ $def[0] }} {{ $def[1] }}</span>
+                                                            <span style="font-size:9px;color:#6b7280;margin-top:2px;text-align:center">{{ $def[0] }}</span>
                                                         </a>
                                                     @endif
                                                 @endforeach
@@ -111,11 +111,11 @@
                                         <div style="display:flex;flex-direction:column;gap:6px">
                                             <form method="POST" action="{{ route('admin.registration.approve', $reg->id) }}">
                                                 @csrf
-                                                <button type="submit" class="btn btn-success" style="width:100%">✅ Approve</button>
+                                                <button type="submit" class="btn btn-success" style="width:100%"><i class="fas fa-check-circle"></i> Approve</button>
                                             </form>
                                             <form method="POST" action="{{ route('admin.registration.reject', $reg->id) }}">
                                                 @csrf
-                                                <button type="submit" class="btn btn-danger" style="width:100%" onclick="return confirm('Reject this registration?')">❌ Reject</button>
+                                                <button type="submit" class="btn btn-danger" style="width:100%" onclick="return confirm('Reject this registration?')"><i class="fas fa-times-circle"></i> Reject</button>
                                             </form>
                                         </div>
                                     </td>
