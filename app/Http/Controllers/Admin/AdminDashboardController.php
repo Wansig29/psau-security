@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 
 class AdminDashboardController extends Controller
 {
+    public function home()
+    {
+        $pendingCount = \App\Models\Registration::whereRaw('LOWER(status) = ?', ['pending'])->count();
+        return view('admin.home', compact('pendingCount'));
+    }
+
     public function index()
     {
         $pendingRegistrations = \App\Models\Registration::with(['user', 'vehicle', 'documents'])

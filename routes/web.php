@@ -10,7 +10,7 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     $role = request()->user()->role;
     return match ($role) {
-        'admin' => redirect()->route('admin.dashboard'),
+        'admin' => redirect()->route('admin.home'),
         'security' => redirect()->route('security.dashboard'),
         default => redirect()->route('user.dashboard'),
     };
@@ -21,6 +21,7 @@ Route::get('/scan/{qr_sticker_id}', [\App\Http\Controllers\QrScanController::cla
 
 // Admin Routes
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/home', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'home'])->name('home');
     Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('dashboard');
     
     // User Accounts Management

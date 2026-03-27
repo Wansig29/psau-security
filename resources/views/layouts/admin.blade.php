@@ -239,7 +239,7 @@
 {{-- ── Sidebar ── --}}
 <aside class="sidebar">
     <div class="sidebar-brand">
-        <a class="brand-logo brand-logo-link" href="{{ route('admin.dashboard') }}">
+        <a class="brand-logo brand-logo-link" href="{{ route('admin.home') }}">
             <div class="brand-icon">
                 <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
@@ -256,6 +256,9 @@
     </div>
 
     <div class="sidebar-section">Main Menu</div>
+    <a class="nav-item {{ request()->routeIs('admin.home') ? 'active' : '' }}" href="{{ route('admin.home') }}">
+        <span class="nav-icon"><i class="fas fa-home"></i></span> Home
+    </a>
     <a class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
         <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span> Pending Reviews
         @php $pendingSideCount = \App\Models\Registration::whereRaw('LOWER(status) = ?', ['pending'])->count(); @endphp
