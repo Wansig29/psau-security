@@ -1,129 +1,174 @@
 @extends('layouts.admin')
 
-@section('title', 'Registration Verification Queue — PSAU Parking')
+@section('title', 'Admin Portal Home — PSAU Parking')
 
-@section('topbar-title', 'Registration Verification Queue')
+@section('topbar-title', 'Admin Portal Home')
 
 @section('topbar-right')
-    @if($pendingRegistrations->count() > 0)
-        <span class="badge-count">{{ $pendingRegistrations->count() }} Pending</span>
-    @endif
+    <span class="badge-count">{{ $pendingRegistrations->count() }} Pending</span>
 @endsection
 
 @section('content')
-        {{-- Stat Cards --}}
-        @php
-            $totalRegistrations  = \App\Models\Registration::count();
-            $approvedCount       = \App\Models\Registration::whereRaw('LOWER(status) = ?', ['approved'])->count();
-            $pendingCount        = $pendingRegistrations->count();
-            $violationsCount     = \App\Models\Violation::count();
-        @endphp
-        <div class="stat-grid">
-            <div class="stat-card c-maroon">
-                <div class="stat-icon c-maroon"><i class="fas fa-clipboard-list"></i></div>
-                <div><div class="stat-value">{{ $pendingCount }}</div><div class="stat-label">Pending Review</div></div>
-            </div>
-            <div class="stat-card c-green">
-                <div class="stat-icon c-green"><i class="fas fa-check-circle"></i></div>
-                <div><div class="stat-value">{{ $approvedCount }}</div><div class="stat-label">Approved</div></div>
-            </div>
-            <div class="stat-card c-blue">
-                <div class="stat-icon c-blue"><i class="fas fa-car"></i></div>
-                <div><div class="stat-value">{{ $totalRegistrations }}</div><div class="stat-label">Total Registrations</div></div>
-            </div>
-            <div class="stat-card c-red">
-                <div class="stat-icon c-red"><i class="fas fa-exclamation-triangle"></i></div>
-                <div><div class="stat-value">{{ $violationsCount }}</div><div class="stat-label">Violations Logged</div></div>
-            </div>
-        </div>
+    @php
+        $pendingCount = $pendingRegistrations->count();
+        $approvedCount = \App\Models\Registration::whereRaw('LOWER(status) = ?', ['approved'])->count();
+        $violationsCount = \App\Models\Violation::count();
+        $usersCount = \App\Models\User::count();
+    @endphp
 
-        {{-- Tab Navigation --}}
-        <div class="tab-nav">
-            <span class="tab-btn active tab-pending"><i class="fas fa-hourglass-half"></i> Pending Reviews ({{ $pendingCount }})</span>
-            <a class="tab-btn" href="{{ route('admin.approved.index') }}"><i class="fas fa-check-circle"></i> Approved</a>
-            <a class="tab-btn" href="{{ route('admin.sanctions.index') }}"><i class="fas fa-balance-scale"></i> Violations & Sanctions</a>
-        </div>
-
-        {{-- Table --}}
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">
-                    <svg width="16" height="16" fill="none" stroke="var(--maroon)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    Pending Registrations — Review & Approve
+    <div class="card">
+        <div class="card-body" style="padding: 24px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;">
+                <div style="font-size:14px;color:#111827;font-weight:700;">
+                    Welcome, {{ auth()->user()->name ?? 'Administrator' }}
+                </div>
+                <div style="font-size:12px;color:#6b7280;" id="welcomeClock">
+                    <i class="fas fa-calendar-alt"></i>
+                    {{ now()->format('F d, Y') }}
+                    &nbsp;|&nbsp;
+                    <i class="fas fa-clock"></i>
+                    {{ now()->format('h:i A') }}
                 </div>
             </div>
-
-            @if($pendingRegistrations->isEmpty())
-                <div class="empty-state">
-                    <svg width="48" height="48" fill="none" stroke="#d1d5db" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 12px"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p style="font-size:15px;font-weight:600;color:#6b7280;">All caught up!</p>
-                    <p style="font-size:13px;margin-top:4px;">No pending registrations in the queue.</p>
-                </div>
-            @else
-                <div style="overflow-x:auto">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Applicant</th>
-                                <th>Vehicle</th>
-                                <th>Plate No. (OCR)</th>
-                                <th>Documents</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($pendingRegistrations as $reg)
-                                <tr>
-                                    <td>
-                                        <div style="font-weight:600;color:#111827">{{ $reg->user->name }}</div>
-                                        <div style="font-size:11px;color:#9ca3af;margin-top:2px">{{ $reg->user->email }}</div>
-                                    </td>
-                                    <td>
-                                        <div style="font-weight:600;color:#111827">{{ $reg->vehicle->make }} {{ $reg->vehicle->model }}</div>
-                                        <div style="font-size:11px;color:#9ca3af;margin-top:2px">{{ $reg->vehicle->color }}</div>
-                                    </td>
-                                    <td><span class="plate-tag">{{ $reg->vehicle->plate_number }}</span></td>
-                                    <td>
-                                        @php
-                                            $docMap = $reg->documents->keyBy('document_type');
-                                            $docDefs = ['or'=>['OR'],'cr'=>['CR'],'cor'=>['COR'],'license'=>['Lic.'],'school_id'=>['ID'],'or_cr'=>['OR/CR']];
-                                        @endphp
-                                        @if($reg->documents->isNotEmpty())
-                                            <div style="display:flex;flex-wrap:wrap;gap:6px">
-                                                @foreach($docDefs as $type => $def)
-                                                    @if($docMap->has($type))
-                                                        @php $doc = $docMap[$type]; @endphp
-                                                        <a href="{{ asset('storage/' . $doc->image_path) }}" target="_blank"
-                                                           title="{{ $def[1] }}" style="display:flex;flex-direction:column;align-items:center;width:44px;text-decoration:none;">
-                                                            <img src="{{ asset('storage/' . $doc->image_path) }}" alt="{{ $def[1] }}"
-                                                                 style="width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;transition:transform 0.2s"
-                                                                 onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                                                            <span style="font-size:9px;color:#6b7280;margin-top:2px;text-align:center">{{ $def[0] }}</span>
-                                                        </a>
-                                                    @endif
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <span style="font-size:12px;color:#ef4444">No docs</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div style="display:flex;flex-direction:column;gap:6px">
-                                            <form method="POST" action="{{ route('admin.registration.approve', $reg->id) }}">
-                                                @csrf
-                                                <button type="submit" class="btn btn-success" style="width:100%"><i class="fas fa-check-circle"></i> Approve</button>
-                                            </form>
-                                            <form method="POST" action="{{ route('admin.registration.reject', $reg->id) }}">
-                                                @csrf
-                                                <button type="submit" class="btn btn-danger" style="width:100%" onclick="return confirm('Reject this registration?')"><i class="fas fa-times-circle"></i> Reject</button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
+            <div style="font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:#9ca3af;font-weight:700;">
+                Pampanga State Agricultural University
+            </div>
+            <h1 style="font-size:28px;line-height:1.2;color:#111827;margin:6px 0 2px;font-weight:800;">
+                Security Unit
+            </h1>
+            <div style="font-size:16px;color:#6b0a16;font-weight:700;margin-bottom:10px;">
+                Admin Portal
+            </div>
+            <p style="font-size:14px;color:#4b5563;max-width:880px;line-height:1.6;">
+                This portal helps administrators manage vehicle registration workflows, monitor approved sticker releases, enforce violations and sanctions, and maintain secure user accounts across the PSAU parking system.
+            </p>
         </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-th-large" style="color:#6b0a16;"></i>
+                Admin Navigation
+            </div>
+        </div>
+        <div style="padding:20px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
+                <a href="{{ route('admin.dashboard') }}" style="text-decoration:none;">
+                    <div class="stat-card c-maroon" style="min-height:150px;align-items:flex-start;">
+                        <div class="stat-icon c-maroon"><i class="fas fa-clipboard-list"></i></div>
+                        <div>
+                            <div style="font-size:16px;font-weight:800;color:#111827;">Pending Reviews</div>
+                            <div style="font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">
+                                Review submitted vehicle applications, verify uploaded documents, then approve or reject requests.
+                            </div>
+                            <div style="font-size:12px;color:#6b0a16;font-weight:700;margin-top:8px;">{{ $pendingCount }} awaiting review</div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ route('admin.approved.index') }}" style="text-decoration:none;">
+                    <div class="stat-card c-green" style="min-height:150px;align-items:flex-start;">
+                        <div class="stat-icon c-green"><i class="fas fa-check-circle"></i></div>
+                        <div>
+                            <div style="font-size:16px;font-weight:800;color:#111827;">Approved</div>
+                            <div style="font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">
+                                Manage approved registrations, print QR stickers, and schedule or reschedule claim dates.
+                            </div>
+                            <div style="font-size:12px;color:#166534;font-weight:700;margin-top:8px;">{{ $approvedCount }} approved records</div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ route('admin.sanctions.index') }}" style="text-decoration:none;">
+                    <div class="stat-card c-red" style="min-height:150px;align-items:flex-start;">
+                        <div class="stat-icon c-red"><i class="fas fa-balance-scale"></i></div>
+                        <div>
+                            <div style="font-size:16px;font-weight:800;color:#111827;">Violations & Sanctions</div>
+                            <div style="font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">
+                                Track violation incidents, assign sanctions, and monitor active or resolved enforcement actions.
+                            </div>
+                            <div style="font-size:12px;color:#991b1b;font-weight:700;margin-top:8px;">{{ $violationsCount }} logged violations</div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ route('admin.users.index') }}" style="text-decoration:none;">
+                    <div class="stat-card c-blue" style="min-height:150px;align-items:flex-start;">
+                        <div class="stat-icon c-blue"><i class="fas fa-users-cog"></i></div>
+                        <div>
+                            <div style="font-size:16px;font-weight:800;color:#111827;">User Management</div>
+                            <div style="font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">
+                                Create and manage admin, security, and user accounts while enforcing role-based access.
+                            </div>
+                            <div style="font-size:12px;color:#1d4ed8;font-weight:700;margin-top:8px;">{{ $usersCount }} active accounts</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-cogs" style="color:#6b0a16;"></i>
+                Admin Portal Functions
+            </div>
+        </div>
+        <div style="padding: 22px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
+                <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:#fff;">
+                    <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:6px;">Registration Validation</div>
+                    <div style="font-size:13px;color:#6b7280;line-height:1.55;">Checks and verifies user-submitted vehicle records and supporting documents for approval compliance.</div>
+                </div>
+                <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:#fff;">
+                    <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:6px;">Sticker Issuance Workflow</div>
+                    <div style="font-size:13px;color:#6b7280;line-height:1.55;">Handles QR sticker generation, bulk printing, and pick-up scheduling based on business-day rules.</div>
+                </div>
+                <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:#fff;">
+                    <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:6px;">Security Enforcement Support</div>
+                    <div style="font-size:13px;color:#6b7280;line-height:1.55;">Provides an audit-ready violation and sanction module to enforce parking and security policies.</div>
+                </div>
+                <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:#fff;">
+                    <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:6px;">Account Governance</div>
+                    <div style="font-size:13px;color:#6b7280;line-height:1.55;">Manages role-based access and secure account lifecycle for administrators, security officers, and users.</div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
+
+@push('scripts')
+<script>
+(function initWelcomeClock() {
+    const clockEl = document.getElementById('welcomeClock');
+    if (!clockEl) return;
+
+    function fmt(now) {
+        const months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        const month = months[now.getMonth()];
+        const day = String(now.getDate()).padStart(2, '0');
+        const year = now.getFullYear();
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        const hh = String(hours).padStart(2, '0');
+        return `${month} ${day}, ${year} | ${hh}:${minutes} ${ampm}`;
+    }
+
+    function render() {
+        clockEl.innerHTML =
+            '<i class="fas fa-calendar-alt"></i> ' +
+            fmt(new Date()).replace(' | ', ' &nbsp;|&nbsp; <i class="fas fa-clock"></i> ');
+    }
+
+    render();
+    setInterval(render, 1000);
+})();
+</script>
+@endpush
