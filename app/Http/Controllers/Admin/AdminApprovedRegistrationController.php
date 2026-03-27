@@ -64,6 +64,49 @@ class AdminApprovedRegistrationController extends Controller
 
         return view('admin.approved.qr-print', compact('registration', 'qrCodeSvg'));
     }
+
+    /**
+     * Generate printable QR stickers for multiple registrations.
+     */
+    public function bulkPrintQr(Request $request)
+    {
+        $validated = $request->validate([
+            'registration_ids' => ['required', 'array', 'min:1'],
+            'registration_ids.*' => ['integer', 'distinct'],
+        ]);
+
+        $registrations = Registration::with(['user', 'vehicle'])
+            ->whereIn('id', $validated['registration_ids'])
+            ->whereRaw('LOWER(status) = ?', ['approved'])
+            ->whereNotNull('qr_sticker_id')
+            ->orderBy('id')
+            ->get();
+
+        if ($registrations->isEmpty()) {
+            return redirect()->route('admin.approved.index')
+                ->with('error', 'No valid approved registrations with QR sticker found from your selection.');
+        }
+
+        $qrCodeByRegistrationId = [];
+        foreach ($registrations as $registration) {
+            $url = route('scan.show', $registration->qr_sticker_id);
+            $qrCodeByRegistrationId[$registration->id] = QrCode::size(180)
+                ->errorCorrection('H')
+                ->generate($url);
+        }
+
+        if ($this->supportsQrPrintTracking()) {
+            foreach ($registrations as $registration) {
+                $registration->increment('qr_print_count');
+                $registration->update(['last_qr_printed_at' => now()]);
+            }
+        }
+
+        return view('admin.approved.qr-print-bulk', [
+            'registrations' => $registrations,
+            'qrCodeByRegistrationId' => $qrCodeByRegistrationId,
+        ]);
+    }
     
     /**
      * Schedule a pick-up time for the user.

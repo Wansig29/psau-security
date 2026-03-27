@@ -17,6 +17,13 @@
                     <svg width="18" height="18" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                     Approved Registrations Directory
                 </div>
+                <form id="bulkPrintForm" method="POST" action="{{ route('admin.approved.qr.bulk') }}" style="display:flex;align-items:center;gap:8px;">
+                    @csrf
+                    <button type="submit" class="btn btn-primary btn-sm" id="bulkPrintBtn" disabled>
+                        🖨 Print Selected
+                    </button>
+                    <span style="font-size:11px;color:#6b7280;" id="bulkSelectedLabel">0 selected</span>
+                </form>
             </div>
 
             @if($approvedRegistrations->isEmpty())
@@ -29,6 +36,9 @@
                     <table>
                         <thead>
                             <tr>
+                                <th style="width:42px;text-align:center;">
+                                    <input type="checkbox" id="selectAllPrintables" title="Select all printable">
+                                </th>
                                 <th>Registrant</th>
                                 <th>Vehicle / Plate</th>
                                 <th>Sticker & QR</th>
@@ -39,6 +49,15 @@
                         <tbody>
                             @foreach($approvedRegistrations as $reg)
                                 <tr>
+                                    <td style="text-align:center;">
+                                        @if($reg->qr_sticker_id)
+                                            <input type="checkbox"
+                                                   class="bulk-print-checkbox"
+                                                   name="registration_ids[]"
+                                                   value="{{ $reg->id }}"
+                                                   form="bulkPrintForm">
+                                        @endif
+                                    </td>
                                     <td>
                                         <div style="font-weight:600;color:#111827">{{ $reg->user->name }}</div>
                                         <div style="font-size:11px;color:#9ca3af;margin-top:2px">{{ $reg->user->email }}</div>
@@ -125,7 +144,7 @@
                                 </tr>
                                 {{-- Inline schedule form --}}
                                 <tr id="schedule-row-{{ $reg->id }}" style="display:none;background:#f8fafc;border-top:1px solid #e2e8f0;">
-                                    <td colspan="5" style="padding:16px 20px;">
+                                    <td colspan="6" style="padding:16px 20px;">
                                         <div style="font-size:12px;color:#1e293b;font-weight:600;margin-bottom:10px">Schedule Pick-up for {{ $reg->user->name }}</div>
                                         <form method="POST" action="{{ route('admin.approved.schedule', $reg->id) }}" class="form-inline">
                                             @csrf
@@ -166,5 +185,37 @@ function toggleScheduleForm(id) {
     const el = document.getElementById('schedule-row-' + id);
     el.style.display = el.style.display === 'table-row' ? 'none' : 'table-row';
 }
+
+(function initBulkPrintSelection() {
+    const selectAll = document.getElementById('selectAllPrintables');
+    const checkboxes = Array.from(document.querySelectorAll('.bulk-print-checkbox'));
+    const bulkBtn = document.getElementById('bulkPrintBtn');
+    const label = document.getElementById('bulkSelectedLabel');
+
+    if (!selectAll || !bulkBtn || !label) return;
+
+    function updateState() {
+        const selectedCount = checkboxes.filter(cb => cb.checked).length;
+        bulkBtn.disabled = selectedCount === 0;
+        label.textContent = selectedCount + ' selected';
+
+        if (checkboxes.length === 0) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
+            return;
+        }
+
+        selectAll.checked = selectedCount === checkboxes.length;
+        selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+    }
+
+    selectAll.addEventListener('change', function() {
+        checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
+        updateState();
+    });
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateState));
+    updateState();
+})();
 </script>
 @endpush

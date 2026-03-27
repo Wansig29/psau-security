@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     // Approved Registrations & QR
     Route::get('/approved', [\App\Http\Controllers\Admin\AdminApprovedRegistrationController::class, 'index'])->name('approved.index');
     Route::get('/approved/{registration}/qr', [\App\Http\Controllers\Admin\AdminApprovedRegistrationController::class, 'generateQr'])->name('approved.qr');
+    Route::post('/approved/qr/bulk-print', [\App\Http\Controllers\Admin\AdminApprovedRegistrationController::class, 'bulkPrintQr'])->name('approved.qr.bulk');
     Route::post('/approved/{registration}/schedule', [\App\Http\Controllers\Admin\AdminApprovedRegistrationController::class, 'schedulePickup'])->name('approved.schedule');
     Route::post('/approved/{registration}/claim', [\App\Http\Controllers\Admin\AdminApprovedRegistrationController::class, 'markAsClaimed'])->name('approved.claim');
 
