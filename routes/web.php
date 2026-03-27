@@ -19,6 +19,45 @@ Route::get('/dashboard', function () {
 // Public QR Scan Endpoint
 Route::get('/scan/{qr_sticker_id}', [\App\Http\Controllers\QrScanController::class, 'show'])->name('scan.show');
 
+// Public App Install Endpoint (Non-Play Store distribution)
+Route::get('/app/install', function () {
+    $ua = strtolower((string) request()->userAgent());
+    $isAndroid = (bool) preg_match('/android/i', $ua);
+    $isIos = (bool) preg_match('/iphone|ipad|ipod/i', $ua);
+    $apkPublicPath = public_path('psau_parking.apk');
+
+    if (file_exists($apkPublicPath)) {
+        if ($isAndroid) {
+            return response()->download($apkPublicPath, 'psau_parking.apk');
+        }
+
+        $unsupportedMessage = __('This app is available for Android devices only.');
+        return response(
+            '<!doctype html><html lang="en"><head><meta charset="utf-8">' .
+            '<meta name="viewport" content="width=device-width, initial-scale=1">' .
+            '<script>' .
+            'window.addEventListener("load", function(){ alert(' . json_encode($unsupportedMessage) . '); });' .
+            '</script></head><body></body></html>',
+            403,
+            ['Content-Type' => 'text/html; charset=utf-8']
+        );
+    }
+
+    $missingMessage = $isIos
+        ? __('This app is available for Android devices only.')
+        : __('APK is not available right now. Please contact the administrator.');
+
+    return response(
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">' .
+        '<meta name="viewport" content="width=device-width, initial-scale=1">' .
+        '<script>' .
+        'window.addEventListener("load", function(){ alert(' . json_encode($missingMessage) . '); });' .
+        '</script></head><body></body></html>',
+        404,
+        ['Content-Type' => 'text/html; charset=utf-8']
+    );
+})->name('app.install');
+
 // Admin Routes
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/home', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'home'])->name('home');

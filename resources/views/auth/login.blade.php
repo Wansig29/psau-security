@@ -2,6 +2,22 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    @php
+        $ua = strtolower((string) request()->userAgent());
+        $isIos = (bool) preg_match('/iphone|ipad|ipod/i', $ua);
+    @endphp
+
+    @if (! $isIos)
+        <div class="flex justify-end mb-4 sm:hidden">
+            <a
+                href="{{ route('app.install') }}"
+                class="text-sm text-gray-600 hover:text-gray-900 underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+                {{ __('Install App') }}
+            </a>
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('login') }}">
         @csrf
 

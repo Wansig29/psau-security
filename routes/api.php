@@ -487,10 +487,30 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Vehicle / QR / Pickup
         Route::get('/vehicles', function () {
+            $registrations = \App\Models\Registration::with(['vehicle', 'user', 'pickupSchedule'])
+                ->whereRaw("LOWER(status) = 'approved'")
+                ->latest()
+                ->get();
+
             return response()->json(
-                \App\Models\Registration::with(['vehicle', 'user', 'pickupSchedule'])
-                    ->whereRaw("LOWER(status) = 'approved'")
-                    ->latest()->get()
+                $registrations->map(function ($r) {
+                    $pickup = $r->pickupSchedule;
+                    return [
+                        'id'              => $r->id,
+                        'qr_sticker_id'  => $r->qr_sticker_id,
+                        'status'         => $r->status,
+                        'approved_at'    => $r->approved_at,
+                        'vehicle'        => $r->vehicle,
+                        'user'           => $r->user,
+                        'pickup_schedule' => $pickup ? [
+                            'pickup_date'      => $pickup->pickup_date?->format('Y-m-d'),
+                            'pickup_time'      => $pickup->pickup_time,
+                            'pickup_location'  => $pickup->location,
+                            'is_claimed'       => (bool) $pickup->is_completed,
+                            'completed_at'     => $pickup->completed_at,
+                        ] : null,
+                    ];
+                })
             );
         });
 
@@ -502,19 +522,40 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/vehicles/schedule-pickup/{id}', function (Request $request, $id) {
             $request->validate([
                 'pickup_date'     => 'required|date',
-                'pickup_location' => 'required|string',
+                'pickup_location' => 'required|string|max:255',
             ]);
             $registration = \App\Models\Registration::findOrFail($id);
+
+            // pickup_time is required by schema; default to 08:00 when not provided by the app.
             $registration->pickupSchedule()->updateOrCreate(
                 ['registration_id' => $registration->id],
-                ['pickup_date' => $request->pickup_date, 'pickup_location' => $request->pickup_location, 'is_claimed' => false]
+                [
+                    'pickup_date'  => $request->pickup_date,
+                    'pickup_time'  => '08:00',
+                    'location'     => $request->pickup_location,
+                    'is_completed' => false,
+                    'completed_at' => null,
+                    'completed_by' => null,
+                ]
             );
+
             return response()->json(['message' => 'Pickup scheduled.']);
         });
 
         Route::post('/vehicles/mark-claimed/{id}', function ($id) {
-            $registration = \App\Models\Registration::findOrFail($id);
-            $registration->pickupSchedule()->update(['is_claimed' => true]);
+            $registration = \App\Models\Registration::with('pickupSchedule')->findOrFail($id);
+            $schedule = $registration->pickupSchedule;
+
+            if (!$schedule) {
+                return response()->json(['message' => 'No schedule found.'], 404);
+            }
+
+            $schedule->update([
+                'is_completed' => true,
+                'completed_at' => now(),
+                'completed_by' => auth()->id(),
+            ]);
+
             return response()->json(['message' => 'Marked as claimed.']);
         });
 
