@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\ValidationException;
 
 class AdminUserController extends Controller
 {
@@ -30,6 +32,9 @@ class AdminUserController extends Controller
      */
     public function store(Request $request)
     {
+        $normalizedEmail = strtolower(trim((string) $request->input('email')));
+        $request->merge(['email' => $normalizedEmail]);
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
@@ -38,14 +43,24 @@ class AdminUserController extends Controller
             'role' => ['required', 'in:admin,security,vehicle_user'],
         ]);
 
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'contact_number' => $request->input('contact_number'),
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'email_verified_at' => now(), // Auto-verify internal accounts
-        ]);
+        try {
+            User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'contact_number' => $request->input('contact_number'),
+                'password' => Hash::make($request->password),
+                'role' => $request->role,
+                'email_verified_at' => now(), // Auto-verify internal accounts
+            ]);
+        } catch (QueryException $e) {
+            // Handles race conditions where two requests pass validation simultaneously.
+            if (($e->errorInfo[1] ?? null) === 1062 || $e->getCode() === '23000') {
+                throw ValidationException::withMessages([
+                    'email' => 'This email is already used by another account.',
+                ]);
+            }
+            throw $e;
+        }
 
         return redirect()->back()->with('success', 'User account successfully generated!');
     }

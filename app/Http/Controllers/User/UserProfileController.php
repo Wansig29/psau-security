@@ -3,14 +3,19 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class UserProfileController extends Controller
 {
     public function update(Request $request)
     {
+        $normalizedEmail = strtolower(trim((string) $request->input('email')));
+        $request->merge(['email' => $normalizedEmail]);
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -37,7 +42,17 @@ class UserProfileController extends Controller
             $payload['password'] = $request->input('password');
         }
 
-        $request->user()->update($payload);
+        try {
+            $request->user()->update($payload);
+        } catch (QueryException $e) {
+            // Handles race conditions where two updates target the same email.
+            if (($e->errorInfo[1] ?? null) === 1062 || $e->getCode() === '23000') {
+                throw ValidationException::withMessages([
+                    'email' => 'This email is already used by another account.',
+                ]);
+            }
+            throw $e;
+        }
 
         return back()->with('status', 'Profile information updated.');
     }
