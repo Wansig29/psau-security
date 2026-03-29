@@ -498,8 +498,27 @@
         if (html5QrcodeScanner && html5QrcodeScanner.isScanning) html5QrcodeScanner.stop();
         $('#scannerModal').modal('hide');
 
-        // Check if any violation matches this plate — if so, go to map and route
-        const plateClean = decodedText.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+        const raw = decodedText.trim();
+
+        // ── Determine scan type ──────────────────────────────────────────────
+        // If the decoded text is a URL (e.g. from the QR on the sticker),
+        // extract the last path segment (the qr_sticker_id or plate slug).
+        let scanValue = raw;
+        if (/^https?:\/\//i.test(raw)) {
+            try {
+                const url = new URL(raw);
+                const parts = url.pathname.replace(/\/+$/, '').split('/');
+                scanValue = parts[parts.length - 1] || raw;
+            } catch (e) {
+                // leave scanValue as raw
+            }
+        }
+
+        // Clean the extracted value (strip only non-alphanumeric except hyphen) for violation matching
+        const plateClean = scanValue.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+
+        // ── Violation GPS shortcut ────────────────────────────────────────────
+        // If this plate has an outstanding violation with GPS co-ords, jump straight to the map.
         const matchedViolation = violations.find(v =>
             v.vehicle && v.vehicle.plate_number &&
             v.vehicle.plate_number.replace(/[^A-Z0-9]/gi, '').toUpperCase() === plateClean &&
@@ -519,16 +538,18 @@
                         m.openPopup();
                     }
                 });
-                // Route to live location if available, else violation pin
                 const destLat = matchedViolation.owner_lat || matchedViolation.gps_lat;
                 const destLng = matchedViolation.owner_lng || matchedViolation.gps_lng;
                 getDirectionsTo(destLat, destLng, matchedViolation.vehicle.plate_number);
             }, 300);
-        } else {
-            // No GPS data — fall back to regular search
-            $('#searchInput').val(decodedText);
-            $('#searchInput').closest('form').submit();
+            return;
         }
+
+        // ── Default: navigate to the scan endpoint which handles both QR IDs and plate numbers ──
+        // Using /scan/{value} lets QrScanController handle the lookup for security users
+        // (it redirects security/admin to security.search automatically).
+        const scanUrl = '{{ url("/scan") }}/' + encodeURIComponent(scanValue);
+        window.location.href = scanUrl;
     }
 
     // ── OCR License Plate Capture ──
@@ -553,26 +574,42 @@
                     }
                 }
             });
-            
+
+            $('#ocrOverlay').css('display', 'none');
+
             const text = result.data.text.trim();
+            // Keep letters, digits, and hyphens; strip everything else
             const cleaned = text.replace(/[^A-Z0-9-]/gi, '').toUpperCase();
-            
-            // Match PH plates: 3 letters, 3-4 numbers
-            const plateRegex = /[A-Z]{3}[-]?[0-9]{3,4}/;
+
+            // Match PH plates: 3 letters + optional hyphen + 3-4 digits (e.g. HJW-0827 or HJW0827)
+            const plateRegex = /[A-Z]{3}-?[0-9]{3,4}/;
             const match = cleaned.match(plateRegex);
-            
+
+            let plateGuess = '';
             if (match) {
-                onScanSuccess(match[0]);
-            } else if (cleaned.length >= 4) {
-               onScanSuccess(cleaned.substring(0, 8));
-            } else {
-                alert("Could not detect a clear license plate. Please try again.");
-                $('#ocrOverlay').css('display', 'none');
+                plateGuess = match[0];
+            } else if (cleaned.replace(/-/g, '').length >= 4) {
+                plateGuess = cleaned.replace(/-/g, '').substring(0, 8);
+            }
+
+            if (!plateGuess) {
+                alert('Could not detect a clear license plate. Please try again or type it manually.');
+                return;
+            }
+
+            // Show the result to the officer and let them confirm or correct it
+            const confirmed = window.prompt(
+                '📷 OCR detected this plate number. Edit if needed, then click OK to look it up:',
+                plateGuess
+            );
+
+            if (confirmed && confirmed.trim()) {
+                onScanSuccess(confirmed.trim());
             }
         } catch (err) {
             console.error(err);
-            alert("OCR Processing failed.");
             $('#ocrOverlay').css('display', 'none');
+            alert('OCR Processing failed. Please try again or enter the plate manually.');
         }
     });
 </script>
