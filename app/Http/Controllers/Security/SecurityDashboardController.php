@@ -53,9 +53,9 @@ class SecurityDashboardController extends Controller
             return back()->with('error', 'Please enter a search term.');
         }
 
-        $queryUpper = strtoupper($query);
+        $queryClean = str_replace(['-', ' '], '', strtoupper($query));
 
-        // Search in Vehicle Plate Number or Registration QR Sticker ignoring case
+        // Search in Vehicle Plate Number or Registration QR Sticker ignoring case, spaces, and hyphens
         $vehicle = \App\Models\Vehicle::with(['registrations' => function($q) {
             // Prefer approved over pending so the security card shows "valid entry" when available.
             // Also uses LOWER(status) to handle DB enum values like "Approved"/"Pending".
@@ -68,9 +68,9 @@ class SecurityDashboardController extends Controller
                 ->orderByDesc('created_at')
                 ->limit(1);
         }, 'user'])
-        ->whereRaw('UPPER(plate_number) LIKE ?', ["%{$queryUpper}%"])
-        ->orWhereHas('registrations', function ($q) use ($queryUpper) {
-            $q->whereRaw('UPPER(qr_sticker_id) LIKE ?', ["%{$queryUpper}%"]);
+        ->whereRaw("REPLACE(REPLACE(UPPER(plate_number), '-', ''), ' ', '') LIKE ?", ["%{$queryClean}%"])
+        ->orWhereHas('registrations', function ($q) use ($queryClean) {
+            $q->whereRaw("REPLACE(REPLACE(UPPER(qr_sticker_id), '-', ''), ' ', '') LIKE ?", ["%{$queryClean}%"]);
         })->first();
 
         if (!$vehicle) {

@@ -141,8 +141,16 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('user.registration.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('user.registration.store') }}" enctype="multipart/form-data" id="registrationForm">
             @csrf
+            
+            <div id="total-size-error" class="alert-error-list" style="display: none;">
+                <p>⚠️ Total Upload Size Too Large</p>
+                <ul>
+                    <li>The combined size of all your documents exceeds the 20MB limit.</li>
+                    <li>Please compress your images and try again.</li>
+                </ul>
+            </div>
 
             {{-- Step 1: Vehicle Info --}}
             <div class="card">
@@ -281,9 +289,28 @@
     </div>
 
     <script>
-        /* ── Fix 5: File-size guard (max 5 MB) ── */
-        const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+        /* ── Fix 5: File-size guard (max 5 MB per file, max 20 MB total) ── */
+        const MAX_BYTES_PER_FILE = 5 * 1024 * 1024; // 5 MB
+        const MAX_BYTES_TOTAL = 20 * 1024 * 1024;   // 20 MB
         const docs = ['or', 'cr', 'cor', 'license', 'school_id'];
+        
+        document.getElementById('registrationForm').addEventListener('submit', function (e) {
+            let totalBytes = 0;
+            docs.forEach(key => {
+                const input = document.getElementById('doc_' + key);
+                if (input && input.files.length > 0) {
+                    totalBytes += input.files[0].size;
+                }
+            });
+            
+            if (totalBytes > MAX_BYTES_TOTAL) {
+                e.preventDefault();
+                document.getElementById('total-size-error').style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                document.getElementById('total-size-error').style.display = 'none';
+            }
+        });
 
         docs.forEach(key => {
             const input = document.getElementById('doc_' + key);
@@ -304,7 +331,7 @@
                 if (!file) return;
 
                 // ⚠️ Block files larger than 5 MB
-                if (file.size > MAX_BYTES) {
+                if (file.size > MAX_BYTES_PER_FILE) {
                     this.value = '';
                     card.classList.remove('has-file');
                     wrap.style.display = 'none';
