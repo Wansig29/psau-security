@@ -52,7 +52,7 @@
             </div>
         </div>
         <div style="padding:20px;">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;align-items:flex-start;">
                 <div class="stat-card c-maroon" style="min-height:auto;align-items:flex-start;cursor:pointer;padding-bottom:16px;" onclick="window.location.href='{{ route('admin.dashboard') }}'">
                     <div class="stat-icon c-maroon"><i class="fas fa-clipboard-list"></i></div>
                     <div style="width:100%;flex:1;">
@@ -62,8 +62,12 @@
                                 <i class="fas fa-chevron-down" style="padding:4px;"></i>
                             </button>
                         </div>
-                        <div id="desc-pending" style="display:none;font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">
-                            Review submitted vehicle applications, verify uploaded documents, then approve or reject requests.
+                        <div id="desc-pending" style="display:grid;grid-template-rows:0fr;transition:all 0.3s ease;margin-top:0;">
+                            <div style="overflow:hidden;">
+                                <div style="font-size:13px;color:#6b7280;line-height:1.5;padding-top:2px;">
+                                    Review submitted vehicle applications, verify uploaded documents, then approve or reject requests.
+                                </div>
+                            </div>
                         </div>
                         <div style="font-size:12px;color:#6b0a16;font-weight:700;margin-top:8px;">{{ $pendingCount }} awaiting review</div>
                     </div>
@@ -78,8 +82,12 @@
                                 <i class="fas fa-chevron-down" style="padding:4px;"></i>
                             </button>
                         </div>
-                        <div id="desc-approved" style="display:none;font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">
-                            Manage approved registrations, print QR stickers, and schedule or reschedule claim dates.
+                        <div id="desc-approved" style="display:grid;grid-template-rows:0fr;transition:all 0.3s ease;margin-top:0;">
+                            <div style="overflow:hidden;">
+                                <div style="font-size:13px;color:#6b7280;line-height:1.5;padding-top:2px;">
+                                    Manage approved registrations, print QR stickers, and schedule or reschedule claim dates.
+                                </div>
+                            </div>
                         </div>
                         <div style="font-size:12px;color:#166534;font-weight:700;margin-top:8px;">{{ $approvedCount }} approved records</div>
                     </div>
@@ -94,8 +102,12 @@
                                 <i class="fas fa-chevron-down" style="padding:4px;"></i>
                             </button>
                         </div>
-                        <div id="desc-violations" style="display:none;font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">
-                            Track violation incidents, assign sanctions, and monitor active or resolved enforcement actions.
+                        <div id="desc-violations" style="display:grid;grid-template-rows:0fr;transition:all 0.3s ease;margin-top:0;">
+                            <div style="overflow:hidden;">
+                                <div style="font-size:13px;color:#6b7280;line-height:1.5;padding-top:2px;">
+                                    Track violation incidents, assign sanctions, and monitor active or resolved enforcement actions.
+                                </div>
+                            </div>
                         </div>
                         <div style="font-size:12px;color:#991b1b;font-weight:700;margin-top:8px;">{{ $violationsCount }} logged violations</div>
                     </div>
@@ -110,8 +122,12 @@
                                 <i class="fas fa-chevron-down" style="padding:4px;"></i>
                             </button>
                         </div>
-                        <div id="desc-users" style="display:none;font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">
-                            Create and manage admin, security, and user accounts while enforcing role-based access.
+                        <div id="desc-users" style="display:grid;grid-template-rows:0fr;transition:all 0.3s ease;margin-top:0;">
+                            <div style="overflow:hidden;">
+                                <div style="font-size:13px;color:#6b7280;line-height:1.5;padding-top:2px;">
+                                    Create and manage admin, security, and user accounts while enforcing role-based access.
+                                </div>
+                            </div>
                         </div>
                         <div style="font-size:12px;color:#1d4ed8;font-weight:700;margin-top:8px;">{{ $usersCount }} active accounts</div>
                     </div>
@@ -153,12 +169,14 @@
 @push('scripts')
 <script>
 function toggleCardDesc(id, iconEl) {
-    const desc = document.getElementById(id);
-    if (desc.style.display === 'none') {
-        desc.style.display = 'block';
+    const wrapper = document.getElementById(id);
+    if (wrapper.style.gridTemplateRows === '0fr' || wrapper.style.gridTemplateRows === '') {
+        wrapper.style.gridTemplateRows = '1fr';
+        wrapper.style.marginTop = '6px';
         iconEl.classList.replace('fa-chevron-down', 'fa-chevron-up');
     } else {
-        desc.style.display = 'none';
+        wrapper.style.gridTemplateRows = '0fr';
+        wrapper.style.marginTop = '0px';
         iconEl.classList.replace('fa-chevron-up', 'fa-chevron-down');
     }
 }
