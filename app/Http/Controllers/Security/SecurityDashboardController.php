@@ -53,6 +53,14 @@ class SecurityDashboardController extends Controller
             return back()->with('error', 'Please enter a search term.');
         }
 
+        // If the query is a full URL from scanning the QR code, extract the last segment
+        if (filter_var($query, FILTER_VALIDATE_URL)) {
+            $path = parse_url($query, PHP_URL_PATH); // e.g., '/scan/QR-001' or '/scan/HJW-0827'
+            if ($path) {
+                $query = basename($path);
+            }
+        }
+
         $queryClean = str_replace(['-', ' '], '', strtoupper($query));
 
         // Search in Vehicle Plate Number or Registration QR Sticker ignoring case, spaces, and hyphens
