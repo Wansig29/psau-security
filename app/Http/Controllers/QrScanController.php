@@ -17,8 +17,22 @@ class QrScanController extends Controller
             return redirect()->route('security.search', ['query' => $qr_sticker_id]);
         }
 
+        $qrOrPlateClean = str_replace(['-', ' '], '', strtoupper($qr_sticker_id));
+
         $registration = Registration::with(['user', 'vehicle'])
-            ->whereRaw('LOWER(qr_sticker_id) = ?', [strtolower($qr_sticker_id)])
+            ->where(function ($query) use ($qrOrPlateClean) {
+                $query->whereRaw("REPLACE(REPLACE(UPPER(qr_sticker_id), '-', ''), ' ', '') = ?", [$qrOrPlateClean])
+                      ->orWhereHas('vehicle', function ($q) use ($qrOrPlateClean) {
+                          $q->whereRaw("REPLACE(REPLACE(UPPER(plate_number), '-', ''), ' ', '') = ?", [$qrOrPlateClean]);
+                      });
+            })
+            ->orderByRaw("CASE 
+                WHEN LOWER(status) = 'approved' THEN 0 
+                WHEN LOWER(status) = 'pending' THEN 1 
+                ELSE 2 
+            END")
+            ->orderByDesc('approved_at')
+            ->orderByDesc('created_at')
             ->first();
 
         if (!$registration) {
