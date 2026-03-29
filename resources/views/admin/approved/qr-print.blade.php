@@ -523,21 +523,11 @@
                 </div>
 
                 <div class="details-wrapper">
-                    <!-- Plate Number + scannable plate QR -->
+                    <!-- Plate Number -->
                     <div class="plate-block">
-                        <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
-                            <div class="plate" contenteditable="true">{{ $registration->vehicle->plate_number }}</div>
-                            @if(!empty($plateQrSvg))
-                            <div title="Scan this QR to look up by plate number"
-                                 style="border:2px solid #111;border-radius:4px;padding:3px;background:#fff;display:inline-flex;flex-shrink:0">
-                                {!! $plateQrSvg !!}
-                            </div>
-                            @endif
-                        </div>
-                        <div style="font-size:8px;color:#9ca3af;text-align:center;margin-top:3px;letter-spacing:.4px">
-                            SCAN EITHER CODE
-                        </div>
+                        <div class="plate" contenteditable="true">{{ $registration->vehicle->plate_number }}</div>
                     </div>
+
 
                     <!-- Info Box -->
                     <div class="info-block">

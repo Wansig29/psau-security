@@ -62,11 +62,8 @@ class AdminApprovedRegistrationController extends Controller
         // Generate the main SVG QR code with High error correction (30% recovery) for lumpy/curved surfaces
         $qrCodeSvg = QrCode::size(260)->errorCorrection('H')->generate($url);
 
-        // Generate a second, smaller QR code for the plate number so scanning the plate area also works
-        $plateUrl = route('scan.show', $registration->vehicle->plate_number);
-        $plateQrSvg = QrCode::size(80)->errorCorrection('M')->generate($plateUrl);
+        return view('admin.approved.qr-print', compact('registration', 'qrCodeSvg'));
 
-        return view('admin.approved.qr-print', compact('registration', 'qrCodeSvg', 'plateQrSvg'));
     }
 
     /**
