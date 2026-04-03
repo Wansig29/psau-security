@@ -10,7 +10,7 @@ if errorlevel 1 goto error
 
 echo.
 echo Running "flutter build apk"...
-call flutter build apk
+call C:\Users\Janssen\.puro\envs\stable\flutter\bin\flutter.bat build apk
 if errorlevel 1 goto build_error
 
 echo.
