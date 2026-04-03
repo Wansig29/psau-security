@@ -8,6 +8,11 @@ Route::get('/force-migration', function () {
     return "✅ Database migrations successfully applied! Output: " . nl2br(\Illuminate\Support\Facades\Artisan::output());
 });
 
+Route::get('/force-storage-link', function () {
+    \Illuminate\Support\Facades\Artisan::call('storage:link');
+    return "✅ Storage successfully linked! Your uploaded images should now be visible.";
+});
+
 Route::get('/', function () {
     return redirect()->route('login');
 });
