@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('registration_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('registration_id')->constrained('registrations')->onDelete('cascade');
-            $table->enum('document_type', ['CR', 'DL', 'SID']);
+            $table->string('document_type');
             $table->string('image_path')->nullable(); // deleted after approval
             $table->text('ocr_extracted_text')->nullable(); // kept permanently
             $table->decimal('match_score', 5, 2)->nullable();
