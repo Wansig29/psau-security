@@ -19,11 +19,11 @@ class RegistrationController extends Controller
                 'make'          => 'required|string|max:255',
                 'model'         => 'required|string|max:255',
                 'color'         => 'required|string|max:255',
-                'doc_or'        => 'required|file|mimes:jpeg,png,jpg|max:5120',
-                'doc_cr'        => 'required|file|mimes:jpeg,png,jpg|max:5120',
-                'doc_cor'       => 'required|file|mimes:jpeg,png,jpg|max:5120',
-                'doc_license'   => 'required|file|mimes:jpeg,png,jpg|max:5120',
-                'doc_school_id' => 'required|file|mimes:jpeg,png,jpg|max:5120',
+                'doc_or'        => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:5120',
+                'doc_cr'        => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:5120',
+                'doc_cor'       => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:5120',
+                'doc_license'   => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:5120',
+                'doc_school_id' => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:5120',
             ]);
 
             $user = $request->user();
@@ -60,7 +60,7 @@ class RegistrationController extends Controller
 
             // 2. Run OCR on the OR document to extract the plate number
             $ocrText     = '';
-            $plateNumber = 'UNKNOWN';
+            $plateNumber = 'UNKNOWN_' . \Illuminate\Support\Str::random(8);
             try {
                 $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['or']['full']))->run();
                 if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($ocrText), $matches)) {
@@ -90,7 +90,7 @@ class RegistrationController extends Controller
 
             // 5. Save each document record
             $docTypes = [
-                'or'        => ['type' => 'or',        'ocr' => $ocrText, 'flagged' => $plateNumber === 'UNKNOWN' ? ['plate_number' => 'Not found in OCR'] : null],
+                'or'        => ['type' => 'or',        'ocr' => $ocrText, 'flagged' => str_starts_with($plateNumber, 'UNKNOWN_') ? ['plate_number' => 'Not found in OCR'] : null],
                 'cr'        => ['type' => 'cr',        'ocr' => null, 'flagged' => null],
                 'cor'       => ['type' => 'cor',       'ocr' => null, 'flagged' => null],
                 'license'   => ['type' => 'license',   'ocr' => null, 'flagged' => null],

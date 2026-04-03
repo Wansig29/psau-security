@@ -141,6 +141,16 @@
             </div>
         @endif
 
+        {{-- Backend Errors --}}
+        @if(session('error'))
+            <div class="alert-error-list">
+                <p>⚠️ Error submitting registration</p>
+                <ul>
+                    <li>{{ session('error') }}</li>
+                </ul>
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('user.registration.store') }}" enctype="multipart/form-data" id="registrationForm">
             @csrf
             
@@ -208,7 +218,7 @@
                             <div class="doc-label">Official Receipt (OR) <span class="required">*</span></div>
                             <div class="doc-sublabel">LTO Registration Receipt</div>
                             <label class="doc-trigger" for="doc_or">Choose File</label>
-                            <input class="doc-input" type="file" id="doc_or" name="doc_or" accept="image/jpeg,image/png,image/jpg">
+                            <input class="doc-input" type="file" id="doc_or" name="doc_or" accept="image/jpeg,image/png,image/jpg,image/heic,image/heif,.heic,.heif">
                             <div class="doc-preview-wrap" id="preview-or">
                                 <img id="img-or" src="" alt="OR Preview">
                                 <div class="doc-filename" id="name-or"></div>
@@ -222,7 +232,7 @@
                             <div class="doc-label">Certificate of Registration (CR) <span class="required">*</span></div>
                             <div class="doc-sublabel">LTO Vehicle Certificate</div>
                             <label class="doc-trigger" for="doc_cr">Choose File</label>
-                            <input class="doc-input" type="file" id="doc_cr" name="doc_cr" accept="image/jpeg,image/png,image/jpg">
+                            <input class="doc-input" type="file" id="doc_cr" name="doc_cr" accept="image/jpeg,image/png,image/jpg,image/heic,image/heif,.heic,.heif">
                             <div class="doc-preview-wrap" id="preview-cr">
                                 <img id="img-cr" src="" alt="CR Preview">
                                 <div class="doc-filename" id="name-cr"></div>
@@ -236,7 +246,7 @@
                             <div class="doc-label">Certificate of Registration (COR) <span class="required">*</span></div>
                             <div class="doc-sublabel">School enrollment COR</div>
                             <label class="doc-trigger" for="doc_cor">Choose File</label>
-                            <input class="doc-input" type="file" id="doc_cor" name="doc_cor" accept="image/jpeg,image/png,image/jpg">
+                            <input class="doc-input" type="file" id="doc_cor" name="doc_cor" accept="image/jpeg,image/png,image/jpg,image/heic,image/heif,.heic,.heif">
                             <div class="doc-preview-wrap" id="preview-cor">
                                 <img id="img-cor" src="" alt="COR Preview">
                                 <div class="doc-filename" id="name-cor"></div>
@@ -250,7 +260,7 @@
                             <div class="doc-label">Driver's License <span class="required">*</span></div>
                             <div class="doc-sublabel">LTO Driver's License (front)</div>
                             <label class="doc-trigger" for="doc_license">Choose File</label>
-                            <input class="doc-input" type="file" id="doc_license" name="doc_license" accept="image/jpeg,image/png,image/jpg">
+                            <input class="doc-input" type="file" id="doc_license" name="doc_license" accept="image/jpeg,image/png,image/jpg,image/heic,image/heif,.heic,.heif">
                             <div class="doc-preview-wrap" id="preview-license">
                                 <img id="img-license" src="" alt="License Preview">
                                 <div class="doc-filename" id="name-license"></div>
@@ -264,7 +274,7 @@
                             <div class="doc-label">School ID <span class="required">*</span></div>
                             <div class="doc-sublabel">Valid PSAU Student/Faculty ID</div>
                             <label class="doc-trigger" for="doc_school_id">Choose File</label>
-                            <input class="doc-input" type="file" id="doc_school_id" name="doc_school_id" accept="image/jpeg,image/png,image/jpg">
+                            <input class="doc-input" type="file" id="doc_school_id" name="doc_school_id" accept="image/jpeg,image/png,image/jpg,image/heic,image/heif,.heic,.heif">
                             <div class="doc-preview-wrap" id="preview-school_id">
                                 <img id="img-school_id" src="" alt="School ID Preview">
                                 <div class="doc-filename" id="name-school_id"></div>
