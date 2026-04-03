@@ -278,11 +278,11 @@
 
             <div class="form-actions">
                 <a href="{{ route('user.dashboard') }}" class="btn-secondary">Cancel</a>
-                <button type="submit" class="btn-primary">
-                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <button type="submit" class="btn-primary" id="submitBtn">
+                    <svg id="submitIcon" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path d="M5 13l4 4L19 7"/>
                     </svg>
-                    Submit Registration
+                    <span id="submitText">Submit Registration</span>
                 </button>
             </div>
         </form>
@@ -296,20 +296,40 @@
         
         document.getElementById('registrationForm').addEventListener('submit', function (e) {
             let totalBytes = 0;
+            let missingDocs = [];
+
             docs.forEach(key => {
                 const input = document.getElementById('doc_' + key);
                 if (input && input.files.length > 0) {
                     totalBytes += input.files[0].size;
+                } else {
+                    missingDocs.push(key.toUpperCase());
                 }
             });
+
+            if (missingDocs.length > 0) {
+                e.preventDefault();
+                alert('Please upload all required documents. Missing: ' + missingDocs.join(', '));
+                return;
+            }
             
             if (totalBytes > MAX_BYTES_TOTAL) {
                 e.preventDefault();
                 document.getElementById('total-size-error').style.display = 'block';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
             } else {
                 document.getElementById('total-size-error').style.display = 'none';
             }
+
+            // Visual feedback for upload
+            const btn = document.getElementById('submitBtn');
+            const icon = document.getElementById('submitIcon');
+            const text = document.getElementById('submitText');
+            btn.style.opacity = '0.7';
+            btn.style.cursor = 'not-allowed';
+            icon.style.display = 'none';
+            text.textContent = 'Uploading... Please wait';
         });
 
         docs.forEach(key => {
@@ -360,7 +380,6 @@
             input.value = v.startsWith('+') ? v.slice(0, 13) : v.slice(0, 11);
         }
 
-        /* ── Fix 6: Idle Session Timeout (15 minutes) ── */
         (function () {
             const IDLE_MS   = 15 * 60 * 1000; // 15 minutes
             const CSRF      = document.querySelector('meta[name="csrf-token"]') &&
@@ -383,6 +402,12 @@
                 .forEach(evt => document.addEventListener(evt, resetIdle, true));
 
             resetIdle(); // kick off on page load
+
+            // Auto-scroll to errors if present
+            const errorList = document.querySelector('.alert-error-list');
+            if (errorList) {
+                errorList.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         })();
     </script>
 
