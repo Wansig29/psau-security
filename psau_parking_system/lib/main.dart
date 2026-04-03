@@ -148,10 +148,10 @@ class _PsauParkingAppState extends State<PsauParkingApp> {
         }
         return null;
       },
-    );
-  }
+    ),
+  );
 }
-
+}
 // ── Splash / Auth gate ────────────────────────────────────────────────────────
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
