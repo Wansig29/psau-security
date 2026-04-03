@@ -59,6 +59,10 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "build-apk": [
+            "cd psau_parking_system && flutter build apk",
+            "@php -r \"copy('psau_parking_system/build/app/outputs/flutter-apk/app-release.apk', 'public/psau_parking.apk'); echo 'APK successfully copied to public/\\n';\""
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
