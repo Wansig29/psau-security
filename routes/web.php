@@ -3,6 +3,11 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/force-migration', function () {
+    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+    return "✅ Database migrations successfully applied! Output: " . nl2br(\Illuminate\Support\Facades\Artisan::output());
+});
+
 Route::get('/', function () {
     return redirect()->route('login');
 });
