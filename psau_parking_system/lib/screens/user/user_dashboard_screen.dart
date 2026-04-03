@@ -231,13 +231,13 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   Widget _actions() {
     final actions = [
       _Action('Register Vehicle', Icons.directions_car_outlined, AppTheme.primaryLight,
-          () => Navigator.pushNamed(context, '/user/register-vehicle')),
+          () => Navigator.pushNamed(context, '/user/register-vehicle').then((_) => _load())),
       _Action('Update Photo', Icons.camera_alt_outlined, AppTheme.info,
-          () => Navigator.pushNamed(context, '/user/profile-photo')),
+          () => Navigator.pushNamed(context, '/user/profile-photo').then((_) => _load())),
       _Action('Broadcast Location', Icons.location_on_outlined, AppTheme.success,
           () => Navigator.pushNamed(context, '/user/location')),
       _Action('Update Contact', Icons.phone_outlined, AppTheme.warning,
-          () => Navigator.pushNamed(context, '/user/contact')),
+          () => Navigator.pushNamed(context, '/user/contact').then((_) => _load())),
     ];
 
     return GridView.count(

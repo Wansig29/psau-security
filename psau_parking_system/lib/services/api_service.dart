@@ -72,7 +72,6 @@ class ApiService {
     return _dio.post(
       path,
       data: formData,
-      options: Options(contentType: 'multipart/form-data'),
     );
   }
 

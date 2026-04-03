@@ -194,7 +194,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
             $vehicle = \App\Models\Vehicle::create([
                 'user_id'      => $user->id,
-                'plate_number' => 'PENDING_OCR',
+                'plate_number' => 'PENDING_' . strtoupper(\Illuminate\Support\Str::random(8)),
                 'make'         => $request->make,
                 'model'        => $request->model,
                 'color'        => $request->color,
