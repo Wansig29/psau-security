@@ -122,6 +122,7 @@ Route::middleware(['auth', 'verified', 'role:vehicle_user'])->prefix('user')->na
     // Vehicle Registration routes
     Route::get('/registration/create', [\App\Http\Controllers\RegistrationController::class, 'create'])->name('registration.create');
     Route::post('/registration', [\App\Http\Controllers\RegistrationController::class, 'store'])->name('registration.store');
+    Route::delete('/vehicle/{vehicle}', [\App\Http\Controllers\User\UserDashboardController::class, 'destroyVehicle'])->name('vehicle.destroy');
 
     // Profile photo
     Route::post('/profile/photo', [\App\Http\Controllers\User\UserProfileController::class, 'uploadPhoto'])->name('profile.photo.upload');

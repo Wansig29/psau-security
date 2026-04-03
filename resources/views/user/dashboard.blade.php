@@ -157,7 +157,7 @@
                 </span>
                 <span class="badge badge-pill"
                       style="background:#fff3cd;color:#856404;border:1px solid #ffeeba;font-size:.76rem;padding:4px 10px">
-                    <i class="fas fa-car mr-1"></i>{{ $vehicles->count() }} Vehicle(s)
+                    <i class="fas fa-car mr-1"></i>{{ $approvedVehiclesCount }} Approved Vehicle(s)
                 </span>
                 @if($violations->count() > 0)
                 <span class="badge badge-pill badge-danger" style="font-size:.76rem;padding:4px 10px">
@@ -229,9 +229,19 @@
                 @foreach($vehicles as $veh)
                 <div class="col-sm-6 col-lg-4 mb-4">
                     <div class="card shadow-sm h-100"
-                         style="border-radius:12px;overflow:hidden;border:1px solid #e3e6f0;transition:transform .2s,box-shadow .2s"
+                         style="border-radius:12px;overflow:hidden;border:1px solid #e3e6f0;transition:transform .2s,box-shadow .2s;position:relative;"
                          onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.12)'"
                          onmouseout="this.style.transform='';this.style.boxShadow=''">
+                         
+                        <form action="{{ route('user.vehicle.destroy', $veh) }}" method="POST" class="d-inline"
+                              onsubmit="return confirm('Are you sure you want to remove this vehicle? All related data, including pending applications, will be removed.')"
+                              style="position:absolute;top:8px;right:8px;z-index:10;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-danger rounded-circle shadow-sm" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;" title="Remove Vehicle">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
                         {{-- Vehicle photo --}}
                         <div style="height:150px;overflow:hidden;background:#f1f3f9;display:flex;align-items:center;justify-content:center">
                             @if($veh->photo_path)

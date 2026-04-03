@@ -15,7 +15,22 @@ class UserDashboardController extends Controller
         $registrations = $user->registrations()->with(['vehicle', 'pickupSchedule', 'documents'])->latest()->get();
         $violations = \App\Models\Violation::whereIn('vehicle_id', $vehicles->pluck('id'))->with(['vehicle', 'sanctions'])->latest()->get();
 
-        return view('user.dashboard', compact('user', 'vehicles', 'registrations', 'violations'));
+        $approvedVehiclesCount = $vehicles->filter(function ($veh) {
+            return $veh->registrations->where('status', 'approved')->isNotEmpty();
+        })->count();
+
+        return view('user.dashboard', compact('user', 'vehicles', 'registrations', 'violations', 'approvedVehiclesCount'));
+    }
+
+    public function destroyVehicle(\App\Models\Vehicle $vehicle)
+    {
+        if ($vehicle->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $vehicle->delete();
+
+        return redirect()->route('user.dashboard')->with('status', 'Vehicle removed successfully.');
     }
 
     public function info()
