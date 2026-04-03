@@ -22,3 +22,12 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Flutter project ignores
+psau_parking_system/build/
+psau_parking_system/android/.gradle/
+psau_parking_system/.dart_tool/
+psau_parking_system/.pub-cache/
+psau_parking_system/.pub/
+psau_parking_system/.flutter-plugins
+psau_parking_system/.flutter-plugins-dependencies

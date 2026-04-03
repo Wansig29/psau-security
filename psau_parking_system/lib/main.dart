@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'config/app_theme.dart';
@@ -45,13 +46,71 @@ void main() async {
   );
 }
 
-class PsauParkingApp extends StatelessWidget {
+class PsauParkingApp extends StatefulWidget {
   const PsauParkingApp({super.key});
 
   @override
+  State<PsauParkingApp> createState() => _PsauParkingAppState();
+}
+
+class _PsauParkingAppState extends State<PsauParkingApp> {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  Timer? _idleTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<AuthProvider>().addListener(_authListener);
+    });
+  }
+
+  @override
+  void dispose() {
+    _idleTimer?.cancel();
+    super.dispose();
+  }
+
+  void _authListener() {
+    if (!mounted) return;
+    if (context.read<AuthProvider>().isLoggedIn) {
+      _handleInteraction();
+    } else {
+      _idleTimer?.cancel();
+    }
+  }
+
+  void _handleInteraction([_]) {
+    if (!mounted) return;
+    final auth = context.read<AuthProvider>();
+    if (!auth.isLoggedIn) return;
+
+    _idleTimer?.cancel();
+    _idleTimer = Timer(const Duration(minutes: 10), () {
+      if (mounted && auth.isLoggedIn) {
+        auth.logout();
+        navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+        final ctx = navigatorKey.currentContext;
+        if (ctx != null) {
+          ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+            content: Text('Logged out due to inactivity.'),
+            backgroundColor: AppTheme.warning,
+          ));
+        }
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'PSAU Parking System',
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: _handleInteraction,
+      onPointerMove: _handleInteraction,
+      onPointerUp: _handleInteraction,
+      child: MaterialApp(
+        navigatorKey: navigatorKey,
+        title: 'PSAU Parking System',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       initialRoute: '/splash',
