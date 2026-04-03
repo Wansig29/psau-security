@@ -117,7 +117,7 @@ class RegistrationController extends Controller
             \Illuminate\Support\Facades\Log::error('Vehicle registration failed: ' . $e->getMessage());
             return back()
                 ->withInput()
-                ->with('error', 'Something went wrong while submitting your registration. Please try again or contact support if the problem persists.');
+                ->with('error', 'Server error: ' . $e->getMessage());
         }
     }
 }
