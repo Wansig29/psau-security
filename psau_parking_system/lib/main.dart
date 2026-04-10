@@ -27,23 +27,40 @@ import 'screens/admin/vehicle_management_screen.dart';
 import 'screens/admin/sanctions_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Init API service (registers 401 hook after providers are up)
-  await ApiService().init();
+    // Catch Flutter framework errors (widget build errors etc.)  
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+    };
 
-  // Init local notifications
-  await NotificationService().init();
+    // Init API service (registers 401 hook after providers are up)
+    try {
+      await ApiService().init();
+    } catch (e) {
+      debugPrint('ApiService init failed: $e');
+    }
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => NotificationProvider()),
-      ],
-      child: const PsauParkingApp(),
-    ),
-  );
+    // Init local notifications (non-fatal if it fails)
+    try {
+      await NotificationService().init();
+    } catch (e) {
+      debugPrint('NotificationService init failed: $e');
+    }
+
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ],
+        child: const PsauParkingApp(),
+      ),
+    );
+  }, (error, stack) {
+    debugPrint('Uncaught error: $error\n$stack');
+  });
 }
 
 class PsauParkingApp extends StatefulWidget {
