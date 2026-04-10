@@ -10,6 +10,24 @@ use Illuminate\Support\Facades\Route;
 | All routes require Bearer token from Sanctum unless marked [public].
 */
 
+// ─── [PUBLIC] Crash Reporter ──────────────────────────────────────────────────
+
+Route::post('/crash-report', function (Request $request) {
+    $error     = $request->input('error', 'Unknown error');
+    $stack     = $request->input('stack', '');
+    $platform  = $request->input('platform', 'unknown');
+    $version   = $request->input('version', '?');
+    $timestamp = $request->input('timestamp', now()->toISOString());
+
+    \Illuminate\Support\Facades\Log::channel('stack')->error(
+        "[MOBILE CRASH] platform={$platform} version={$version} time={$timestamp}\n" .
+        "ERROR: {$error}\n" .
+        "STACK:\n{$stack}"
+    );
+
+    return response()->json(['message' => 'Crash report received.'], 200);
+});
+
 // ─── [PUBLIC] Auth ────────────────────────────────────────────────────────────
 
 Route::post('/login', function (Request $request) {

@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import 'config/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/notification_provider.dart';
+import 'dart:ui';
 import 'services/api_service.dart';
+import 'services/crash_service.dart';
 import 'services/notification_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -33,6 +35,13 @@ void main() async {
     // Catch Flutter framework errors (widget build errors etc.)  
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
+      CrashService().reportCrash(details.exceptionAsString(), details.stack ?? StackTrace.empty);
+    };
+
+    // Catch asynchronous errors outside of Flutter framework
+    PlatformDispatcher.instance.onError = (error, stack) {
+      CrashService().reportCrash(error, stack);
+      return true;
     };
 
     // Init API service (registers 401 hook after providers are up)
@@ -60,6 +69,7 @@ void main() async {
     );
   }, (error, stack) {
     debugPrint('Uncaught error: $error\n$stack');
+    CrashService().reportCrash(error, stack);
   });
 }
 

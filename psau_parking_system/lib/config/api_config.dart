@@ -15,6 +15,9 @@ class AppConfig {
   // Profile
   static const String profileUpdate = '/api/profile/update';
   static const String profileDelete = '/api/profile/delete';
+  
+  // Crash Report
+  static const String crashReport = '/api/crash-report';
 
   // Notifications
   static const String notifications    = '/api/notifications';
