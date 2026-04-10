@@ -226,14 +226,15 @@ Route::middleware('auth:sanctum')->group(function () {
             $ocrText     = '';
             $plateNumber = 'PENDING_' . strtoupper(\Illuminate\Support\Str::random(8));
             try {
-                $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['vehicle_photo']['full']))->run();
+                // The user requested scanning from the OR explicitly since vehicle photos may lack the plate
+                $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['or']['full']))->run();
                 if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($ocrText), $matches)) {
                     $plateNumber = str_replace([' ', '-'], '', $matches[0]);
                 } else {
-                    $orOcrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['or']['full']))->run();
-                    if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($orOcrText), $matches)) {
+                    $crOcrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['cr']['full']))->run();
+                    if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($crOcrText), $matches)) {
                         $plateNumber = str_replace([' ', '-'], '', $matches[0]);
-                        $ocrText .= "\n" . $orOcrText; 
+                        $ocrText .= "\n--- CR ---\n" . $crOcrText; 
                     }
                 }
             } catch (\Exception $e) {
