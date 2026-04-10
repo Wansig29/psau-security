@@ -90,10 +90,10 @@
                                                 @foreach($docDefs as $type => $def)
                                                     @if($docMap->has($type))
                                                         @php $doc = $docMap[$type]; @endphp
-                                                        <a href="{{ asset('storage/' . $doc->image_path) }}" target="_blank"
+                                                        <a href="javascript:void(0)" onclick="openImageModal('{{ asset('storage/' . $doc->image_path) }}', '{{ $def[0] }}')"
                                                            title="{{ $def[0] }}" style="display:flex;flex-direction:column;align-items:center;width:44px;text-decoration:none;">
                                                             <img src="{{ asset('storage/' . $doc->image_path) }}" alt="{{ $def[0] }}"
-                                                                 onerror="this.onerror=null;this.src='https://via.placeholder.com/38x38.png?text={{ urlencode($def[0]) }}';"
+                                                                 onerror="this.onerror=null;this.src='https://placehold.co/38x38?text={{ urlencode($def[0]) }}';"
                                                                  style="width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;transition:transform 0.2s"
                                                                  onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
                                                             <span style="font-size:9px;color:#6b7280;margin-top:2px;text-align:center">{{ $def[0] }}</span>
@@ -124,4 +124,23 @@
                 </div>
             @endif
         </div>
+
+        {{-- Image Modal Overlay --}}
+        <div id="imageModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;" onclick="this.style.display='none'">
+            <div style="position:relative; max-width:90%; max-height:90%;">
+                <div style="position:absolute;top:-40px;right:-10px;color:white;font-size:30px;cursor:pointer;">&times;</div>
+                <img id="imageModalSrc" src="" style="max-width:100%;max-height:90vh;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5); object-fit:contain;">
+            </div>
+        </div>
+
+        <script>
+        function openImageModal(url, label) {
+            document.getElementById('imageModalSrc').src = url;
+            document.getElementById('imageModalSrc').onerror = function() {
+                this.onerror = null;
+                this.src = 'https://placehold.co/600x400?text=Image+Not+Found+(' + encodeURIComponent(label) + ')';
+            };
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+        </script>
 @endsection
