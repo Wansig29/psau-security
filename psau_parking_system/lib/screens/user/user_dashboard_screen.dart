@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../config/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
@@ -22,12 +24,41 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   RegistrationModel? _registration;
   List<SanctionModel> _sanctions = [];
   bool _loading = true;
+  Timer? _bgLocTimer;
 
   @override
   void initState() {
     super.initState();
     _load();
     context.read<NotificationProvider>().fetchNotifications();
+    _initAutoLocationBroadcast();
+  }
+
+  @override
+  void dispose() {
+    _bgLocTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initAutoLocationBroadcast() async {
+    LocationPermission perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
+    }
+    if (perm == LocationPermission.whileInUse || perm == LocationPermission.always) {
+      _broadcastCurrentLocation();
+      _bgLocTimer = Timer.periodic(const Duration(seconds: 15), (_) => _broadcastCurrentLocation());
+    }
+  }
+
+  Future<void> _broadcastCurrentLocation() async {
+    try {
+      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      await ApiService().post(AppConfig.userLocationBroadcast, data: {
+        'lat': pos.latitude,
+        'lng': pos.longitude,
+      });
+    } catch (_) {}
   }
 
   Future<void> _load() async {
