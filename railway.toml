@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm run build"
+buildCommand = "npm run build && php artisan storage:link"
 
 [build.env]
 COMPOSER_MEMORY_LIMIT = "-1"
