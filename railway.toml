@@ -6,6 +6,6 @@ buildCommand = "npm run build && php artisan storage:link"
 COMPOSER_MEMORY_LIMIT = "-1"
 
 [phases.setup]
-nixPkgs = ["php82", "php82Packages.composer", "nodejs_20"]
+nixPkgs = ["php82", "php82Packages.composer", "nodejs_20", "tesseract"]
 
 # Force new Railway deployment queue
