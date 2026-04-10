@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_theme.dart';
 import '../../providers/auth_provider.dart';
@@ -186,43 +187,99 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   Widget _registrationCard() {
     final status = _registration?.status ?? 'none';
     final color  = _registration != null ? statusColor(status) : AppTheme.textMuted;
+    final vehiclePhotoPath = _registration?.vehiclePhotoPath;
+    final vehiclePhotoUrl  = vehiclePhotoPath != null
+        ? '${AppConfig.baseUrl}/storage/$vehiclePhotoPath'
+        : null;
 
     return Container(
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: AppTheme.cardGradient,
         borderRadius: AppTheme.radiusMd,
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Registration Status',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 13, fontFamily: 'Outfit')),
-              if (_registration != null) RegistrationStatusBadge(status: status),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (_registration == null)
-            const Text('No registration found.\nSubmit your vehicle registration to get started.',
-              style: TextStyle(color: Colors.white, fontFamily: 'Outfit'))
-          else ...[
-            Text(
-              '${_registration!.vehicle?.make ?? ''} ${_registration!.vehicle?.model ?? ''}',
-              style: const TextStyle(color: Colors.white, fontSize: 18,
-                  fontWeight: FontWeight.w600, fontFamily: 'Outfit'),
+          // ── Vehicle Photo Banner ──────────────────────────────────────
+          if (vehiclePhotoUrl != null)
+            SizedBox(
+              height: 160,
+              width: double.infinity,
+              child: CachedNetworkImage(
+                imageUrl: vehiclePhotoUrl,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => Container(
+                  color: AppTheme.surfaceCard,
+                  child: const Center(child: CircularProgressIndicator(
+                      color: AppTheme.primaryLight, strokeWidth: 2)),
+                ),
+                errorWidget: (_, __, ___) => Container(
+                  color: AppTheme.surfaceCard,
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.directions_car, color: AppTheme.textMuted, size: 40),
+                      SizedBox(height: 6),
+                      Text('Photo unavailable',
+                          style: TextStyle(color: AppTheme.textMuted,
+                              fontSize: 12, fontFamily: 'Outfit')),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              height: 120,
+              width: double.infinity,
+              color: AppTheme.surfaceCard,
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.directions_car_outlined, color: AppTheme.textMuted, size: 40),
+                  SizedBox(height: 6),
+                  Text('No vehicle photo', style: TextStyle(
+                      color: AppTheme.textMuted, fontSize: 12, fontFamily: 'Outfit')),
+                ],
+              ),
             ),
-            Text(_registration!.vehicle?.plateNumber ?? '',
-              style: const TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit')),
-            if (_registration!.isRejected && _registration!.rejectionReason != null) ...[
-              const SizedBox(height: 8),
-              Text('Reason: ${_registration!.rejectionReason}',
-                style: const TextStyle(color: AppTheme.danger, fontSize: 13, fontFamily: 'Outfit')),
-            ],
-          ],
+          // ── Text Details ──────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Registration Status',
+                      style: TextStyle(color: AppTheme.textMuted, fontSize: 13, fontFamily: 'Outfit')),
+                    if (_registration != null) RegistrationStatusBadge(status: status),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (_registration == null)
+                  const Text('No registration found.\nSubmit your vehicle registration to get started.',
+                    style: TextStyle(color: Colors.white, fontFamily: 'Outfit'))
+                else ...[ 
+                  Text(
+                    '${_registration!.vehicle?.make ?? ''} ${_registration!.vehicle?.model ?? ''}',
+                    style: const TextStyle(color: Colors.white, fontSize: 18,
+                        fontWeight: FontWeight.w600, fontFamily: 'Outfit'),
+                  ),
+                  Text(_registration!.vehicle?.plateNumber ?? '',
+                    style: const TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit')),
+                  if (_registration!.isRejected && _registration!.rejectionReason != null) ...[
+                    const SizedBox(height: 8),
+                    Text('Reason: ${_registration!.rejectionReason}',
+                      style: const TextStyle(color: AppTheme.danger, fontSize: 13, fontFamily: 'Outfit')),
+                  ],
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );

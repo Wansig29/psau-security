@@ -95,4 +95,13 @@ class RegistrationModel {
   bool get isApproved  => status.toLowerCase() == 'approved';
   bool get isPending   => status.toLowerCase() == 'pending';
   bool get isRejected  => status.toLowerCase() == 'rejected';
+
+  /// Returns the raw image_path for the vehicle_photo document, or null.
+  String? get vehiclePhotoPath {
+    try {
+      return documents.firstWhere((d) => d.documentType == 'vehicle_photo').imagePath;
+    } catch (_) {
+      return null;
+    }
+  }
 }
