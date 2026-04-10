@@ -169,26 +169,29 @@ class _RegistrationReviewScreenState extends State<RegistrationReviewScreen> {
                 final doc  = d as Map<String, dynamic>;
                 final path = doc['image_path'] as String? ?? '';
                 final type = doc['document_type'] as String? ?? '';
+                final fullImageUrl = '${AppConfig.baseUrl}/storage/$path';
                 return Column(children: [
                   Expanded(
-                    child: ClipRRect(
-                      borderRadius: AppTheme.radiusSm,
-                      child: CachedNetworkImage(
-                        imageUrl:
-                            '${AppConfig.baseUrl}/storage/$path',
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        placeholder: (_, __) => Container(
-                            color: AppTheme.surfaceCard,
-                            child: const Center(
-                                child: CircularProgressIndicator(
-                                    color: AppTheme.primaryLight,
-                                    strokeWidth: 2))),
-                        errorWidget: (_, __, ___) =>
-                            Container(
-                                color: AppTheme.surfaceCard,
-                                child: const Icon(Icons.broken_image,
-                                    color: AppTheme.textMuted)),
+                    child: GestureDetector(
+                      onTap: () => _showFullScreenImage(context, fullImageUrl, type.toUpperCase()),
+                      child: ClipRRect(
+                        borderRadius: AppTheme.radiusSm,
+                        child: CachedNetworkImage(
+                          imageUrl: fullImageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          placeholder: (_, __) => Container(
+                              color: AppTheme.surfaceCard,
+                              child: const Center(
+                                  child: CircularProgressIndicator(
+                                      color: AppTheme.primaryLight,
+                                      strokeWidth: 2))),
+                          errorWidget: (_, __, ___) =>
+                              Container(
+                                  color: AppTheme.surfaceCard,
+                                  child: const Icon(Icons.broken_image,
+                                      color: AppTheme.textMuted)),
+                        ),
                       ),
                     ),
                   ),
@@ -348,4 +351,42 @@ class _RegistrationReviewScreenState extends State<RegistrationReviewScreen> {
                   fontWeight: FontWeight.w500))),
     ]),
   );
+
+  void _showFullScreenImage(BuildContext context, String imageUrl, String title) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: InteractiveViewer(
+                panEnabled: true,
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  placeholder: (_, __) => const Center(child: CircularProgressIndicator(color: AppTheme.primaryLight)),
+                  errorWidget: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.white, size: 50)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

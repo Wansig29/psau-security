@@ -82,12 +82,10 @@ class AppDrawer extends StatelessWidget {
                   ],
                   const Divider(color: Color(0xFF2A2A2A)),
                   _tile(context, Icons.logout, 'Logout', () async {
-                    Navigator.pop(context);
+                    final nav = Navigator.of(context);
+                    nav.pop();
                     await auth.logout();
-                    if (context.mounted) {
-                      Navigator.pushNamedAndRemoveUntil(
-                          context, '/login', (_) => false);
-                    }
+                    nav.pushNamedAndRemoveUntil('/login', (_) => false);
                   }, color: AppTheme.danger),
                 ],
               ),
