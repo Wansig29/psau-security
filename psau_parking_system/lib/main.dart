@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'config/app_theme.dart';
+import 'config/api_config.dart';
 import 'providers/auth_provider.dart';
 import 'providers/notification_provider.dart';
 import 'dart:ui';
@@ -226,6 +228,50 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _checkAuth() async {
     await Future.delayed(const Duration(milliseconds: 1200));
+    if (!mounted) return;
+
+    // Check for App Updates first
+    try {
+      final res = await ApiService().get(AppConfig.appVersionInfo);
+      if (res.data != null && res.data['latest_build'] != null) {
+        final latestBuild = res.data['latest_build'] as int;
+        final downloadUrl = res.data['download_url'] as String?;
+        final isForce = res.data['force_update'] as bool? ?? false;
+
+        if (latestBuild > AppConfig.currentBuildNumber && downloadUrl != null) {
+          if (!mounted) return;
+          await showDialog(
+            context: context,
+            barrierDismissible: !isForce,
+            builder: (ctx) => PopScope(
+              canPop: !isForce,
+              child: AlertDialog(
+                backgroundColor: AppTheme.surfaceCard,
+                title: const Text('Updates Available', style: TextStyle(color: Colors.white, fontFamily: 'Outfit')),
+                content: const Text('A new version of the PSAU Parking app is required to continue. Please update your app.',
+                  style: TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit')),
+                actions: [
+                  if (!isForce)
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Skip')),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final uri = Uri.parse(downloadUrl);
+                      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
+                    child: const Text('Update Now'),
+                  ),
+                ],
+              ),
+            ),
+          );
+          if (isForce) return; // Halt here if forced
+        }
+      }
+    } catch (e) {
+      debugPrint('Update check failed: $e'); // Ignore if offline
+    }
+
     if (!mounted) return;
     final auth = context.read<AuthProvider>();
     final loggedIn = await auth.checkLoginStatus();
