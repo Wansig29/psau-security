@@ -31,14 +31,24 @@ Route::get('/scan/{qr_sticker_id}', [\App\Http\Controllers\QrScanController::cla
 
 // Public App Install Endpoint (Non-Play Store distribution)
 Route::get('/app/install', function () {
+    $apkPath   = public_path('psau_parking.apk');
+
+    // Forced direct download link (used by install page button)
+    if (request()->has('download') && file_exists($apkPath)) {
+        return response()->download($apkPath, 'psau_parking.apk', [
+            'Content-Type' => 'application/vnd.android.package-archive',
+        ]);
+    }
+
     $ua        = strtolower((string) request()->userAgent());
     $isAndroid = (bool) preg_match('/android/i', $ua);
     $isIos     = (bool) preg_match('/iphone|ipad|ipod/i', $ua);
-    $apkPath   = public_path('psau_parking.apk');
 
     // Android: trigger direct APK download immediately
     if ($isAndroid && file_exists($apkPath)) {
-        return response()->download($apkPath, 'psau_parking.apk');
+        return response()->download($apkPath, 'psau_parking.apk', [
+            'Content-Type' => 'application/vnd.android.package-archive',
+        ]);
     }
 
     // iOS: not supported

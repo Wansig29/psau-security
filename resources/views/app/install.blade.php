@@ -4,7 +4,7 @@
         $apkExists   = file_exists($apkPath);
         $apkSize     = $apkExists ? round(filesize($apkPath) / 1048576, 1) . ' MB' : null;
         $apkModified = $apkExists ? date('F j, Y', filemtime($apkPath)) : null;
-        $downloadUrl = $apkExists ? asset('psau_parking.apk') : null;
+        $downloadUrl = $apkExists ? route('app.install', ['download' => 1]) : null;
     @endphp
 
     <div class="max-w-md mx-auto">
