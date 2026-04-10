@@ -11,10 +11,13 @@ class PreventBackHistory
     {
         $response = $next($request);
 
-        // Add headers to prevent caching (FIX 2)
-        return $response
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0')
-            ->header('Pragma', 'no-cache')
-            ->header('Expires', '0');
+        // Add headers to prevent caching safely for all response types (including BinaryFileResponse)
+        if (isset($response->headers)) {
+            $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
+            $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', '0');
+        }
+
+        return $response;
     }
 }
