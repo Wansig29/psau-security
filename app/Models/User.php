@@ -54,6 +54,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_location_update' => 'datetime',
+            'current_lat' => 'double',
+            'current_lng' => 'double',
         ];
     }
 

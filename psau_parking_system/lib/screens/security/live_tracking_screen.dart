@@ -160,8 +160,8 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                     ),
                     MarkerLayer(
                       markers: filtered.map((u) {
-                        final lat    = (u['lat'] as num?)?.toDouble() ?? 0;
-                        final lng    = (u['lng'] as num?)?.toDouble() ?? 0;
+                        final lat    = double.tryParse((u['lat'] ?? '0').toString()) ?? 0.0;
+                        final lng    = double.tryParse((u['lng'] ?? '0').toString()) ?? 0.0;
                         final online = u['is_online'] as bool? ?? false;
 
                         return Marker(
