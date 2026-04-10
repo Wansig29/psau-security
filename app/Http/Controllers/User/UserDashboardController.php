@@ -11,7 +11,7 @@ class UserDashboardController extends Controller
     {
         $user = auth()->user();
         
-        $vehicles = $user->vehicles;
+        $vehicles = $user->vehicles()->with(['registrations.documents'])->get();
         $registrations = $user->registrations()->with(['vehicle', 'pickupSchedule', 'documents'])->latest()->get();
         $violations = \App\Models\Violation::whereIn('vehicle_id', $vehicles->pluck('id'))->with(['vehicle', 'sanctions'])->latest()->get();
 

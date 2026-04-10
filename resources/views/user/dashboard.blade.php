@@ -242,12 +242,21 @@
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </form>
-                        {{-- Vehicle photo --}}
+                        {{-- Vehicle photo from registration documents --}}
+                        @php
+                            $vehPhotoPath = null;
+                            $latestReg = $veh->registrations->first();
+                            if ($latestReg) {
+                                $vehDoc = $latestReg->documents->firstWhere('document_type', 'vehicle_photo');
+                                $vehPhotoPath = $vehDoc ? $vehDoc->image_path : null;
+                            }
+                        @endphp
                         <div style="height:150px;overflow:hidden;background:#f1f3f9;display:flex;align-items:center;justify-content:center">
-                            @if($veh->photo_path)
-                                <img src="{{ asset('storage/' . $veh->photo_path) }}"
+                            @if($vehPhotoPath)
+                                <img src="{{ asset('storage/' . $vehPhotoPath) }}"
                                      style="width:100%;height:100%;object-fit:cover"
-                                     alt="{{ $veh->plate_number }}">
+                                     alt="{{ $veh->plate_number }}"
+                                     onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\'text-center text-muted\'><i class=\'fas fa-car fa-3x mb-1\'></i><br><small>Photo unavailable</small></div>'">
                             @else
                                 <div class="text-center text-muted">
                                     <i class="fas fa-car fa-3x mb-1"></i><br>
