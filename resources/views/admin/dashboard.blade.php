@@ -83,7 +83,7 @@
                                     <td>
                                         @php
                                             $docMap = $reg->documents->keyBy('document_type');
-                                            $docDefs = ['or'=>['OR'],'cr'=>['CR'],'cor'=>['COR'],'license'=>['Lic.'],'school_id'=>['ID'],'or_cr'=>['OR/CR']];
+                                            $docDefs = ['vehicle_photo'=>['Vehicle'],'or'=>['OR'],'cr'=>['CR'],'cor'=>['COR'],'license'=>['Lic.'],'school_id'=>['ID'],'or_cr'=>['OR/CR']];
                                         @endphp
                                         @if($reg->documents->isNotEmpty())
                                             <div style="display:flex;flex-wrap:wrap;gap:6px">
@@ -93,6 +93,7 @@
                                                         <a href="{{ asset('storage/' . $doc->image_path) }}" target="_blank"
                                                            title="{{ $def[0] }}" style="display:flex;flex-direction:column;align-items:center;width:44px;text-decoration:none;">
                                                             <img src="{{ asset('storage/' . $doc->image_path) }}" alt="{{ $def[0] }}"
+                                                                 onerror="this.onerror=null;this.src='https://via.placeholder.com/38x38.png?text={{ urlencode($def[0]) }}';"
                                                                  style="width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;transition:transform 0.2s"
                                                                  onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
                                                             <span style="font-size:9px;color:#6b7280;margin-top:2px;text-align:center">{{ $def[0] }}</span>

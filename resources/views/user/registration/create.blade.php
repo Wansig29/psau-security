@@ -211,6 +211,19 @@
                 </div>
                 <div class="card-body">
                     <div class="doc-grid">
+                        {{-- Vehicle Photo --}}
+                        <div class="doc-card" id="card-vehicle_photo">
+                            <div class="doc-icon">🚗</div>
+                            <div class="doc-label">Vehicle Photo <span class="required">*</span></div>
+                            <div class="doc-sublabel">Must show Plate Number</div>
+                            <label class="doc-trigger" for="doc_vehicle_photo">Choose File</label>
+                            <input class="doc-input" type="file" id="doc_vehicle_photo" name="doc_vehicle_photo" accept="image/jpeg,image/png,image/jpg,image/heic,image/heif,.heic,.heif">
+                            <div class="doc-preview-wrap" id="preview-vehicle_photo">
+                                <img id="img-vehicle_photo" src="" alt="Vehicle Photo Preview">
+                                <div class="doc-filename" id="name-vehicle_photo"></div>
+                            </div>
+                            @error('doc_vehicle_photo')<div class="field-error">{{ $message }}</div>@enderror
+                        </div>
 
                         {{-- OR --}}
                         <div class="doc-card" id="card-or">
@@ -299,10 +312,10 @@
     </div>
 
     <script>
-        /* ── Fix 5: File-size guard (max 5 MB per file, max 20 MB total) ── */
+        /* ── Fix 5: File-size guard (max 5 MB per file, max 25 MB total) ── */
         const MAX_BYTES_PER_FILE = 5 * 1024 * 1024; // 5 MB
-        const MAX_BYTES_TOTAL = 20 * 1024 * 1024;   // 20 MB
-        const docs = ['or', 'cr', 'cor', 'license', 'school_id'];
+        const MAX_BYTES_TOTAL = 25 * 1024 * 1024;   // 25 MB
+        const docs = ['vehicle_photo', 'or', 'cr', 'cor', 'license', 'school_id'];
         
         document.getElementById('registrationForm').addEventListener('submit', function (e) {
             let totalBytes = 0;

@@ -23,6 +23,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
   bool _loading = false;
 
   final Map<String, XFile?> _docs = {
+    'doc_vehicle_photo': null,
     'doc_or':        null,
     'doc_cr':        null,
     'doc_cor':       null,
@@ -31,6 +32,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
   };
 
   final Map<String, String> _docLabels = {
+    'doc_vehicle_photo':'Vehicle Photo w/ Plate',
     'doc_or':        'Official Receipt (OR)',
     'doc_cr':        'Certificate of Registration (CR)',
     'doc_cor':       'School COR',

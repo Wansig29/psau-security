@@ -19,6 +19,7 @@ class RegistrationController extends Controller
                 'make'          => 'required|string|max:255',
                 'model'         => 'required|string|max:255',
                 'color'         => 'required|string|max:255',
+                'doc_vehicle_photo' => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:5120',
                 'doc_or'        => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:5120',
                 'doc_cr'        => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:5120',
                 'doc_cor'       => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:5120',
@@ -49,25 +50,34 @@ class RegistrationController extends Controller
                 return ['path' => $path, 'full' => $fullPath];
             };
 
-            // 1. Store all five documents
+            // 1. Store all six documents
             $docs = [
-                'or'        => $storeAndCompress($request->file('doc_or'),        'registrations/or'),
-                'cr'        => $storeAndCompress($request->file('doc_cr'),        'registrations/cr'),
-                'cor'       => $storeAndCompress($request->file('doc_cor'),       'registrations/cor'),
-                'license'   => $storeAndCompress($request->file('doc_license'),   'registrations/license'),
-                'school_id' => $storeAndCompress($request->file('doc_school_id'), 'registrations/school_id'),
+                'vehicle_photo' => $storeAndCompress($request->file('doc_vehicle_photo'), 'registrations/vehicle'),
+                'or'            => $storeAndCompress($request->file('doc_or'),        'registrations/or'),
+                'cr'            => $storeAndCompress($request->file('doc_cr'),        'registrations/cr'),
+                'cor'           => $storeAndCompress($request->file('doc_cor'),       'registrations/cor'),
+                'license'       => $storeAndCompress($request->file('doc_license'),   'registrations/license'),
+                'school_id'     => $storeAndCompress($request->file('doc_school_id'), 'registrations/school_id'),
             ];
 
-            // 2. Run OCR on the OR document to extract the plate number
+            // 2. Run OCR on the vehicle photo to extract the plate number
             $ocrText     = '';
             $plateNumber = 'UNKNOWN_' . \Illuminate\Support\Str::random(8);
             try {
-                $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['or']['full']))->run();
+                // Try vehicle photo first
+                $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['vehicle_photo']['full']))->run();
                 if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($ocrText), $matches)) {
                     $plateNumber = str_replace([' ', '-'], '', $matches[0]);
+                } else {
+                    // Fallback to OR document if plate number is not clear in the photo
+                    $orOcrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['or']['full']))->run();
+                    if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($orOcrText), $matches)) {
+                        $plateNumber = str_replace([' ', '-'], '', $matches[0]);
+                        $ocrText .= "\n" . $orOcrText; // Append OR text to OCR results for context
+                    }
                 }
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('OCR failed on OR document: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::warning('OCR failed: ' . $e->getMessage());
             }
 
             // 3. Create Vehicle
@@ -90,11 +100,12 @@ class RegistrationController extends Controller
 
             // 5. Save each document record
             $docTypes = [
-                'or'        => ['type' => 'or',        'ocr' => $ocrText, 'flagged' => str_starts_with($plateNumber, 'UNKNOWN_') ? ['plate_number' => 'Not found in OCR'] : null],
-                'cr'        => ['type' => 'cr',        'ocr' => null, 'flagged' => null],
-                'cor'       => ['type' => 'cor',       'ocr' => null, 'flagged' => null],
-                'license'   => ['type' => 'license',   'ocr' => null, 'flagged' => null],
-                'school_id' => ['type' => 'school_id', 'ocr' => null, 'flagged' => null],
+                'vehicle_photo' => ['type' => 'vehicle_photo', 'ocr' => $ocrText, 'flagged' => str_starts_with($plateNumber, 'UNKNOWN_') ? ['plate_number' => 'Not found in OCR'] : null],
+                'or'            => ['type' => 'or',            'ocr' => null, 'flagged' => null],
+                'cr'            => ['type' => 'cr',            'ocr' => null, 'flagged' => null],
+                'cor'           => ['type' => 'cor',           'ocr' => null, 'flagged' => null],
+                'license'       => ['type' => 'license',       'ocr' => null, 'flagged' => null],
+                'school_id'     => ['type' => 'school_id',     'ocr' => null, 'flagged' => null],
             ];
 
             foreach ($docTypes as $key => $meta) {

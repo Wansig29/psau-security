@@ -195,6 +195,7 @@ Route::middleware('auth:sanctum')->group(function () {
                 'make'           => 'required|string|max:255',
                 'model'          => 'required|string|max:255',
                 'color'          => 'required|string|max:255',
+                'doc_vehicle_photo' => 'required|file|mimes:jpeg,png,jpg|max:5120',
                 'doc_or'         => 'required|file|mimes:jpeg,png,jpg|max:5120',
                 'doc_cr'         => 'required|file|mimes:jpeg,png,jpg|max:5120',
                 'doc_cor'        => 'required|file|mimes:jpeg,png,jpg|max:5120',
@@ -208,11 +209,40 @@ Route::middleware('auth:sanctum')->group(function () {
                 $user->update(['contact_number' => $request->contact_number]);
             }
 
-            $storeDoc = fn($file, $folder) => $file->store("registrations/{$folder}", 'public');
+            $storeDoc = function($file, $folder) {
+                $path = $file->store("registrations/{$folder}", 'public');
+                return ['path' => $path, 'full' => storage_path('app/public/' . $path)];
+            };
+
+            $docs = [
+                'vehicle_photo' => $storeDoc($request->file('doc_vehicle_photo'), 'vehicle'),
+                'or'            => $storeDoc($request->file('doc_or'),        'or'),
+                'cr'            => $storeDoc($request->file('doc_cr'),        'cr'),
+                'cor'           => $storeDoc($request->file('doc_cor'),       'cor'),
+                'license'       => $storeDoc($request->file('doc_license'),   'license'),
+                'school_id'     => $storeDoc($request->file('doc_school_id'), 'school_id'),
+            ];
+
+            $ocrText     = '';
+            $plateNumber = 'PENDING_' . strtoupper(\Illuminate\Support\Str::random(8));
+            try {
+                $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['vehicle_photo']['full']))->run();
+                if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($ocrText), $matches)) {
+                    $plateNumber = str_replace([' ', '-'], '', $matches[0]);
+                } else {
+                    $orOcrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['or']['full']))->run();
+                    if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($orOcrText), $matches)) {
+                        $plateNumber = str_replace([' ', '-'], '', $matches[0]);
+                        $ocrText .= "\n" . $orOcrText; 
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('API OCR failed: ' . $e->getMessage());
+            }
 
             $vehicle = \App\Models\Vehicle::create([
                 'user_id'      => $user->id,
-                'plate_number' => 'PENDING_' . strtoupper(\Illuminate\Support\Str::random(8)),
+                'plate_number' => $plateNumber,
                 'make'         => $request->make,
                 'model'        => $request->model,
                 'color'        => $request->color,
@@ -226,20 +256,22 @@ Route::middleware('auth:sanctum')->group(function () {
                 'status'     => 'pending',
             ]);
 
-            $docs = [
-                'or'        => $storeDoc($request->file('doc_or'),        'or'),
-                'cr'        => $storeDoc($request->file('doc_cr'),        'cr'),
-                'cor'       => $storeDoc($request->file('doc_cor'),       'cor'),
-                'license'   => $storeDoc($request->file('doc_license'),   'license'),
-                'school_id' => $storeDoc($request->file('doc_school_id'), 'school_id'),
+            $docTypes = [
+                'vehicle_photo' => ['type' => 'vehicle_photo', 'ocr' => $ocrText],
+                'or'            => ['type' => 'or',            'ocr' => null],
+                'cr'            => ['type' => 'cr',            'ocr' => null],
+                'cor'           => ['type' => 'cor',           'ocr' => null],
+                'license'       => ['type' => 'license',       'ocr' => null],
+                'school_id'     => ['type' => 'school_id',     'ocr' => null],
             ];
 
-            foreach ($docs as $type => $path) {
+            foreach ($docTypes as $key => $meta) {
                 \App\Models\RegistrationDocument::create([
-                    'registration_id' => $registration->id,
-                    'document_type'   => $type,
-                    'image_path'      => $path,
-                    'match_score'     => 0,
+                    'registration_id'    => $registration->id,
+                    'document_type'      => $meta['type'],
+                    'image_path'         => $docs[$key]['path'],
+                    'ocr_extracted_text' => $meta['ocr'],
+                    'match_score'        => 0,
                 ]);
             }
 

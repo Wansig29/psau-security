@@ -170,10 +170,20 @@ class _RegistrationReviewScreenState extends State<RegistrationReviewScreen> {
                 final path = doc['image_path'] as String? ?? '';
                 final type = doc['document_type'] as String? ?? '';
                 final fullImageUrl = '${AppConfig.baseUrl}/storage/$path';
+                const docTypeLabels = {
+                  'vehicle_photo': '🚗 Vehicle',
+                  'or':            'OR',
+                  'cr':            'CR',
+                  'cor':           'COR',
+                  'license':       'License',
+                  'school_id':     'School ID',
+                  'or_cr':         'OR/CR',
+                };
+                final label = docTypeLabels[type] ?? type.toUpperCase();
                 return Column(children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => _showFullScreenImage(context, fullImageUrl, type.toUpperCase()),
+                      onTap: () => _showFullScreenImage(context, fullImageUrl, label),
                       child: ClipRRect(
                         borderRadius: AppTheme.radiusSm,
                         child: CachedNetworkImage(
@@ -186,22 +196,21 @@ class _RegistrationReviewScreenState extends State<RegistrationReviewScreen> {
                                   child: CircularProgressIndicator(
                                       color: AppTheme.primaryLight,
                                       strokeWidth: 2))),
-                          errorWidget: (_, __, ___) =>
-                              Container(
-                                  color: AppTheme.surfaceCard,
-                                  child: const Icon(Icons.broken_image,
-                                      color: AppTheme.textMuted)),
+                          errorWidget: (_, __, ___) => Container(
+                              color: AppTheme.surfaceCard,
+                              child: const Icon(Icons.broken_image,
+                                  color: AppTheme.textMuted)),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(type.toUpperCase(),
+                  Text(label,
                       style: const TextStyle(
                           color: AppTheme.textMuted,
                           fontSize: 10,
                           fontFamily: 'Outfit',
-                          letterSpacing: 1)),
+                          letterSpacing: 0.5)),
                 ]);
               }).toList(),
             ),
