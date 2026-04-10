@@ -741,15 +741,15 @@
     },
     {
       "name": "sqflite",
-      "rootUri": "file:///C:/Users/Janssen/.puro/shared/pub_cache/hosted/pub.dev/sqflite-2.4.2",
+      "rootUri": "file:///C:/Users/Janssen/.puro/shared/pub_cache/hosted/pub.dev/sqflite-2.4.0",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.5"
     },
     {
       "name": "sqflite_android",
-      "rootUri": "file:///C:/Users/Janssen/.puro/shared/pub_cache/hosted/pub.dev/sqflite_android-2.4.2+3",
+      "rootUri": "file:///C:/Users/Janssen/.puro/shared/pub_cache/hosted/pub.dev/sqflite_android-2.4.0",
       "packageUri": "lib/",
-      "languageVersion": "3.10"
+      "languageVersion": "3.5"
     },
     {
       "name": "sqflite_common",

@@ -1,0 +1,50 @@
+name: Build and Update APK
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'psau_parking_system/**' # Only trigger when flutter code changes
+
+jobs:
+  build_apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed for auto-commit back to the repo
+      
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+          
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          
+      - name: Install Dependencies
+        working-directory: psau_parking_system
+        run: flutter pub get
+        
+      - name: Compile Release APK
+        working-directory: psau_parking_system
+        run: flutter build apk --release
+        
+      - name: Overwrite Public APK
+        run: |
+          mkdir -p public
+          cp psau_parking_system/build/app/outputs/flutter-apk/app-release.apk public/psau_parking.apk
+          
+      - name: Commit Auto-built APK back to Repo
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "🤖 Auto-build: Updated public/psau_parking.apk"
+          file_pattern: public/psau_parking.apk

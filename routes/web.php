@@ -31,41 +31,23 @@ Route::get('/scan/{qr_sticker_id}', [\App\Http\Controllers\QrScanController::cla
 
 // Public App Install Endpoint (Non-Play Store distribution)
 Route::get('/app/install', function () {
-    $ua = strtolower((string) request()->userAgent());
+    $ua        = strtolower((string) request()->userAgent());
     $isAndroid = (bool) preg_match('/android/i', $ua);
-    $isIos = (bool) preg_match('/iphone|ipad|ipod/i', $ua);
-    $apkPublicPath = public_path('psau_parking.apk');
+    $isIos     = (bool) preg_match('/iphone|ipad|ipod/i', $ua);
+    $apkPath   = public_path('psau_parking.apk');
 
-    if (file_exists($apkPublicPath)) {
-        if ($isAndroid) {
-            return response()->download($apkPublicPath, 'psau_parking.apk');
-        }
-
-        $unsupportedMessage = __('This app is available for Android devices only.');
-        return response(
-            '<!doctype html><html lang="en"><head><meta charset="utf-8">' .
-            '<meta name="viewport" content="width=device-width, initial-scale=1">' .
-            '<script>' .
-            'window.addEventListener("load", function(){ alert(' . json_encode($unsupportedMessage) . '); });' .
-            '</script></head><body></body></html>',
-            403,
-            ['Content-Type' => 'text/html; charset=utf-8']
-        );
+    // Android: trigger direct APK download immediately
+    if ($isAndroid && file_exists($apkPath)) {
+        return response()->download($apkPath, 'psau_parking.apk');
     }
 
-    $missingMessage = $isIos
-        ? __('This app is available for Android devices only.')
-        : __('APK is not available right now. Please contact the administrator.');
+    // iOS: not supported
+    if ($isIos) {
+        return view('app.install');
+    }
 
-    return response(
-        '<!doctype html><html lang="en"><head><meta charset="utf-8">' .
-        '<meta name="viewport" content="width=device-width, initial-scale=1">' .
-        '<script>' .
-        'window.addEventListener("load", function(){ alert(' . json_encode($missingMessage) . '); });' .
-        '</script></head><body></body></html>',
-        404,
-        ['Content-Type' => 'text/html; charset=utf-8']
-    );
+    // Desktop / other: show nicely-designed install page (auto-detects APK path)
+    return view('app.install');
 })->name('app.install');
 
 // Admin Routes

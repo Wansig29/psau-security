@@ -53,13 +53,15 @@ class PsauParkingApp extends StatefulWidget {
   State<PsauParkingApp> createState() => _PsauParkingAppState();
 }
 
-class _PsauParkingAppState extends State<PsauParkingApp> {
+class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObserver {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   Timer? _idleTimer;
+  DateTime _lastActiveTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<AuthProvider>().addListener(_authListener);
     });
@@ -67,8 +69,35 @@ class _PsauParkingAppState extends State<PsauParkingApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _idleTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final auth = context.read<AuthProvider>();
+      if (auth.isLoggedIn) {
+        if (DateTime.now().difference(_lastActiveTime).inMinutes >= 10) {
+          auth.logout();
+          navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+          _showLogoutMessage();
+        } else {
+          _handleInteraction();
+        }
+      }
+    }
+  }
+
+  void _showLogoutMessage() {
+    final ctx = navigatorKey.currentContext;
+    if (ctx != null) {
+      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+        content: Text('Logged out due to inactivity.'),
+        backgroundColor: AppTheme.warning,
+      ));
+    }
   }
 
   void _authListener() {
@@ -85,18 +114,13 @@ class _PsauParkingAppState extends State<PsauParkingApp> {
     final auth = context.read<AuthProvider>();
     if (!auth.isLoggedIn) return;
 
+    _lastActiveTime = DateTime.now();
     _idleTimer?.cancel();
     _idleTimer = Timer(const Duration(minutes: 10), () {
       if (mounted && auth.isLoggedIn) {
         auth.logout();
         navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
-        final ctx = navigatorKey.currentContext;
-        if (ctx != null) {
-          ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
-            content: Text('Logged out due to inactivity.'),
-            backgroundColor: AppTheme.warning,
-          ));
-        }
+        _showLogoutMessage();
       }
     });
   }

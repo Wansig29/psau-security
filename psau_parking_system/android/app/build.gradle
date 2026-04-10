@@ -21,7 +21,7 @@ if (flutterVersionName == null) { flutterVersionName = "1.0" }
 
 android {
     namespace = "ph.edu.psau.parking"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

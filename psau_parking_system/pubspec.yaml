@@ -75,3 +75,7 @@ flutter:
           weight: 600
         - asset: assets/fonts/Outfit-Bold.ttf
           weight: 700
+
+dependency_overrides:
+  sqflite_android: 2.4.0
+  sqflite: 2.4.0
