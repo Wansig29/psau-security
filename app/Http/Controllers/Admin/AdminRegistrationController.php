@@ -24,9 +24,12 @@ class AdminRegistrationController extends Controller
                 return back()->with('error', 'Only pending registrations can be approved.');
             }
 
-            // Retry plate extraction at approval if OCR during submission failed.
+            // Retry plate extraction at approval if OCR during submission failed, or allow admin override
             $vehicle = $registration->vehicle;
-            if ($vehicle && $this->isPlaceholderPlate($vehicle->plate_number)) {
+            $corrected = $request->input('corrected_plate');
+            if (!empty($corrected) && $corrected !== $vehicle?->plate_number) {
+                $vehicle?->update(['plate_number' => strtoupper(trim($corrected))]);
+            } else if ($vehicle && $this->isPlaceholderPlate($vehicle->plate_number)) {
                 $plateNumber = $this->extractPlateFromRegistrationDocs($registration);
                 if ($plateNumber !== null) {
                     $vehicle->update(['plate_number' => $plateNumber]);
@@ -105,7 +108,7 @@ class AdminRegistrationController extends Controller
         }
 
         foreach ($ocrSources as $text) {
-            if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper((string) $text), $matches)) {
+            if (preg_match('/([A-Z]{2,3}[\s-]?[0-9]{3,4}|[0-9]{3,4}[\s-]?[A-Z]{2,3})/', strtoupper((string) $text), $matches)) {
                 return str_replace([' ', '-'], '', $matches[0]);
             }
         }
@@ -124,7 +127,7 @@ class AdminRegistrationController extends Controller
                     continue;
                 }
                 $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($fullPath))->run();
-                if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($ocrText), $matches)) {
+                if (preg_match('/([A-Z]{2,3}[\s-]?[0-9]{3,4}|[0-9]{3,4}[\s-]?[A-Z]{2,3})/', strtoupper($ocrText), $matches)) {
                     return str_replace([' ', '-'], '', $matches[0]);
                 }
             } catch (\Throwable $e) {

@@ -74,7 +74,7 @@ class RegistrationController extends Controller
                 try {
                     $text = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs[$docKey]['full']))->run();
                     $ocrText .= "\n--- {$docLabel} ---\n" . $text;
-                    if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($text), $matches)) {
+                    if (preg_match('/([A-Z]{2,3}[\s-]?[0-9]{3,4}|[0-9]{3,4}[\s-]?[A-Z]{2,3})/', strtoupper($text), $matches)) {
                         $plateNumber = str_replace([' ', '-'], '', $matches[0]);
                         break; // Found the plate number, stop scanning
                     }

@@ -107,8 +107,11 @@
                                     </td>
                                     <td>
                                         <div style="display:flex;flex-direction:column;gap:6px">
-                                            <form method="POST" action="{{ route('admin.registration.approve', $reg->id) }}">
+                                            <form method="POST" action="{{ route('admin.registration.approve', $reg->id) }}" style="display:flex;flex-direction:column;gap:6px;margin-bottom:2px;">
                                                 @csrf
+                                                @if(Str::startsWith($reg->vehicle->plate_number, 'UNKNOWN_') || Str::startsWith($reg->vehicle->plate_number, 'PENDING_'))
+                                                    <input type="text" name="corrected_plate" placeholder="Type verified plate no." required style="padding:6px;font-size:12px;border:1px solid #d1d5db;border-radius:4px;width:100%;box-sizing:border-box;">
+                                                @endif
                                                 <button type="submit" class="btn btn-success" style="width:100%"><i class="fas fa-check-circle"></i> Approve</button>
                                             </form>
                                             <form method="POST" action="{{ route('admin.registration.reject', $reg->id) }}">
