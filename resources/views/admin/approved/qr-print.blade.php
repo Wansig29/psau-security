@@ -6,6 +6,8 @@
     <title>QR Sticker — {{ $registration->qr_sticker_id }}</title>
     <!-- Add FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2canvas for image export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -120,6 +122,63 @@
             transition: background 0.15s;
         }
         .btn-back:hover { background: #f9fafb; }
+        .btn-export {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+            transition: background 0.15s;
+        }
+        .btn-export:hover { background: #1d4ed8; }
+        .btn-import {
+            background: #f59e0b;
+            color: #fff;
+            border: none;
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(245,158,11,0.3);
+            transition: background 0.15s;
+        }
+        .btn-import:hover { background: #d97706; }
+
+        /* ── Custom Background Styles ── */
+        .sticker.custom-bg {
+            background-color: transparent !important;
+        }
+        .sticker.custom-bg .sticker-header {
+            background: rgba(0, 0, 0, 0.6) !important;
+        }
+        .sticker.custom-bg .sticker-footer {
+            background: rgba(255, 255, 255, 0.85) !important;
+            border-top: none;
+        }
+        .sticker.custom-bg .plate {
+            background: rgba(255, 255, 255, 0.9) !important;
+        }
+        .sticker.custom-bg .info-row {
+            background: rgba(255, 255, 255, 0.85) !important;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-bottom: 2px;
+            border-bottom: none;
+        }
+        .sticker.custom-bg .qr-frame {
+            background: rgba(255, 255, 255, 0.9) !important;
+        }
 
         /* ── Sticker Frame / Shapes ── */
         .sticker-content {
@@ -494,7 +553,14 @@
                 <a href="{{ route('admin.approved.index') }}" class="btn-back">
                     ← Back to List
                 </a>
-                <button class="btn-print" onclick="window.print()">
+                <label class="btn-import">
+                    <i class="fas fa-upload"></i> Import Background
+                    <input type="file" accept="image/*" style="display:none;" onchange="importBackground(this)">
+                </label>
+                <button class="btn-export" onclick="exportSticker()">
+                    <i class="fas fa-download"></i> Save Image
+                </button>
+                <button class="btn-print" onclick="trackAndPrint()">
                     <i class="fas fa-print"></i> Print Sticker
                 </button>
             </div>
@@ -603,6 +669,68 @@
             slider.addEventListener('input', apply);
             apply();
         })();
+
+        function trackAndPrint() {
+            fetch("{{ route('admin.approved.track-print', $registration->id) }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            }).catch(e => console.error(e));
+            
+            // Print dialog
+            window.print();
+        }
+
+        function exportSticker() {
+            var sticker = document.getElementById('print-sticker');
+            var originalScale = sticker.style.getPropertyValue('--sticker-scale');
+            var originalBoxShadow = sticker.style.boxShadow;
+            
+            // Momentarily reset scale and shadow for a clean export
+            sticker.style.setProperty('--sticker-scale', '1');
+            sticker.style.boxShadow = 'none';
+            
+            // Add a small delay to ensure CSS updates before rendering
+            setTimeout(function() {
+                html2canvas(sticker, {
+                    scale: 3, // High resolution (3x)
+                    useCORS: true,
+                    backgroundColor: null // Transparent background
+                }).then(function(canvas) {
+                    var link = document.createElement('a');
+                    link.download = 'PSAU-Sticker-{{ $registration->qr_sticker_id }}.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    // Restore original styling
+                    sticker.style.setProperty('--sticker-scale', originalScale);
+                    sticker.style.boxShadow = originalBoxShadow;
+                }).catch(function(error) {
+                    console.error("Export failed:", error);
+                    alert("Failed to export image. Please try again.");
+                    
+                    // Restore original styling
+                    sticker.style.setProperty('--sticker-scale', originalScale);
+                    sticker.style.boxShadow = originalBoxShadow;
+                });
+            }, 50);
+        }
+
+        function importBackground(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var sticker = document.getElementById('print-sticker');
+                    sticker.style.backgroundImage = 'url(' + e.target.result + ')';
+                    sticker.style.backgroundSize = 'cover';
+                    sticker.style.backgroundPosition = 'center';
+                    sticker.classList.add('custom-bg');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
     </script>
 </body>
 </html>
