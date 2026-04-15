@@ -60,24 +60,27 @@ class RegistrationController extends Controller
                 'school_id'     => $storeAndCompress($request->file('doc_school_id'), 'registrations/school_id'),
             ];
 
-            // 2. Run OCR directly on the OR document to extract the plate number
+            // 2. Run OCR on the vehicle photo, OR, and CR documents sequentially to extract the plate number
             $ocrText     = '';
             $plateNumber = 'UNKNOWN_' . \Illuminate\Support\Str::random(8);
-            try {
-                // The user requested scanning from the OR explicitly since vehicle photos may lack the plate
-                $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['or']['full']))->run();
-                if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($ocrText), $matches)) {
-                    $plateNumber = str_replace([' ', '-'], '', $matches[0]);
-                } else {
-                    // Try the CR document as fallback if OR fails
-                    $crOcrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['cr']['full']))->run();
-                    if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($crOcrText), $matches)) {
+
+            $docsToScan = [
+                'vehicle_photo' => 'Vehicle Photo',
+                'or'            => 'OR',
+                'cr'            => 'CR'
+            ];
+
+            foreach ($docsToScan as $docKey => $docLabel) {
+                try {
+                    $text = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs[$docKey]['full']))->run();
+                    $ocrText .= "\n--- {$docLabel} ---\n" . $text;
+                    if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($text), $matches)) {
                         $plateNumber = str_replace([' ', '-'], '', $matches[0]);
-                        $ocrText .= "\n--- CR ---\n" . $crOcrText; 
+                        break; // Found the plate number, stop scanning
                     }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning("OCR failed for {$docLabel}: " . $e->getMessage());
                 }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('OCR failed: ' . $e->getMessage());
             }
 
             // 3. Create Vehicle
