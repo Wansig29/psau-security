@@ -23,9 +23,33 @@ class _LiveLocationScreenState extends State<LiveLocationScreen> {
   final MapController _mapCtrl = MapController();
 
   @override
+  void initState() {
+    super.initState();
+    // Start broadcasting automatically when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startAutomaticBroadcast();
+    });
+  }
+
+  @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _startAutomaticBroadcast() async {
+    setState(() => _loading = true);
+    final granted = await _checkPermission();
+    if (!granted) {
+      setState(() => _loading = false);
+      return;
+    }
+
+    await _broadcast();
+    _timer = Timer.periodic(const Duration(seconds: 10), (_) => _broadcast());
+    if (mounted) {
+      setState(() { _broadcasting = true; _loading = false; });
+    }
   }
 
   Future<bool> _checkPermission() async {
@@ -42,7 +66,7 @@ class _LiveLocationScreenState extends State<LiveLocationScreen> {
       }
       return false;
     }
-    return perm != LocationPermission.denied;
+    return perm == LocationPermission.whileInUse || perm == LocationPermission.always;
   }
 
   Future<void> _toggle() async {
@@ -140,10 +164,9 @@ class _LiveLocationScreenState extends State<LiveLocationScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.location_searching, size: 64,
-                          color: AppTheme.textMuted.withValues(alpha: 0.4)),
+                        const CircularProgressIndicator(color: AppTheme.primaryLight),
                         const SizedBox(height: 16),
-                        const Text('Tap "Start Broadcasting" to share your location.',
+                        const Text('Initializing broadcast...',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit')),
                       ],
