@@ -8,6 +8,7 @@ import 'config/api_config.dart';
 import 'providers/auth_provider.dart';
 import 'providers/notification_provider.dart';
 import 'dart:ui';
+import 'package:ota_update/ota_update.dart';
 import 'services/api_service.dart';
 import 'services/crash_service.dart';
 import 'services/notification_service.dart';
@@ -134,9 +135,9 @@ class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObse
                         child: const Text('Later', style: TextStyle(color: AppTheme.textMuted)),
                       ),
                     ElevatedButton(
-                      onPressed: () async {
-                        final uri = Uri.parse(downloadUrl);
-                        if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _startOtaUpdate(downloadUrl);
                       },
                       style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
                       child: const Text('Update Now', style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600)),
@@ -148,7 +149,18 @@ class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObse
           }
         }
       }
+      }
     } catch (_) {}
+  }
+
+  void _startOtaUpdate(String downloadUrl) {
+    showDialog(
+      context: navigatorKey.currentContext!,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return _UpdateProgressDialog(downloadUrl: downloadUrl);
+      },
+    );
   }
 
 
@@ -331,9 +343,9 @@ class _SplashScreenState extends State<SplashScreen>
                       child: const Text('Later', style: TextStyle(color: AppTheme.textMuted)),
                     ),
                   ElevatedButton(
-                    onPressed: () async {
-                      final uri = Uri.parse(downloadUrl);
-                      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _startOtaUpdate(downloadUrl);
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
                     child: const Text('Update Now', style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600)),
@@ -429,6 +441,104 @@ class _SplashScreenState extends State<SplashScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _UpdateProgressDialog extends StatefulWidget {
+  final String downloadUrl;
+  const _UpdateProgressDialog({required this.downloadUrl});
+  @override
+  State<_UpdateProgressDialog> createState() => _UpdateProgressDialogState();
+}
+
+class _UpdateProgressDialogState extends State<_UpdateProgressDialog> {
+  OtaEvent? currentEvent;
+
+  @override
+  void initState() {
+    super.initState();
+    _startDownload();
+  }
+
+  void _startDownload() {
+    try {
+      OtaUpdate()
+          .execute(
+        widget.downloadUrl,
+        destinationFilename: 'psau_parking_update_${AppConfig.currentBuildNumber + 1}.apk',
+      )
+          .listen(
+        (OtaEvent event) {
+          if (mounted) {
+            setState(() {
+              currentEvent = event;
+            });
+          }
+        },
+      );
+    } catch (e) {
+      debugPrint('Failed to make OTA update. Details: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (currentEvent == null) {
+      return const AlertDialog(
+        backgroundColor: AppTheme.surfaceCard,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: AppTheme.primaryLight),
+            SizedBox(height: 16),
+            Text('Starting download...', style: TextStyle(color: Colors.white, fontFamily: 'Outfit')),
+          ],
+        ),
+      );
+    }
+
+    final double? progress = double.tryParse(currentEvent!.value ?? '0');
+    final bool isDownloading = currentEvent!.status == OtaStatus.DOWNLOADING;
+    final bool isDone = currentEvent!.status == OtaStatus.INSTALLING;
+    final bool isError = currentEvent!.status != OtaStatus.DOWNLOADING &&
+        currentEvent!.status != OtaStatus.INSTALLING &&
+        currentEvent!.status != OtaStatus.ALREADY_RUNNING_ERROR;
+
+    return PopScope(
+      canPop: false,
+      child: AlertDialog(
+        backgroundColor: AppTheme.surfaceCard,
+        title: Text(isDone ? 'Installing...' : (isError ? 'Update Failed' : 'Downloading Update'), 
+            style: const TextStyle(color: Colors.white, fontFamily: 'Outfit', fontWeight: FontWeight.w700)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isDownloading && progress != null) ...[
+              LinearProgressIndicator(value: progress / 100, backgroundColor: AppTheme.surfaceCardLight, color: AppTheme.primaryLight),
+              const SizedBox(height: 16),
+              Text('${progress.toStringAsFixed(0)}%', style: const TextStyle(color: AppTheme.primaryLight, fontSize: 18, fontWeight: FontWeight.bold)),
+            ] else if (isDone) ...[
+              const Icon(Icons.check_circle, color: AppTheme.success, size: 48),
+              const SizedBox(height: 16),
+              const Text('Download complete. Opening installer...', style: TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit'), textAlign: TextAlign.center),
+            ] else if (isError) ...[
+              const Icon(Icons.error, color: AppTheme.error, size: 48),
+              const SizedBox(height: 16),
+              Text('Error: ${currentEvent?.status.name}', style: const TextStyle(color: AppTheme.error, fontFamily: 'Outfit'), textAlign: TextAlign.center),
+            ] else ...[
+              const CircularProgressIndicator(color: AppTheme.primaryLight),
+            ],
+          ],
+        ),
+        actions: [
+          if (isError)
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close', style: TextStyle(color: AppTheme.textMuted)),
+            )
+        ],
       ),
     );
   }
