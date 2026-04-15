@@ -23,6 +23,10 @@ dependencies:
   # Navigation
   go_router: ^13.2.0
 
+  # Files & Paths
+  path_provider: ^2.1.2
+  open_filex: ^4.5.0
+
   # Images
   image_picker: ^1.0.7
   cached_network_image: ^3.3.1
@@ -42,12 +46,9 @@ dependencies:
   # Background location
   background_locator_2: ^2.0.6
 
-  # Firebase — disabled until google-services.json is added
-  # firebase_core: ^2.27.0
-  # firebase_messaging: ^14.7.19
   flutter_local_notifications: ^17.1.2
 
-  # URL launcher (tap-to-call)
+  # URL launcher
   url_launcher: ^6.2.5
 
   # UI utilities

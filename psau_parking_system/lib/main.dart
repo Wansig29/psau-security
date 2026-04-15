@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'config/app_theme.dart';
 import 'config/api_config.dart';
@@ -11,6 +10,7 @@ import 'dart:ui';
 import 'services/api_service.dart';
 import 'services/crash_service.dart';
 import 'services/notification_service.dart';
+import 'services/update_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/shared/profile_screen.dart';
@@ -35,26 +35,24 @@ void main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // Catch Flutter framework errors (widget build errors etc.)  
+    // Catch Flutter framework errors
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
       CrashService().reportCrash(details.exceptionAsString(), details.stack ?? StackTrace.empty);
     };
 
-    // Catch asynchronous errors outside of Flutter framework
+    // Catch asynchronous errors
     PlatformDispatcher.instance.onError = (error, stack) {
       CrashService().reportCrash(error, stack);
       return true;
     };
 
-    // Init API service (registers 401 hook after providers are up)
     try {
       await ApiService().init();
     } catch (e) {
       debugPrint('ApiService init failed: $e');
     }
 
-    // Init local notifications (non-fatal if it fails)
     try {
       await NotificationService().init();
     } catch (e) {
@@ -97,22 +95,22 @@ class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObse
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<AuthProvider>().addListener(_authListener);
     });
-    // Add timer to check updates every 45 seconds from Railway deployment
-    _updateCheckTimer = Timer.periodic(const Duration(seconds: 45), (_) => _checkForLiveDeployment());
+    // Check updates every 60 seconds
+    _updateCheckTimer = Timer.periodic(const Duration(seconds: 60), (_) => _checkForLiveDeployment());
   }
 
   Future<void> _checkForLiveDeployment() async {
-    if (!mounted) return;
+    if (!mounted || UpdateService().isDownloading) return;
     try {
       final res = await ApiService().get(AppConfig.appVersionInfo);
       if (res.data != null && res.data['latest_build'] != null) {
         final latestBuild = res.data['latest_build'] as int;
         final downloadUrl = res.data['download_url'] as String?;
         final isForce = res.data['force_update'] as bool? ?? false;
-        
+
         if (latestBuild > AppConfig.currentBuildNumber && latestBuild != _shownUpdateBuildNumber && downloadUrl != null) {
           _shownUpdateBuildNumber = latestBuild;
-          
+
           final ctx = navigatorKey.currentContext;
           if (ctx != null && ctx.mounted) {
             await showDialog(
@@ -122,9 +120,9 @@ class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObse
                 canPop: !isForce,
                 child: AlertDialog(
                   backgroundColor: AppTheme.surfaceCard,
-                  title: const Text('New Deployment Updates Available 🎉', style: TextStyle(color: Colors.white, fontFamily: 'Outfit', fontWeight: FontWeight.w700)),
+                  title: const Text('Updates Available! 🎉', style: TextStyle(color: Colors.white, fontFamily: 'Outfit', fontWeight: FontWeight.w700)),
                   content: const Text(
-                    'A new deployment has been released in Railway. Please download the latest update to keep your app working properly.',
+                    'A new version has been released. Would you like to update now?',
                     style: TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit'),
                   ),
                   actions: [
@@ -134,9 +132,9 @@ class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObse
                         child: const Text('Later', style: TextStyle(color: AppTheme.textMuted)),
                       ),
                     ElevatedButton(
-                      onPressed: () async {
-                        final uri = Uri.parse(downloadUrl);
-                        if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        UpdateService().downloadAndInstallUpdate(downloadUrl, latestBuild);
                       },
                       style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
                       child: const Text('Update Now', style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600)),
@@ -165,7 +163,7 @@ class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObse
     if (state == AppLifecycleState.resumed) {
       final auth = context.read<AuthProvider>();
       if (auth.isLoggedIn) {
-        if (DateTime.now().difference(_lastActiveTime).inMinutes >= 10) {
+        if (DateTime.now().difference(_lastActiveTime).inMinutes >= 15) {
           auth.logout();
           navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
           _showLogoutMessage();
@@ -202,7 +200,7 @@ class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObse
 
     _lastActiveTime = DateTime.now();
     _idleTimer?.cancel();
-    _idleTimer = Timer(const Duration(minutes: 10), () {
+    _idleTimer = Timer(const Duration(minutes: 15), () {
       if (mounted && auth.isLoggedIn) {
         auth.logout();
         navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
@@ -249,7 +247,6 @@ class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObse
         '/admin/sanctions':    (_) => const SanctionsScreen(),
       },
       onGenerateRoute: (settings) {
-        // Handle routes with arguments (e.g. issue violation with vehicle data)
         if (settings.name == '/security/violation') {
           final args = settings.arguments as Map<String, dynamic>?;
           return MaterialPageRoute(
@@ -262,7 +259,7 @@ class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObse
   );
 }
 }
-// ── Splash / Auth gate ────────────────────────────────────────────────────────
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
   @override
@@ -291,18 +288,16 @@ class _SplashScreenState extends State<SplashScreen>
     const storage = FlutterSecureStorage();
     final lastRunStr = await storage.read(key: 'last_run_version');
     final lastRunVal = lastRunStr != null ? int.tryParse(lastRunStr) : null;
-    
-    // If the last run version is older than the current version, the app just got updated.
+
     if (lastRunVal != null && lastRunVal < AppConfig.currentBuildNumber) {
       await NotificationService().showLocalNotification(
         title: 'Update Successful 🎉',
         body: 'Application has been successfully updated to version ${AppConfig.currentBuildNumber}.',
       );
     }
-    // Save current version
     await storage.write(key: 'last_run_version', value: AppConfig.currentBuildNumber.toString());
 
-    // Check for App Updates first
+    // Check for App Updates
     try {
       final res = await ApiService().get(AppConfig.appVersionInfo);
       if (res.data != null && res.data['latest_build'] != null) {
@@ -319,9 +314,9 @@ class _SplashScreenState extends State<SplashScreen>
               canPop: !isForce,
               child: AlertDialog(
                 backgroundColor: AppTheme.surfaceCard,
-                title: const Text('Update Available 🎉', style: TextStyle(color: Colors.white, fontFamily: 'Outfit', fontWeight: FontWeight.w700)),
+                title: const Text('Update Available! 🎉', style: TextStyle(color: Colors.white, fontFamily: 'Outfit', fontWeight: FontWeight.w700)),
                 content: const Text(
-                  'A new version of the PSAU Parking app is available. Update now to get the latest features and improvements.',
+                  'A new version of PSAU Parking is available. Tap Update Now to download it in the background.',
                   style: TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit'),
                 ),
                 actions: [
@@ -331,9 +326,9 @@ class _SplashScreenState extends State<SplashScreen>
                       child: const Text('Later', style: TextStyle(color: AppTheme.textMuted)),
                     ),
                   ElevatedButton(
-                    onPressed: () async {
-                      final uri = Uri.parse(downloadUrl);
-                      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      UpdateService().downloadAndInstallUpdate(downloadUrl, latestBuild);
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
                     child: const Text('Update Now', style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600)),
@@ -342,11 +337,11 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
           );
-          if (isForce) return; // Halt here if forced
+          if (isForce) return;
         }
       }
     } catch (e) {
-      debugPrint('Update check failed: $e'); // Ignore if offline
+      debugPrint('Update check failed: $e');
     }
 
     if (!mounted) return;
