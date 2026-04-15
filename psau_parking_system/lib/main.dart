@@ -247,19 +247,24 @@ class _SplashScreenState extends State<SplashScreen>
               canPop: !isForce,
               child: AlertDialog(
                 backgroundColor: AppTheme.surfaceCard,
-                title: const Text('Updates Available', style: TextStyle(color: Colors.white, fontFamily: 'Outfit')),
-                content: const Text('A new version of the PSAU Parking app is required to continue. Please update your app.',
-                  style: TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit')),
+                title: const Text('Update Available 🎉', style: TextStyle(color: Colors.white, fontFamily: 'Outfit', fontWeight: FontWeight.w700)),
+                content: const Text(
+                  'A new version of the PSAU Parking app is available. Update now to get the latest features and improvements.',
+                  style: TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit'),
+                ),
                 actions: [
                   if (!isForce)
-                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Skip')),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Later', style: TextStyle(color: AppTheme.textMuted)),
+                    ),
                   ElevatedButton(
                     onPressed: () async {
                       final uri = Uri.parse(downloadUrl);
                       if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
-                    child: const Text('Update Now'),
+                    child: const Text('Update Now', style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
