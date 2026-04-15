@@ -142,5 +142,52 @@
             };
             document.getElementById('imageModal').style.display = 'flex';
         }
+
+        // Auto-refresh script for Pending Registrations
+        document.addEventListener('DOMContentLoaded', function() {
+            setInterval(() => {
+                // Do not auto-refresh if the image modal is open
+                if (document.getElementById('imageModal').style.display === 'flex') {
+                    return; 
+                }
+
+                fetch(window.location.href, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Cache-Control': 'no-cache'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Replace the Table Card
+                    const newCard = doc.querySelector('.card');
+                    if (newCard) {
+                        document.querySelector('.card').innerHTML = newCard.innerHTML;
+                    }
+
+                    // Replace the Stats Grid
+                    const newStats = doc.querySelector('.stat-grid');
+                    if (newStats) {
+                        document.querySelector('.stat-grid').innerHTML = newStats.innerHTML;
+                    }
+
+                    // Replace Tab Nav
+                    const newTabs = doc.querySelector('.tab-nav');
+                    if (newTabs) {
+                        document.querySelector('.tab-nav').innerHTML = newTabs.innerHTML;
+                    }
+
+                    // Replace Topbar Badge
+                    const newTopbar = doc.querySelector('.topbar-right');
+                    if (newTopbar) {
+                        document.querySelector('.topbar-right').innerHTML = newTopbar.innerHTML;
+                    }
+                })
+                .catch(err => console.error('Auto-refresh error:', err));
+            }, 10000); // Poll every 10 seconds
+        });
         </script>
 @endsection
