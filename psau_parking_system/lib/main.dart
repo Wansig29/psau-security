@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'config/app_theme.dart';
 import 'config/api_config.dart';
 import 'providers/auth_provider.dart';
@@ -85,6 +86,8 @@ class PsauParkingApp extends StatefulWidget {
 class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObserver {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   Timer? _idleTimer;
+  Timer? _updateCheckTimer;
+  int? _shownUpdateBuildNumber;
   DateTime _lastActiveTime = DateTime.now();
 
   @override
@@ -94,12 +97,66 @@ class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObse
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<AuthProvider>().addListener(_authListener);
     });
+    // Add timer to check updates every 45 seconds from Railway deployment
+    _updateCheckTimer = Timer.periodic(const Duration(seconds: 45), (_) => _checkForLiveDeployment());
   }
+
+  Future<void> _checkForLiveDeployment() async {
+    if (!mounted) return;
+    try {
+      final res = await ApiService().get(AppConfig.appVersionInfo);
+      if (res.data != null && res.data['latest_build'] != null) {
+        final latestBuild = res.data['latest_build'] as int;
+        final downloadUrl = res.data['download_url'] as String?;
+        final isForce = res.data['force_update'] as bool? ?? false;
+        
+        if (latestBuild > AppConfig.currentBuildNumber && latestBuild != _shownUpdateBuildNumber && downloadUrl != null) {
+          _shownUpdateBuildNumber = latestBuild;
+          
+          final ctx = navigatorKey.currentContext;
+          if (ctx != null && ctx.mounted) {
+            await showDialog(
+              context: ctx,
+              barrierDismissible: !isForce,
+              builder: (ctx) => PopScope(
+                canPop: !isForce,
+                child: AlertDialog(
+                  backgroundColor: AppTheme.surfaceCard,
+                  title: const Text('New Deployment Updates Available 🎉', style: TextStyle(color: Colors.white, fontFamily: 'Outfit', fontWeight: FontWeight.w700)),
+                  content: const Text(
+                    'A new deployment has been released in Railway. Please download the latest update to keep your app working properly.',
+                    style: TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit'),
+                  ),
+                  actions: [
+                    if (!isForce)
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Later', style: TextStyle(color: AppTheme.textMuted)),
+                      ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final uri = Uri.parse(downloadUrl);
+                        if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
+                      child: const Text('Update Now', style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _idleTimer?.cancel();
+    _updateCheckTimer?.cancel();
     super.dispose();
   }
 
@@ -229,6 +286,21 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkAuth() async {
     await Future.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
+
+    // Check for "Update Finished" Notification
+    const storage = FlutterSecureStorage();
+    final lastRunStr = await storage.read(key: 'last_run_version');
+    final lastRunVal = lastRunStr != null ? int.tryParse(lastRunStr) : null;
+    
+    // If the last run version is older than the current version, the app just got updated.
+    if (lastRunVal != null && lastRunVal < AppConfig.currentBuildNumber) {
+      await NotificationService().showLocalNotification(
+        title: 'Update Successful 🎉',
+        body: 'Application has been successfully updated to version ${AppConfig.currentBuildNumber}.',
+      );
+    }
+    // Save current version
+    await storage.write(key: 'last_run_version', value: AppConfig.currentBuildNumber.toString());
 
     // Check for App Updates first
     try {
