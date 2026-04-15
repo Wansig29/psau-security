@@ -81,6 +81,16 @@ class _SearchScreenState extends State<SearchScreen> {
                   onPressed: _search,
                   child: const Icon(Icons.search),
                 ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(52, 52),
+                    padding: EdgeInsets.zero,
+                    backgroundColor: AppTheme.primaryLight,
+                  ),
+                  onPressed: () => Navigator.pushNamed(context, '/qr-scan'),
+                  child: const Icon(Icons.qr_code_scanner),
+                ),
               ]),
               const SizedBox(height: 20),
               if (_error != null) _errorCard(),

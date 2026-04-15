@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -16,6 +17,7 @@ class LiveLocationScreen extends StatefulWidget {
 class _LiveLocationScreenState extends State<LiveLocationScreen> {
   bool _broadcasting = false;
   bool _loading = false;
+  bool _wifiWarningShown = false;
   Timer? _timer;
   Position? _position;
   final MapController _mapCtrl = MapController();
@@ -61,6 +63,20 @@ class _LiveLocationScreenState extends State<LiveLocationScreen> {
 
   Future<void> _broadcast() async {
     try {
+      final connectivity = await Connectivity().checkConnectivity();
+      final hasWifi = connectivity.contains(ConnectivityResult.wifi);
+      if (!hasWifi) {
+        if (mounted && !_wifiWarningShown) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Location broadcasting requires Wi-Fi connection.'),
+            backgroundColor: AppTheme.warning,
+          ));
+          _wifiWarningShown = true;
+        }
+        return;
+      }
+      _wifiWarningShown = false;
+
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );

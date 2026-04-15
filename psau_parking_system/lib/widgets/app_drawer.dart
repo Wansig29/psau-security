@@ -73,6 +73,21 @@ class AppDrawer extends StatelessWidget {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/profile');
                   }),
+                  if (auth.role == 'security') ...[
+                    const Divider(color: Color(0xFF2A2A2A)),
+                    _tile(context, Icons.search, 'Search Plate / QR', () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/security/search');
+                    }),
+                    _tile(context, Icons.qr_code_scanner, 'Scan QR', () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/qr-scan');
+                    }),
+                    _tile(context, Icons.map_outlined, 'Live Tracking', () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/security/track');
+                    }),
+                  ],
                   if (auth.role == 'vehicle_user') ...[
                     const Divider(color: Color(0xFF2A2A2A)),
                     _tile(context, Icons.qr_code_scanner, 'Scan QR', () {

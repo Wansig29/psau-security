@@ -513,17 +513,52 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         Route::post('/registrations/approve/{id}', function (Request $request, $id) {
-            $registration = \App\Models\Registration::with('vehicle')->findOrFail($id);
-            $qrId = strtoupper(\Illuminate\Support\Str::random(10));
-            $registration->update([
-                'status'        => 'approved',
-                'qr_sticker_id' => $qrId,
-                'approved_at'   => now(),
-            ]);
-            if ($registration->user) {
-                $registration->user->notify(new \App\Notifications\RegistrationApproved($registration));
+            try {
+                $registration = \App\Models\Registration::with(['vehicle', 'user', 'documents'])->findOrFail($id);
+
+                if (strtolower((string) $registration->status) !== 'pending') {
+                    return response()->json(['message' => 'Only pending registrations can be approved.'], 422);
+                }
+
+                // Retry OCR plate extraction at approval time if still placeholder.
+                $vehicle = $registration->vehicle;
+                if ($vehicle) {
+                    $plate = strtoupper(trim((string) $vehicle->plate_number));
+                    $isPlaceholder = $plate === '' || str_starts_with($plate, 'PENDING_') || str_starts_with($plate, 'UNKNOWN_');
+                    if ($isPlaceholder) {
+                        $documents = $registration->documents->keyBy('document_type');
+                        $plateCandidates = [];
+                        foreach (['vehicle_photo', 'or', 'cr'] as $type) {
+                            $text = (string) ($documents[$type]->ocr_extracted_text ?? '');
+                            if ($text !== '' && preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($text), $matches)) {
+                                $plateCandidates[] = str_replace([' ', '-'], '', $matches[0]);
+                            }
+                        }
+                        if (!empty($plateCandidates)) {
+                            $vehicle->update(['plate_number' => $plateCandidates[0]]);
+                        }
+                    }
+                }
+
+                $qrId = strtoupper(\Illuminate\Support\Str::random(10));
+                $registration->update([
+                    'status'        => 'approved',
+                    'qr_sticker_id' => $qrId,
+                    'approved_at'   => now(),
+                    'approved_by'   => $request->user()?->id,
+                ]);
+                if ($registration->user) {
+                    $registration->user->notify(new \App\Notifications\RegistrationApproved($registration));
+                }
+
+                return response()->json(['message' => 'Registration approved.', 'qr_sticker_id' => $qrId]);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('API approve failed', [
+                    'registration_id' => $id,
+                    'error' => $e->getMessage(),
+                ]);
+                return response()->json(['message' => 'Approval failed. Please try again.'], 500);
             }
-            return response()->json(['message' => 'Registration approved.', 'qr_sticker_id' => $qrId]);
         });
 
         Route::post('/registrations/reject/{id}', function (Request $request, $id) {

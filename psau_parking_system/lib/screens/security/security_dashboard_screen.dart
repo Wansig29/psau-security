@@ -100,16 +100,24 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Quick action row
-                      Row(children: [
-                        _actionBtn('Search', Icons.search, AppTheme.info,
-                            () => Navigator.pushNamed(context, '/security/search')),
-                        const SizedBox(width: 10),
-                        _actionBtn('Track', Icons.map_outlined, AppTheme.success,
-                            () => Navigator.pushNamed(context, '/security/track')),
-                        const SizedBox(width: 10),
-                        _actionBtn('Violation', Icons.warning_amber_rounded, AppTheme.danger,
-                            () => Navigator.pushNamed(context, '/security/violation')),
-                      ]),
+                      GridView.count(
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 1.8,
+                        children: [
+                          _actionBtn('Search Plate', Icons.search, AppTheme.info,
+                              () => Navigator.pushNamed(context, '/security/search')),
+                          _actionBtn('Scan QR', Icons.qr_code_scanner, AppTheme.primaryLight,
+                              () => Navigator.pushNamed(context, '/qr-scan')),
+                          _actionBtn('Track', Icons.map_outlined, AppTheme.success,
+                              () => Navigator.pushNamed(context, '/security/track')),
+                          _actionBtn('Violation', Icons.warning_amber_rounded, AppTheme.danger,
+                              () => Navigator.pushNamed(context, '/security/violation')),
+                        ],
+                      ),
                       const SizedBox(height: 24),
                       const Text('Recent Violations (by you)',
                         style: TextStyle(color: Colors.white, fontSize: 16,
@@ -146,23 +154,21 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
   }
 
   Widget _actionBtn(String label, IconData icon, Color color, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: AppTheme.radiusMd,
-            border: Border.all(color: color.withValues(alpha: 0.3)),
-          ),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 6),
-            Text(label, style: TextStyle(color: color, fontFamily: 'Outfit',
-                fontSize: 12, fontWeight: FontWeight.w500)),
-          ]),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: AppTheme.radiusMd,
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 6),
+          Text(label, style: TextStyle(color: color, fontFamily: 'Outfit',
+              fontSize: 12, fontWeight: FontWeight.w500)),
+        ]),
       ),
     );
   }

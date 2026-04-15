@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../config/app_theme.dart';
 import '../../providers/auth_provider.dart';
@@ -53,6 +54,10 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
   Future<void> _broadcastCurrentLocation() async {
     try {
+      final connectivity = await Connectivity().checkConnectivity();
+      final hasWifi = connectivity.contains(ConnectivityResult.wifi);
+      if (!hasWifi) return;
+
       final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
       await ApiService().post(AppConfig.userLocationBroadcast, data: {
         'lat': pos.latitude,
