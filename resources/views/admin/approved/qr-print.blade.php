@@ -494,7 +494,7 @@
                 <a href="{{ route('admin.approved.index') }}" class="btn-back">
                     ← Back to List
                 </a>
-                <button class="btn-print" onclick="window.print()">
+                <button class="btn-print" onclick="trackAndPrint()">
                     <i class="fas fa-print"></i> Print Sticker
                 </button>
             </div>
@@ -603,6 +603,19 @@
             slider.addEventListener('input', apply);
             apply();
         })();
+
+        function trackAndPrint() {
+            fetch("{{ route('admin.approved.track-print', $registration->id) }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            }).catch(e => console.error(e));
+            
+            // Print dialog
+            window.print();
+        }
     </script>
 </body>
 </html>

@@ -124,7 +124,7 @@
         </div>
         <div class="actions">
             <a href="{{ route('admin.approved.index') }}" class="btn">Back</a>
-            <button class="btn btn-primary" onclick="window.print()">Print All</button>
+            <button class="btn btn-primary" onclick="trackAndPrint()">Print All</button>
         </div>
     </div>
 
@@ -150,5 +150,22 @@
             </div>
         @endforeach
     </div>
+    <script>
+        function trackAndPrint() {
+            var ids = {!! json_encode($registrations->pluck('id')) !!};
+            fetch("{{ route('admin.approved.track-bulk-print') }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ registration_ids: ids })
+            }).catch(e => console.error(e));
+            
+            // Print dialog
+            window.print();
+        }
+    </script>
 </body>
 </html>

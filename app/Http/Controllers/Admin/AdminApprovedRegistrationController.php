@@ -51,11 +51,6 @@ class AdminApprovedRegistrationController extends Controller
                 ->with('error', 'No QR sticker assigned or this registration is not yet approved.');
         }
 
-        if ($this->supportsQrPrintTracking()) {
-            $registration->increment('qr_print_count');
-            $registration->update(['last_qr_printed_at' => now()]);
-        }
-
         // URL that the main QR code will encode (public scan profile with sticker ID)
         $url = route('scan.show', $registration->qr_sticker_id);
 
@@ -96,19 +91,46 @@ class AdminApprovedRegistrationController extends Controller
                 ->generate($url);
         }
 
-        if ($this->supportsQrPrintTracking()) {
-            foreach ($registrations as $registration) {
-                $registration->increment('qr_print_count');
-                $registration->update(['last_qr_printed_at' => now()]);
-            }
-        }
-
         return view('admin.approved.qr-print-bulk', [
             'registrations' => $registrations,
             'qrCodeByRegistrationId' => $qrCodeByRegistrationId,
         ]);
     }
+
+    /**
+     * Track that a sticker was actually printed.
+     */
+    public function trackPrint(Registration $registration)
+    {
+        if ($this->supportsQrPrintTracking() && $registration->qr_sticker_id) {
+            $registration->increment('qr_print_count');
+            $registration->update(['last_qr_printed_at' => now()]);
+        }
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Track that bulk stickers were actually printed.
+     */
+    public function trackBulkPrint(Request $request)
+    {
+        $validated = $request->validate([
+            'registration_ids' => ['required', 'array'],
+            'registration_ids.*' => ['integer', 'exists:registrations,id'],
+        ]);
+
+        if ($this->supportsQrPrintTracking()) {
+            Registration::whereIn('id', $validated['registration_ids'])
+                ->whereNotNull('qr_sticker_id')
+                ->update([
+                    'qr_print_count' => \Illuminate\Support\Facades\DB::raw('qr_print_count + 1'),
+                    'last_qr_printed_at' => now(),
+                ]);
+        }
+        return response()->json(['success' => true]);
+    }
     
+
     /**
      * Schedule a pick-up time for the user.
      */
