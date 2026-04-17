@@ -44,9 +44,6 @@ Route::post('/login', function (Request $request) {
 
     // Auth::attempt() already loaded the user — no second DB query needed
     $user  = \Illuminate\Support\Facades\Auth::user();
-
-    // Delete old tokens for this device to keep the token table lean
-    $user->tokens()->where('name', 'mobile-app')->delete();
     $token = $user->createToken('mobile-app')->plainTextToken;
 
     return response()->json([

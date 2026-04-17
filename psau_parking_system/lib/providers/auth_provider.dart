@@ -40,13 +40,16 @@ class AuthProvider extends ChangeNotifier {
     try {
       final res  = await _api.post(AppConfig.login, data: {
         'email': email, 'password': password,
-      });
+      }).timeout(
+        const Duration(seconds: 12),
+        onTimeout: () => throw Exception('Login timed out. Please check your connection and try again.'),
+      );
       final body = res.data as Map<String, dynamic>;
       await _api.saveToken(body['token'] as String);
       _user = UserModel.fromJson(body['user'] as Map<String, dynamic>);
       return true;
     } catch (e) {
-      _error = ApiService.errorMessage(e);
+      _error = e is Exception ? e.toString().replaceFirst('Exception: ', '') : ApiService.errorMessage(e);
       return false;
     } finally {
       _loading = false;
