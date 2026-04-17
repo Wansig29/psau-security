@@ -84,6 +84,11 @@ class RegistrationController extends Controller
                 }
             }
 
+            // Railway's TCP proxy drops idle MySQL connections after 60 seconds.
+            // Since the OCR process above can take 20-30 seconds, we force Laravel
+            // to reconnect the database before inserting to prevent "MySQL server has gone away".
+            \Illuminate\Support\Facades\DB::reconnect();
+
             // 3. Create Vehicle
             $vehicle = \App\Models\Vehicle::create([
                 'user_id'      => $user->id,

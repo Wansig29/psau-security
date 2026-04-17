@@ -251,6 +251,8 @@ Route::middleware('auth:sanctum')->group(function () {
                 \Illuminate\Support\Facades\Log::warning('API OCR failed: ' . $e->getMessage());
             }
 
+            \Illuminate\Support\Facades\DB::reconnect();
+
             $vehicle = \App\Models\Vehicle::create([
                 'user_id'      => $user->id,
                 'plate_number' => $plateNumber,
