@@ -78,7 +78,7 @@ class RegistrationController extends Controller
 
             // 2. Run OCR on the vehicle photo, OR, and CR documents sequentially to extract the plate number
             $ocrText     = '';
-            $plateNumber = 'UNKNOWN_' . \Illuminate\Support\Str::random(8);
+            $plateNumber = null; // Will be set to PENDING_XXXXX if OCR fails
 
             $docsToScan = [
                 'vehicle_photo' => 'Vehicle Photo',
@@ -91,12 +91,26 @@ class RegistrationController extends Controller
                     $text = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs[$docKey]['full']))->run();
                     $ocrText .= "\n--- {$docLabel} ---\n" . $text;
                     if (preg_match('/([A-Z]{2,3}[\s-]?[0-9]{3,4}|[0-9]{3,4}[\s-]?[A-Z]{2,3})/', strtoupper($text), $matches)) {
-                        $plateNumber = str_replace([' ', '-'], '', $matches[0]);
-                        break; // Found the plate number, stop scanning
+                        $extracted = strtoupper(str_replace([' ', '-'], '', $matches[0]));
+                        // Only use OCR plate if it doesn't already exist in DB
+                        $alreadyExists = \App\Models\Vehicle::where('plate_number', $extracted)->exists();
+                        if (!$alreadyExists) {
+                            $plateNumber = $extracted;
+                            break;
+                        }
+                        \Illuminate\Support\Facades\Log::info("OCR plate {$extracted} already exists — skipping, admin will verify.");
                     }
                 } catch (\Exception $e) {
                     \Illuminate\Support\Facades\Log::warning("OCR failed for {$docLabel}: " . $e->getMessage());
                 }
+            }
+
+            // If OCR couldn't find a unique plate, use a unique pending placeholder
+            // Admin will manually verify and update it from the submitted documents
+            if (!$plateNumber) {
+                do {
+                    $plateNumber = 'PENDING_' . strtoupper(\Illuminate\Support\Str::random(6));
+                } while (\App\Models\Vehicle::where('plate_number', $plateNumber)->exists());
             }
 
             // Railway's TCP proxy drops idle MySQL connections after 60 seconds.
@@ -112,6 +126,7 @@ class RegistrationController extends Controller
                 'model'        => $request->model,
                 'color'        => $request->color,
             ]);
+
 
             // 4. Create Registration
             $currentYear  = date('Y') . '-' . (date('Y') + 1);
