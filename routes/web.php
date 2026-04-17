@@ -71,6 +71,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::delete('/users/{user}', [\App\Http\Controllers\Admin\AdminUserController::class, 'destroy'])->name('users.destroy');
     Route::post('/registration/{id}/approve', [\App\Http\Controllers\Admin\AdminRegistrationController::class, 'approve'])->name('registration.approve');
     Route::post('/registration/{id}/reject', [\App\Http\Controllers\Admin\AdminRegistrationController::class, 'reject'])->name('registration.reject');
+    Route::get('/documents/{id}/image', [\App\Http\Controllers\Admin\AdminRegistrationController::class, 'showImage'])->name('document.image');
     
     // Approved Registrations & QR
     Route::get('/approved', [\App\Http\Controllers\Admin\AdminApprovedRegistrationController::class, 'index'])->name('approved.index');

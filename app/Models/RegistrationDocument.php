@@ -12,6 +12,7 @@ class RegistrationDocument extends Model
         'registration_id',
         'document_type',
         'image_path',
+        'image_data',
         'ocr_extracted_text',
         'match_score',
         'is_flagged',

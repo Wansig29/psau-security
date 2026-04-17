@@ -90,9 +90,9 @@
                                                 @foreach($docDefs as $type => $def)
                                                     @if($docMap->has($type))
                                                         @php $doc = $docMap[$type]; @endphp
-                                                        <a href="javascript:void(0)" onclick="openImageModal('{{ asset('storage/' . $doc->image_path) }}', '{{ $def[0] }}')"
+                                                        <a href="javascript:void(0)" onclick="openImageModal('{{ route('admin.document.image', $doc->id) }}', '{{ $def[0] }}')"
                                                            title="{{ $def[0] }}" style="display:flex;flex-direction:column;align-items:center;width:44px;text-decoration:none;">
-                                                            <img src="{{ asset('storage/' . $doc->image_path) }}" alt="{{ $def[0] }}"
+                                                            <img src="{{ route('admin.document.image', $doc->id) }}" alt="{{ $def[0] }}"
                                                                  onerror="this.onerror=null;this.src='https://placehold.co/38x38?text={{ urlencode($def[0]) }}';"
                                                                  style="width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;transition:transform 0.2s"
                                                                  onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">

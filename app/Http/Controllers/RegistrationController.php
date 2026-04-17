@@ -47,7 +47,8 @@ class RegistrationController extends Controller
                 } catch (\Exception $e) {
                     \Illuminate\Support\Facades\Log::error('Image compression failed: ' . $e->getMessage());
                 }
-                return ['path' => $path, 'full' => $fullPath];
+                $data = file_exists($fullPath) ? file_get_contents($fullPath) : null;
+                return ['path' => $path, 'full' => $fullPath, 'data' => $data];
             };
 
             // 1. Store all six documents
@@ -111,11 +112,11 @@ class RegistrationController extends Controller
                 'school_id'     => ['type' => 'school_id',     'ocr' => null, 'flagged' => null],
             ];
 
-            foreach ($docTypes as $key => $meta) {
                 \App\Models\RegistrationDocument::create([
                     'registration_id'   => $registration->id,
                     'document_type'     => $meta['type'],
                     'image_path'        => $docs[$key]['path'],
+                    'image_data'        => $docs[$key]['data'],
                     'ocr_extracted_text'=> $meta['ocr'],
                     'match_score'       => 0,
                     'flagged_fields'    => $meta['flagged'],

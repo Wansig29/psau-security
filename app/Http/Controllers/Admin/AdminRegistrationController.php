@@ -141,4 +141,25 @@ class AdminRegistrationController extends Controller
 
         return null;
     }
+
+    /**
+     * Provide the document image directly from the database LONGBLOB instead of the filesystem.
+     */
+    public function showImage($id)
+    {
+        $document = RegistrationDocument::findOrFail($id);
+
+        if (empty($document->image_data)) {
+            // Fallback to local disk if image_data is empty (e.g., from old registrations)
+            if (!empty($document->image_path)) {
+                $fullPath = storage_path('app/public/' . $document->image_path);
+                if (file_exists($fullPath)) {
+                    return response()->file($fullPath);
+                }
+            }
+            abort(404, 'Image not found');
+        }
+
+        return response($document->image_data)->header('Content-Type', 'image/jpeg');
+    }
 }
