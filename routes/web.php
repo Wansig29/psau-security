@@ -91,6 +91,12 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     // Statistics
     Route::get('/statistics', [\App\Http\Controllers\Admin\AdminStatisticsController::class, 'index'])->name('statistics.index');
 
+    // Vehicle Change Requests
+    Route::get('/vehicle-changes', [\App\Http\Controllers\Admin\AdminVehicleChangeController::class, 'index'])->name('vehicle-changes.index');
+    Route::post('/vehicle-changes/{id}/approve', [\App\Http\Controllers\Admin\AdminVehicleChangeController::class, 'approve'])->name('vehicle-changes.approve');
+    Route::post('/vehicle-changes/{id}/reject', [\App\Http\Controllers\Admin\AdminVehicleChangeController::class, 'reject'])->name('vehicle-changes.reject');
+    Route::get('/vehicle-changes/{id}/image/{type}', [\App\Http\Controllers\Admin\AdminVehicleChangeController::class, 'showImage'])->name('vehicle-changes.image');
+
     // Database Utilities (Protected for Admins Only)
     Route::get('/seed-db-now', function () {
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
@@ -122,6 +128,10 @@ Route::middleware(['auth', 'verified', 'role:vehicle_user'])->prefix('user')->na
     Route::get('/registration/create', [\App\Http\Controllers\RegistrationController::class, 'create'])->name('registration.create');
     Route::post('/registration', [\App\Http\Controllers\RegistrationController::class, 'store'])->name('registration.store');
     Route::delete('/vehicle/{vehicle}', [\App\Http\Controllers\User\UserDashboardController::class, 'destroyVehicle'])->name('vehicle.destroy');
+
+    // Vehicle Change Request routes
+    Route::get('/vehicle-change/request', [\App\Http\Controllers\VehicleChangeController::class, 'create'])->name('vehicle-change.create');
+    Route::post('/vehicle-change/request', [\App\Http\Controllers\VehicleChangeController::class, 'store'])->name('vehicle-change.store');
 
     // Profile photo
     Route::post('/profile/photo', [\App\Http\Controllers\User\UserProfileController::class, 'uploadPhoto'])->name('profile.photo.upload');

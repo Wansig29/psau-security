@@ -130,14 +130,40 @@
                 </form>
             </div>
 
-            {{-- Register Vehicle button sits on same row as avatar, aligned to bottom --}}
+            {{-- Register or Change Vehicle button --}}
             <div class="button-wrap" style="padding-bottom:4px">
-                <a href="{{ route('user.registration.create') }}"
-                   class="btn font-weight-bold"
-                   style="background:#7b1113;color:#fff;border-radius:8px;padding:9px 20px;
-                          box-shadow:0 3px 10px rgba(123,17,19,0.3);white-space:nowrap;font-size:.95rem">
-                    <i class="fas fa-plus mr-2"></i>Register Vehicle
-                </a>
+                @php
+                    $latestReg = $registrations->first();
+                    $latestStatus = $latestReg ? strtolower((string) $latestReg->status) : null;
+                    $hasPendingChange = \App\Models\VehicleChangeRequest::where('user_id', auth()->id())->where('status','pending')->exists();
+                @endphp
+                @if($latestStatus === 'approved' && !$hasPendingChange)
+                    <a href="{{ route('user.vehicle-change.create') }}"
+                       class="btn font-weight-bold"
+                       style="background:#1d4ed8;color:#fff;border-radius:8px;padding:9px 20px;
+                              box-shadow:0 3px 10px rgba(29,78,216,0.3);white-space:nowrap;font-size:.95rem">
+                        <i class="fas fa-exchange-alt mr-2"></i>Change Vehicle
+                    </a>
+                @elseif($hasPendingChange)
+                    <span class="btn font-weight-bold"
+                          style="background:#9ca3af;color:#fff;border-radius:8px;padding:9px 20px;
+                                 cursor:not-allowed;white-space:nowrap;font-size:.95rem">
+                        <i class="fas fa-clock mr-2"></i>Change Pending…
+                    </span>
+                @elseif(!$latestStatus || $latestStatus === 'rejected')
+                    <a href="{{ route('user.registration.create') }}"
+                       class="btn font-weight-bold"
+                       style="background:#7b1113;color:#fff;border-radius:8px;padding:9px 20px;
+                              box-shadow:0 3px 10px rgba(123,17,19,0.3);white-space:nowrap;font-size:.95rem">
+                        <i class="fas fa-plus mr-2"></i>Register Vehicle
+                    </a>
+                @else
+                    <span class="btn font-weight-bold"
+                          style="background:#9ca3af;color:#fff;border-radius:8px;padding:9px 20px;
+                                 cursor:not-allowed;white-space:nowrap;font-size:.95rem">
+                        <i class="fas fa-clock mr-2"></i>Under Review…
+                    </span>
+                @endif
             </div>
         </div>
 

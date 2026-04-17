@@ -13,6 +13,21 @@ class RegistrationController extends Controller
 
     public function store(\Illuminate\Http\Request $request)
     {
+        // ── 1-vehicle-per-user guard ──────────────────────────────────────────
+        $existingReg = \App\Models\Registration::where('user_id', $request->user()->id)
+            ->whereRaw("LOWER(status) IN ('pending', 'approved')")
+            ->first();
+
+        if ($existingReg) {
+            $status = strtolower((string) $existingReg->status);
+            if ($status === 'pending') {
+                return redirect()->route('user.dashboard')
+                    ->with('error', 'You already have a pending vehicle registration under review. Please wait for admin approval.');
+            }
+            return redirect()->route('user.vehicle-change.create')
+                ->with('error', 'You already have an approved vehicle. To change your vehicle, please submit a Vehicle Change Request below.');
+        }
+
         try {
             $request->validate([
                 'contact_number' => ['nullable', 'string', 'regex:/^(09\d{9}|\+639\d{9})$/'],
