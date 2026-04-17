@@ -1,11 +1,13 @@
 name: Build and Update APK
 
 on:
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
   push:
     branches:
       - main
     paths:
-      - 'psau_parking_system/**' # Only trigger when flutter code changes
+      - 'psau_parking_system/**'
+      - '.github/workflows/build-apk.yml' # Re-trigger APK build when workflow itself changes
 
 jobs:
   build_apk:
