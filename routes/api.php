@@ -247,7 +247,7 @@ Route::middleware('auth:sanctum')->group(function () {
                     $crOcrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['cr']['full']))->run();
                     if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($crOcrText), $matches)) {
                         $plateNumber = str_replace([' ', '-'], '', $matches[0]);
-                        $ocrText .= "\n--- CR ---\n" . $crOcrText; 
+                        $ocrText .= "\n--- CR ---\n" . $crOcrText;
                     }
                 }
             } catch (\Exception $e) {

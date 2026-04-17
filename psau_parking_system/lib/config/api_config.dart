@@ -4,7 +4,7 @@ class AppConfig {
   // For local dev on emulator:  'http://10.0.2.2:8000'
   // For local dev on device:    'http://192.168.x.x:8000'
 
-  static const int currentBuildNumber = 4; // Current compiled version
+  static const int currentBuildNumber = 4;
   static const String appVersionInfo = '/api/app-version';
 
   // ── API Endpoints ──────────────────────────────────────────────────────────
@@ -18,7 +18,7 @@ class AppConfig {
   // Profile
   static const String profileUpdate = '/api/profile/update';
   static const String profileDelete = '/api/profile/delete';
-  
+
   // Crash Report
   static const String crashReport = '/api/crash-report';
 
