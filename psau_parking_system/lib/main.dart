@@ -281,10 +281,11 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkAuth() async {
-    await Future.delayed(const Duration(milliseconds: 1200));
+    // Shorter splash — just enough to show the logo
+    await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
 
-    // ── Post-update notification (local, no network needed) ──────────────────
+    // ── Post-update notification (local, no network needed) ─────────────────
     const storage = FlutterSecureStorage();
     try {
       final lastRunStr = await storage.read(key: 'last_run_version');
@@ -300,20 +301,57 @@ class _SplashScreenState extends State<SplashScreen>
       debugPrint('Post-update notification failed: $e');
     }
 
-    // ── Check for App Updates (hard 8-second timeout so it never blocks) ─────
-    try {
-      final res = await ApiService()
-          .get(AppConfig.appVersionInfo)
-          .timeout(const Duration(seconds: 8));
-      if (mounted && res.data != null && res.data['latest_build'] != null) {
-        final latestBuild = res.data['latest_build'] as int;
-        final downloadUrl = res.data['download_url'] as String?;
-        final isForce = res.data['force_update'] as bool? ?? false;
+    if (!mounted) return;
 
-        if (latestBuild > AppConfig.currentBuildNumber && downloadUrl != null) {
-          if (!mounted) return;
+    // ── Run auth check and update check IN PARALLEL (max 6s) ────────────────
+    // Auth check determines where to navigate — update check is non-blocking.
+    final auth = context.read<AuthProvider>();
+    bool loggedIn = false;
+    dynamic updateCheckResult;
+
+    await Future.wait([
+      // 1. Auth check (primary — determines navigation)
+      auth.checkLoginStatus()
+          .timeout(const Duration(seconds: 6))
+          .then((v) => loggedIn = v)
+          .catchError((e) {
+            debugPrint('Auth check failed (non-fatal): $e');
+            loggedIn = false;
+          }),
+
+      // 2. Update check (secondary — runs alongside, never blocks navigation)
+      ApiService()
+          .get(AppConfig.appVersionInfo)
+          .timeout(const Duration(seconds: 6))
+          .then((res) => updateCheckResult = res.data)
+          .catchError((e) {
+            debugPrint('Update check failed (non-fatal): $e');
+          }),
+    ]);
+
+    if (!mounted) return;
+
+    // Navigate immediately — don't wait for the update dialog
+    if (loggedIn) {
+      _routeByRole(auth.role);
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+
+    // Show update dialog after navigation (non-blocking)
+    if (updateCheckResult != null &&
+        updateCheckResult['latest_build'] != null &&
+        mounted) {
+      final latestBuild = updateCheckResult['latest_build'] as int;
+      final downloadUrl = updateCheckResult['download_url'] as String?;
+      final isForce     = updateCheckResult['force_update'] as bool? ?? false;
+
+      if (latestBuild > AppConfig.currentBuildNumber && downloadUrl != null) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        final ctx = _PsauParkingAppState.navigatorKey.currentContext;
+        if (ctx != null && ctx.mounted) {
           await showDialog(
-            context: context,
+            context: ctx,
             barrierDismissible: !isForce,
             builder: (ctx) => PopScope(
               canPop: !isForce,
@@ -321,7 +359,7 @@ class _SplashScreenState extends State<SplashScreen>
                 backgroundColor: AppTheme.surfaceCard,
                 title: const Text('Update Available! 🎉', style: TextStyle(color: Colors.white, fontFamily: 'Outfit', fontWeight: FontWeight.w700)),
                 content: const Text(
-                  'A new version of PSAU Parking is available. Tap Update Now to download it in the background.',
+                  'A new version of PSAU Parking is available. Tap Update Now to download it.',
                   style: TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit'),
                 ),
                 actions: [
@@ -342,31 +380,8 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
           );
-          if (isForce) return;
         }
       }
-    } catch (e) {
-      // Version check failed or timed out — continue to auth check silently
-      debugPrint('Update check failed (non-fatal): $e');
-    }
-
-    // ── Auth check (hard 10-second timeout so splash never freezes) ──────────
-    if (!mounted) return;
-    try {
-      final auth = context.read<AuthProvider>();
-      final loggedIn = await auth
-          .checkLoginStatus()
-          .timeout(const Duration(seconds: 10));
-      if (!mounted) return;
-      if (loggedIn) {
-        _routeByRole(auth.role);
-      } else {
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-    } catch (e) {
-      // Auth timed out or errored — send to login screen
-      debugPrint('Auth check failed (non-fatal): $e');
-      if (mounted) Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
