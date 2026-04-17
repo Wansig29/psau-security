@@ -51,9 +51,9 @@ Route::get('/app/install', function () {
         ]);
     }
 
-    // iOS: not supported
+    // iOS: return back or redirect to login
     if ($isIos) {
-        return view('app.install');
+        return redirect()->route('login')->with('error', 'iOS App is not available. Please access via the website.');
     }
 
     // Desktop / other: show nicely-designed install page (auto-detects APK path)

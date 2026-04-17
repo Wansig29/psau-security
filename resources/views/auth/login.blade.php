@@ -4,10 +4,10 @@
 
     @php
         $ua = strtolower((string) request()->userAgent());
-        $isIos = (bool) preg_match('/iphone|ipad|ipod/i', $ua);
+        $isAndroid = (bool) preg_match('/android/i', $ua);
     @endphp
 
-    @if (! $isIos)
+    @if ($isAndroid)
         <div class="flex justify-center mb-5">
             <a
                 href="{{ route('app.install') }}"
