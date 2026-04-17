@@ -42,6 +42,10 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        // Railway's TCP proxy drops idle MySQL connections aggressively.
+        // Force a fresh connection before every authenticate attempt.
+        \Illuminate\Support\Facades\DB::reconnect();
+
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 

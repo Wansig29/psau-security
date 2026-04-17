@@ -17,7 +17,15 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Register no-cache headers on ALL web responses (FIX 2)
+        // Ping DB and reconnect if Railway's proxy dropped the connection
+        $middleware->web(prepend: [
+            \App\Http\Middleware\EnsureDatabaseConnection::class,
+        ]);
+        $middleware->api(prepend: [
+            \App\Http\Middleware\EnsureDatabaseConnection::class,
+        ]);
+
+        // Register no-cache headers on ALL web responses
         $middleware->web(append: [
             \App\Http\Middleware\PreventBackHistory::class,
         ]);
@@ -54,9 +62,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->with('error', 'Please log in to continue.');
         });
 
-        // Existing DB connection error handlers
+        // Handle MySQL server has gone away (2006) — reconnect and redirect back cleanly
         $exceptions->render(function (\Illuminate\Database\QueryException $e, \Illuminate\Http\Request $request) {
-            if (str_contains($e->getMessage(), 'SQLSTATE[HY000] [2002]')) {
+            $msg = $e->getMessage();
+            if (str_contains($msg, '[2006]') || str_contains($msg, 'server has gone away')) {
+                try { \Illuminate\Support\Facades\DB::reconnect(); } catch (\Exception $_) {}
+                return redirect()->back()
+                    ->withInput($request->except('password', 'password_confirmation', '_token'))
+                    ->with('error', 'Connection was briefly interrupted. Please try again.');
+            }
+            if (str_contains($msg, 'SQLSTATE[HY000] [2002]')) {
                 return response()->view('errors.database', [], 500);
             }
         });
