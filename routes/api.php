@@ -10,6 +10,16 @@ use Illuminate\Support\Facades\Route;
 | All routes require Bearer token from Sanctum unless marked [public].
 */
 
+// ─── [PUBLIC] App Version ─────────────────────────────────────────────────────
+
+Route::get('/app-version', function () {
+    return response()->json([
+        'latest_build' => 5, // Incremented to trigger update
+        'download_url' => 'https://psau-security-production.up.railway.app/psau_parking.apk',
+        'force_update' => false
+    ]);
+});
+
 // ─── [PUBLIC] Crash Reporter ──────────────────────────────────────────────────
 
 Route::post('/crash-report', function (Request $request) {
@@ -36,29 +46,29 @@ Route::post('/login', function (Request $request) {
         'password' => 'required|string',
     ]);
 
-    \Illuminate\Support\Facades\DB::reconnect();
-
-    if (!\Illuminate\Support\Facades\Auth::attempt($request->only('email', 'password'))) {
-        return response()->json(['message' => 'Invalid credentials.'], 401);
+    try {
+        \Illuminate\Support\Facades\DB::reconnect();
+        if (!\Illuminate\Support\Facades\Auth::attempt($request->only('email', 'password'))) {
+            return response()->json(['message' => 'Invalid credentials.'], 401);
+        }
+        $user  = \Illuminate\Support\Facades\Auth::user();
+        $token = $user->createToken('mobile-app')->plainTextToken;
+        return response()->json([
+            'token' => $token,
+            'user'  => [
+                'id'                   => $user->id,
+                'name'                 => $user->name,
+                'email'                => $user->email,
+                'role'                 => $user->role,
+                'contact_number'       => $user->contact_number,
+                'profile_photo_path'   => $user->profile_photo_path
+                    ? \Illuminate\Support\Facades\Storage::url($user->profile_photo_path)
+                    : null,
+            ],
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Server connection error. Please try again.'], 500);
     }
-
-    // Auth::attempt() already loaded the user — no second DB query needed
-    $user  = \Illuminate\Support\Facades\Auth::user();
-    $token = $user->createToken('mobile-app')->plainTextToken;
-
-    return response()->json([
-        'token' => $token,
-        'user'  => [
-            'id'                   => $user->id,
-            'name'                 => $user->name,
-            'email'                => $user->email,
-            'role'                 => $user->role,
-            'contact_number'       => $user->contact_number,
-            'profile_photo_path'   => $user->profile_photo_path
-                ? \Illuminate\Support\Facades\Storage::url($user->profile_photo_path)
-                : null,
-        ],
-    ]);
 });
 
 Route::post('/register', function (Request $request) {
@@ -696,12 +706,4 @@ Route::middleware('auth:sanctum')->group(function () {
             return response()->json(['message' => 'Sanction resolved.']);
         });
     });
-});
-
-Route::get('/app-version', function () {
-    return response()->json([
-        'latest_build' => 4,
-        'download_url' => 'https://psau-security-production.up.railway.app/psau_parking.apk',
-        'force_update' => false
-    ]);
 });

@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "psau_parking_system",
-      "version": "1.0.0+1",
+      "version": "1.0.0+4",
       "dependencies": [
         "background_locator_2",
         "cached_network_image",
