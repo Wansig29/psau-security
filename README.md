@@ -1,30 +1,27 @@
-# PSAU Parking System - Security Module
+# PSAU Parking System — Security Module
 
-This project consists of a Laravel-based backend and a Flutter-based mobile application.
+### 📌 QUICK ACCESS: Flutter Path
+If you need to run Flutter commands manually, use this path:
+`C:\Users\Janssen\.puro\envs\stable\flutter\bin\flutter.bat`
+
+---
 
 ## 🚀 Building the Mobile App (Flutter)
 
-If you have Flutter installed via **Puro**, you can build the APK using the provided batch file:
+The easiest way to build the app is to use the script in this folder:
 
-1. Open a terminal in the project root.
-2. Run the build script:
+1. Open a terminal in this root folder (`psau-security`).
+2. Run:
    ```powershell
    .\build_apk.bat
    ```
 
-### Manual Build Instructions
+### Manual Build Commands
+If the script above fails, run these in order:
 
-If `flutter` is not in your PATH, use the full path to your Flutter executable:
-
-1. Go to the app directory:
-   ```powershell
-   cd psau_parking_system
-   ```
-2. Run the build command:
-   ```powershell
-   C:\Users\Janssen\.puro\envs\stable\flutter\bin\flutter.bat build apk --release
-   ```
-3. The APK will be generated at `build/app/outputs/flutter-apk/app-release.apk`.
+1. `cd psau_parking_system`
+2. `C:\Users\Janssen\.puro\envs\stable\flutter\bin\flutter.bat pub get`
+3. `C:\Users\Janssen\.puro\envs\stable\flutter\bin\flutter.bat build apk --release`
 
 ---
 
@@ -40,5 +37,4 @@ The backend provides the API and admin dashboard.
   4. `php artisan migrate`
 
 ## 📄 License
-
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
