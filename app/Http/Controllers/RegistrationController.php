@@ -76,60 +76,80 @@ class RegistrationController extends Controller
                 'school_id'     => $storeAndCompress($request->file('doc_school_id'), 'registrations/school_id'),
             ];
 
-            // 2. Enhanced OCR — pre-process each image before scanning
-            $ocrText     = '';
-            $plateNumber = null;
+            // 2. Enhanced OCR — multi-variant pre-processing for crumpled/real-world documents
+            $ocrText        = '';
+            $plateNumber    = null;
             $plateCandidates = [];  // Collect candidates from all docs then vote
 
-            // ── Image pre-processing helper ───────────────────────────────
-            $preprocessForOcr = function (string $sourcePath): ?string {
+            // ── Philippine plate regex ──────────────────────────────────────
+            // Covers: ABC1234 · ABC 1234 · AB1234 · ZA0240 · AB1234C · AB-1234
+            $plateRegex = '/\b([A-Z]{2,3}[\s\-]?[0-9]{3,4}[A-Z]?)\b/';
+
+            // ── Build multiple pre-processed variants of one source image ──
+            // Crumpled or bent documents benefit from different contrast/brightness
+            // combos because lighting is uneven. We generate up to 3 variants:
+            //   Variant 1 – grayscale + high contrast + sharpen
+            //   Variant 2 – grayscale + extreme brightness + binarise (B&W) for dark crumple shadows
+            //   Variant 3 – grayscale + contrast + inverted B&W (for light-on-dark plates)
+            $buildVariants = function (string $sourcePath): array {
+                $variants = [];
                 try {
                     $manager = new \Intervention\Image\ImageManager(
                         new \Intervention\Image\Drivers\Gd\Driver()
                     );
-                    $img = $manager->read($sourcePath);
 
-                    // 1. Scale up for better OCR resolution (min 1600px wide)
-                    if ($img->width() < 1600) {
-                        $img->scale(width: 1600);
-                    }
+                    // ── Variant 1: Classic high-contrast sharpened ────────
+                    $img1 = $manager->read($sourcePath);
+                    if ($img1->width() < 1800) { $img1->scale(width: 1800); }
+                    $img1->greyscale()->contrast(65)->sharpen(20)->brightness(10);
+                    $p1 = sys_get_temp_dir() . '/ocr_v1_' . uniqid() . '.jpg';
+                    $img1->toJpeg(95)->save($p1);
+                    $variants[] = $p1;
 
-                    // 2. Grayscale removes colour noise that confuses Tesseract
-                    $img->greyscale();
+                    // ── Variant 2: Strong brighten → binarise (shadow killer) ─
+                    $img2 = $manager->read($sourcePath);
+                    if ($img2->width() < 1800) { $img2->scale(width: 1800); }
+                    $img2->greyscale()->brightness(45)->contrast(80)->sharpen(25);
+                    $p2 = sys_get_temp_dir() . '/ocr_v2_' . uniqid() . '.jpg';
+                    $img2->toJpeg(95)->save($p2);
+                    $variants[] = $p2;
 
-                    // 3. Max contrast to make plate text pop against background
-                    $img->contrast(60);
+                    // ── Variant 3: Inverted for light-on-dark plates ──────
+                    $img3 = $manager->read($sourcePath);
+                    if ($img3->width() < 1800) { $img3->scale(width: 1800); }
+                    $img3->greyscale()->contrast(70)->sharpen(15)->invert();
+                    $p3 = sys_get_temp_dir() . '/ocr_v3_' . uniqid() . '.jpg';
+                    $img3->toJpeg(95)->save($p3);
+                    $variants[] = $p3;
 
-                    // 4. Sharpen edges so character boundaries are crisp
-                    $img->sharpen(15);
-
-                    $tmpPath = sys_get_temp_dir() . '/ocr_' . uniqid() . '.jpg';
-                    $img->toJpeg(95)->save($tmpPath);
-                    return $tmpPath;
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::warning('OCR pre-process failed: ' . $e->getMessage());
-                    return null;
+                    \Illuminate\Support\Facades\Log::warning('OCR variant build failed: ' . $e->getMessage());
                 }
+                return $variants;
             };
 
-            // ── Plate extraction helper (tries multiple Tesseract modes) ──
-            $extractPlate = function (string $imagePath) use (&$ocrText): ?string {
-                // Philippine plates: 3 letters + 3-4 digits (e.g. ABC1234, ZA0240)
-                $plateRegex = '/\b([A-Z]{2,3}[\s\-]?[0-9]{3,4})\b/';
-
-                // Try PSM 6 (uniform block), then PSM 7 (single line), then PSM 3 (auto)
-                $psmModes = [6, 7, 3];
+            // ── Multi-mode Tesseract runner ────────────────────────────────
+            // PSM 8  = single word            ← best for plate-only crops
+            // PSM 7  = single line of text    ← good for horizontal plate bands
+            // PSM 6  = uniform block of text  ← good for full-page OR/CR docs
+            // PSM 13 = raw line               ← fallback, ignores all layout
+            $extractPlate = function (string $imagePath) use (&$ocrText, $plateRegex): ?string {
+                $psmModes = [8, 7, 6, 13];
                 foreach ($psmModes as $psm) {
                     try {
                         $ocr = (new \thiagoalessio\TesseractOCR\TesseractOCR($imagePath))
                             ->psm($psm)
                             ->oem(3)
-                            ->allowlist(\thiagoalessio\TesseractOCR\TesseractOCR::ALPHANUM)
+                            ->allowlist('ABCDEFGHJKLMNPQRSTUVWXYZ0123456789 -')
                             ->run();
-                        $ocrText .= " [psm{$psm}:{$ocr}]";
-                        $upper = strtoupper($ocr);
+                        $upper = strtoupper(trim($ocr));
+                        $ocrText .= " [psm{$psm}:{$upper}]";
                         if (preg_match($plateRegex, $upper, $m)) {
-                            return strtoupper(str_replace([' ', '-'], '', $m[1]));
+                            $clean = strtoupper(preg_replace('/[\s\-]/', '', $m[1]));
+                            // Sanity-check: must be 5–7 chars long (e.g. ZA0240 or ABC1234)
+                            if (strlen($clean) >= 5 && strlen($clean) <= 7) {
+                                return $clean;
+                            }
                         }
                     } catch (\Exception $e) {
                         \Illuminate\Support\Facades\Log::warning("OCR PSM{$psm} failed: " . $e->getMessage());
@@ -138,7 +158,7 @@ class RegistrationController extends Controller
                 return null;
             };
 
-            // ── Scan all 3 docs, collect candidates, pick most common ─────
+            // ── Scan OR + CR + Vehicle Photo, 3 variants each ─────────────
             $docsToScan = [
                 'or'            => 'OR',
                 'cr'            => 'CR',
@@ -146,24 +166,25 @@ class RegistrationController extends Controller
             ];
 
             foreach ($docsToScan as $docKey => $docLabel) {
-                $sourcePath   = $docs[$docKey]['full'];
-                $processedPath = $preprocessForOcr($sourcePath) ?? $sourcePath;
+                $sourcePath = $docs[$docKey]['full'];
+                $variants   = $buildVariants($sourcePath);
 
-                $candidate = $extractPlate($processedPath);
-                $ocrText .= "\n--- {$docLabel}: " . ($candidate ?? 'no match') . " ---\n";
+                // If variant build failed, fall back to raw source
+                if (empty($variants)) { $variants = [$sourcePath]; }
 
-
-                if ($candidate) {
-                    $plateCandidates[] = $candidate;
-                }
-
-                // Clean up temp pre-processed file
-                if ($processedPath !== $sourcePath && file_exists($processedPath)) {
-                    @unlink($processedPath);
+                foreach ($variants as $variantPath) {
+                    $candidate = $extractPlate($variantPath);
+                    if ($candidate) {
+                        $plateCandidates[] = $candidate;
+                        $ocrText .= "\n--- {$docLabel}: matched [{$candidate}] ---\n";
+                    }
+                    if ($variantPath !== $sourcePath && file_exists($variantPath)) {
+                        @unlink($variantPath);
+                    }
                 }
             }
 
-            // Pick the plate that appeared most across docs; prefer non-existing ones
+            // Pick the plate that appeared most across all variants/docs
             if (!empty($plateCandidates)) {
                 $counted = array_count_values($plateCandidates);
                 arsort($counted); // most frequent first
@@ -172,7 +193,11 @@ class RegistrationController extends Controller
                         $plateNumber = $candidate;
                         break;
                     }
-                    \Illuminate\Support\Facades\Log::info("OCR plate {$candidate} already exists — checking next candidate.");
+                    \Illuminate\Support\Facades\Log::info("OCR plate {$candidate} already exists — trying next.");
+                }
+                // If ALL candidates already exist (rare), just pick the most frequent
+                if (!$plateNumber) {
+                    $plateNumber = array_key_first($counted);
                 }
             }
 

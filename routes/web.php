@@ -13,6 +13,9 @@ Route::get('/force-storage-link', function () {
     return "✅ Storage successfully linked! Your uploaded images should now be visible.";
 });
 
+// ── Health check (used by UptimeRobot to keep Railway alive 24/7) ──────────
+Route::get('/health', fn() => response()->json(['status' => 'ok', 'ts' => now()->toIso8601String()]));
+
 Route::get('/', function () {
     return redirect()->route('login');
 });

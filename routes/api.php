@@ -246,22 +246,73 @@ Route::middleware('auth:sanctum')->group(function () {
                 'school_id'     => $storeDoc($request->file('doc_school_id'), 'school_id'),
             ];
 
-            $ocrText     = '';
-            $plateNumber = 'PENDING_' . strtoupper(\Illuminate\Support\Str::random(8));
-            try {
-                // The user requested scanning from the OR explicitly since vehicle photos may lack the plate
-                $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['or']['full']))->run();
-                if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($ocrText), $matches)) {
-                    $plateNumber = str_replace([' ', '-'], '', $matches[0]);
-                } else {
-                    $crOcrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs['cr']['full']))->run();
-                    if (preg_match('/[A-Z]{3}[\s-]?[0-9]{3,4}/', strtoupper($crOcrText), $matches)) {
-                        $plateNumber = str_replace([' ', '-'], '', $matches[0]);
-                        $ocrText .= "\n--- CR ---\n" . $crOcrText;
+            $ocrText         = '';
+            $plateNumber     = null;
+            $plateCandidates = [];
+            $plateRegex      = '/\b([A-Z]{2,3}[\s\-]?[0-9]{3,4}[A-Z]?)\b/';
+
+            // Multi-variant preprocessing — handles crumpled/bent OR, CR, vehicle photos
+            $buildVariants = function (string $src): array {
+                $variants = [];
+                try {
+                    $mgr = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                    foreach ([[65,20,10,false],[45,80,25,false],[70,15,0,true]] as [$cont,$sharp,$bright,$inv]) {
+                        $img = $mgr->read($src);
+                        if ($img->width() < 1800) { $img->scale(width: 1800); }
+                        $img->greyscale()->contrast($cont)->sharpen($sharp);
+                        if ($bright) { $img->brightness($bright); }
+                        if ($inv)    { $img->invert(); }
+                        $p = sys_get_temp_dir() . '/api_ocr_' . uniqid() . '.jpg';
+                        $img->toJpeg(95)->save($p);
+                        $variants[] = $p;
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('API OCR variant failed: ' . $e->getMessage());
+                }
+                return $variants;
+            };
+
+            $extractPlate = function (string $path) use (&$ocrText, $plateRegex): ?string {
+                foreach ([8, 7, 6, 13] as $psm) {
+                    try {
+                        $ocr   = (new \thiagoalessio\TesseractOCR\TesseractOCR($path))
+                            ->psm($psm)->oem(3)
+                            ->allowlist('ABCDEFGHJKLMNPQRSTUVWXYZ0123456789 -')
+                            ->run();
+                        $upper = strtoupper(trim($ocr));
+                        $ocrText .= " [psm{$psm}:{$upper}]";
+                        if (preg_match($plateRegex, $upper, $m)) {
+                            $clean = strtoupper(preg_replace('/[\s\-]/', '', $m[1]));
+                            if (strlen($clean) >= 5 && strlen($clean) <= 7) { return $clean; }
+                        }
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::warning("API OCR PSM{$psm}: " . $e->getMessage());
                     }
                 }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('API OCR failed: ' . $e->getMessage());
+                return null;
+            };
+
+            foreach (['or' => 'OR', 'cr' => 'CR', 'vehicle_photo' => 'Photo'] as $dk => $dl) {
+                $variants = $buildVariants($docs[$dk]['full']);
+                if (empty($variants)) { $variants = [$docs[$dk]['full']]; }
+                foreach ($variants as $vp) {
+                    $c = $extractPlate($vp);
+                    if ($c) { $plateCandidates[] = $c; $ocrText .= "\n--- {$dl}: [{$c}] ---\n"; }
+                    if ($vp !== $docs[$dk]['full'] && file_exists($vp)) { @unlink($vp); }
+                }
+            }
+
+            if (!empty($plateCandidates)) {
+                $counted = array_count_values($plateCandidates); arsort($counted);
+                foreach (array_keys($counted) as $c) {
+                    if (!\App\Models\Vehicle::where('plate_number', $c)->exists()) { $plateNumber = $c; break; }
+                }
+                if (!$plateNumber) { $plateNumber = array_key_first($counted); }
+            }
+
+            if (!$plateNumber) {
+                do { $plateNumber = 'PENDING_' . strtoupper(\Illuminate\Support\Str::random(8)); }
+                while (\App\Models\Vehicle::where('plate_number', $plateNumber)->exists());
             }
 
             \Illuminate\Support\Facades\DB::reconnect();
