@@ -209,9 +209,19 @@ Route::middleware('auth:sanctum')->group(function () {
                 $user->update(['contact_number' => $request->contact_number]);
             }
 
-            $storeDoc = function($file, $folder) {
-                $path = $file->store("registrations/{$folder}", 'public');
-                return ['path' => $path, 'full' => storage_path('app/public/' . $path)];
+            $storeDoc = function ($file, $folder) {
+                $path     = $file->store("registrations/{$folder}", 'public');
+                $fullPath = storage_path('app/public/' . $path);
+                try {
+                    $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                    $img     = $manager->read($fullPath);
+                    if ($img->width() > 1200) { $img->scale(width: 1200); }
+                    $img->toJpeg(70)->save($fullPath);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('API Image compression failed: ' . $e->getMessage());
+                }
+                $data = file_exists($fullPath) ? file_get_contents($fullPath) : null;
+                return ['path' => $path, 'full' => $fullPath, 'data' => $data];
             };
 
             $docs = [
@@ -271,8 +281,10 @@ Route::middleware('auth:sanctum')->group(function () {
                     'registration_id'    => $registration->id,
                     'document_type'      => $meta['type'],
                     'image_path'         => $docs[$key]['path'],
+                    'image_data'         => $docs[$key]['data'],
                     'ocr_extracted_text' => $meta['ocr'],
                     'match_score'        => 0,
+                    'flagged_fields'     => null,
                 ]);
             }
 
