@@ -62,9 +62,10 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
                 PDO::ATTR_EMULATE_PREPARES => true,
-                PDO::ATTR_PERSISTENT => false,
-                PDO::ATTR_TIMEOUT => 30,
-            ]) : [],
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
+                PDO::ATTR_TIMEOUT => env('DB_TIMEOUT', 60),
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET wait_timeout=28800",
+            ], fn ($value) => !is_null($value)) : [],
         ],
 
         'mariadb' => [
