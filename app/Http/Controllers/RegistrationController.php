@@ -111,7 +111,7 @@ class RegistrationController extends Controller
                 'license'       => ['type' => 'license',       'ocr' => null, 'flagged' => null],
                 'school_id'     => ['type' => 'school_id',     'ocr' => null, 'flagged' => null],
             ];
-
+            foreach ($docTypes as $key => $meta) {
                 \App\Models\RegistrationDocument::create([
                     'registration_id'   => $registration->id,
                     'document_type'     => $meta['type'],
