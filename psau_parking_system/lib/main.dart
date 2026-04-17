@@ -284,23 +284,28 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
 
-    // Check for "Update Finished" Notification
+    // ── Post-update notification (local, no network needed) ──────────────────
     const storage = FlutterSecureStorage();
-    final lastRunStr = await storage.read(key: 'last_run_version');
-    final lastRunVal = lastRunStr != null ? int.tryParse(lastRunStr) : null;
-
-    if (lastRunVal != null && lastRunVal < AppConfig.currentBuildNumber) {
-      await NotificationService().showLocalNotification(
-        title: 'Update Successful 🎉',
-        body: 'Application has been successfully updated to version ${AppConfig.currentBuildNumber}.',
-      );
-    }
-    await storage.write(key: 'last_run_version', value: AppConfig.currentBuildNumber.toString());
-
-    // Check for App Updates
     try {
-      final res = await ApiService().get(AppConfig.appVersionInfo);
-      if (res.data != null && res.data['latest_build'] != null) {
+      final lastRunStr = await storage.read(key: 'last_run_version');
+      final lastRunVal = lastRunStr != null ? int.tryParse(lastRunStr) : null;
+      if (lastRunVal != null && lastRunVal < AppConfig.currentBuildNumber) {
+        await NotificationService().showLocalNotification(
+          title: 'Update Successful 🎉',
+          body: 'Application has been successfully updated to version ${AppConfig.currentBuildNumber}.',
+        );
+      }
+      await storage.write(key: 'last_run_version', value: AppConfig.currentBuildNumber.toString());
+    } catch (e) {
+      debugPrint('Post-update notification failed: $e');
+    }
+
+    // ── Check for App Updates (hard 8-second timeout so it never blocks) ─────
+    try {
+      final res = await ApiService()
+          .get(AppConfig.appVersionInfo)
+          .timeout(const Duration(seconds: 8));
+      if (mounted && res.data != null && res.data['latest_build'] != null) {
         final latestBuild = res.data['latest_build'] as int;
         final downloadUrl = res.data['download_url'] as String?;
         final isForce = res.data['force_update'] as bool? ?? false;
@@ -341,17 +346,27 @@ class _SplashScreenState extends State<SplashScreen>
         }
       }
     } catch (e) {
-      debugPrint('Update check failed: $e');
+      // Version check failed or timed out — continue to auth check silently
+      debugPrint('Update check failed (non-fatal): $e');
     }
 
+    // ── Auth check (hard 10-second timeout so splash never freezes) ──────────
     if (!mounted) return;
-    final auth = context.read<AuthProvider>();
-    final loggedIn = await auth.checkLoginStatus();
-    if (!mounted) return;
-    if (loggedIn) {
-      _routeByRole(auth.role);
-    } else {
-      Navigator.pushReplacementNamed(context, '/login');
+    try {
+      final auth = context.read<AuthProvider>();
+      final loggedIn = await auth
+          .checkLoginStatus()
+          .timeout(const Duration(seconds: 10));
+      if (!mounted) return;
+      if (loggedIn) {
+        _routeByRole(auth.role);
+      } else {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } catch (e) {
+      // Auth timed out or errored — send to login screen
+      debugPrint('Auth check failed (non-fatal): $e');
+      if (mounted) Navigator.pushReplacementNamed(context, '/login');
     }
   }
 

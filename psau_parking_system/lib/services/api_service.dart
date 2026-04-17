@@ -14,8 +14,8 @@ class ApiService {
   Future<void> init({VoidCallbackOnUnauthorized? onUnauthorized}) async {
     _dio = Dio(BaseOptions(
       baseUrl:        AppConfig.baseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 15),
       headers: {'Accept': 'application/json'},
     ));
 
