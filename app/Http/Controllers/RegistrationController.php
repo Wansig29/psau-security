@@ -76,34 +76,106 @@ class RegistrationController extends Controller
                 'school_id'     => $storeAndCompress($request->file('doc_school_id'), 'registrations/school_id'),
             ];
 
-            // 2. Run OCR on the vehicle photo, OR, and CR documents sequentially to extract the plate number
+            // 2. Enhanced OCR — pre-process each image before scanning
             $ocrText     = '';
-            $plateNumber = null; // Will be set to PENDING_XXXXX if OCR fails
+            $plateNumber = null;
+            $plateCandidates = [];  // Collect candidates from all docs then vote
 
+            // ── Image pre-processing helper ───────────────────────────────
+            $preprocessForOcr = function (string $sourcePath): ?string {
+                try {
+                    $manager = new \Intervention\Image\ImageManager(
+                        new \Intervention\Image\Drivers\Gd\Driver()
+                    );
+                    $img = $manager->read($sourcePath);
+
+                    // 1. Scale up for better OCR resolution (min 1600px wide)
+                    if ($img->width() < 1600) {
+                        $img->scale(width: 1600);
+                    }
+
+                    // 2. Grayscale removes colour noise that confuses Tesseract
+                    $img->greyscale();
+
+                    // 3. Max contrast to make plate text pop against background
+                    $img->contrast(60);
+
+                    // 4. Sharpen edges so character boundaries are crisp
+                    $img->sharpen(15);
+
+                    $tmpPath = sys_get_temp_dir() . '/ocr_' . uniqid() . '.jpg';
+                    $img->toJpeg(95)->save($tmpPath);
+                    return $tmpPath;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('OCR pre-process failed: ' . $e->getMessage());
+                    return null;
+                }
+            };
+
+            // ── Plate extraction helper (tries multiple Tesseract modes) ──
+            $extractPlate = function (string $imagePath) use (&$ocrText): ?string {
+                // Philippine plates: 3 letters + 3-4 digits (e.g. ABC1234, ZA0240)
+                $plateRegex = '/\b([A-Z]{2,3}[\s\-]?[0-9]{3,4})\b/';
+
+                // Try PSM 6 (uniform block), then PSM 7 (single line), then PSM 3 (auto)
+                $psmModes = [6, 7, 3];
+                foreach ($psmModes as $psm) {
+                    try {
+                        $ocr = (new \thiagoalessio\TesseractOCR\TesseractOCR($imagePath))
+                            ->psm($psm)
+                            ->oem(3)
+                            ->allowlist(\thiagoalessio\TesseractOCR\TesseractOCR::ALPHANUM)
+                            ->run();
+                        $ocrText .= " [psm{$psm}:{$ocr}]";
+                        $upper = strtoupper($ocr);
+                        if (preg_match($plateRegex, $upper, $m)) {
+                            return strtoupper(str_replace([' ', '-'], '', $m[1]));
+                        }
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::warning("OCR PSM{$psm} failed: " . $e->getMessage());
+                    }
+                }
+                return null;
+            };
+
+            // ── Scan all 3 docs, collect candidates, pick most common ─────
             $docsToScan = [
-                'vehicle_photo' => 'Vehicle Photo',
                 'or'            => 'OR',
-                'cr'            => 'CR'
+                'cr'            => 'CR',
+                'vehicle_photo' => 'Vehicle Photo',
             ];
 
             foreach ($docsToScan as $docKey => $docLabel) {
-                try {
-                    $text = (new \thiagoalessio\TesseractOCR\TesseractOCR($docs[$docKey]['full']))->run();
-                    $ocrText .= "\n--- {$docLabel} ---\n" . $text;
-                    if (preg_match('/([A-Z]{2,3}[\s-]?[0-9]{3,4}|[0-9]{3,4}[\s-]?[A-Z]{2,3})/', strtoupper($text), $matches)) {
-                        $extracted = strtoupper(str_replace([' ', '-'], '', $matches[0]));
-                        // Only use OCR plate if it doesn't already exist in DB
-                        $alreadyExists = \App\Models\Vehicle::where('plate_number', $extracted)->exists();
-                        if (!$alreadyExists) {
-                            $plateNumber = $extracted;
-                            break;
-                        }
-                        \Illuminate\Support\Facades\Log::info("OCR plate {$extracted} already exists — skipping, admin will verify.");
-                    }
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::warning("OCR failed for {$docLabel}: " . $e->getMessage());
+                $sourcePath   = $docs[$docKey]['full'];
+                $processedPath = $preprocessForOcr($sourcePath) ?? $sourcePath;
+
+                $candidate = $extractPlate($processedPath);
+                $ocrText .= "\n--- {$docLabel}: " . ($candidate ?? 'no match') . " ---\n";
+
+
+                if ($candidate) {
+                    $plateCandidates[] = $candidate;
+                }
+
+                // Clean up temp pre-processed file
+                if ($processedPath !== $sourcePath && file_exists($processedPath)) {
+                    @unlink($processedPath);
                 }
             }
+
+            // Pick the plate that appeared most across docs; prefer non-existing ones
+            if (!empty($plateCandidates)) {
+                $counted = array_count_values($plateCandidates);
+                arsort($counted); // most frequent first
+                foreach (array_keys($counted) as $candidate) {
+                    if (!\App\Models\Vehicle::where('plate_number', $candidate)->exists()) {
+                        $plateNumber = $candidate;
+                        break;
+                    }
+                    \Illuminate\Support\Facades\Log::info("OCR plate {$candidate} already exists — checking next candidate.");
+                }
+            }
+
 
             // If OCR couldn't find a unique plate, use a unique pending placeholder
             // Admin will manually verify and update it from the submitted documents
