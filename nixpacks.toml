@@ -2,4 +2,4 @@ providers = ["php"]
 
 [phases.tesseract]
 dependsOn = ["setup"]
-cmds = ["apt-get update", "apt-get install -y tesseract-ocr"]
+cmds = ["apt-get update", "DEBIAN_FRONTEND=noninteractive apt-get install -yq tesseract-ocr"]
