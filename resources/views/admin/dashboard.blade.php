@@ -40,6 +40,7 @@
             <span class="tab-btn active tab-pending"><i class="fas fa-hourglass-half"></i> Pending Reviews ({{ $pendingCount }})</span>
             <a class="tab-btn" href="{{ route('admin.approved.index') }}"><i class="fas fa-check-circle"></i> Approved</a>
             <a class="tab-btn" href="{{ route('admin.sanctions.index') }}"><i class="fas fa-balance-scale"></i> Violations & Sanctions</a>
+            <a class="tab-btn" href="{{ route('admin.statistics.index') }}"><i class="fas fa-chart-pie"></i> Statistics</a>
         </div>
 
         <div class="card">

@@ -88,6 +88,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('/sanctions/{violation}', [\App\Http\Controllers\Admin\AdminSanctionController::class, 'store'])->name('sanctions.store');
     Route::post('/sanctions/{sanction}/resolve', [\App\Http\Controllers\Admin\AdminSanctionController::class, 'resolve'])->name('sanctions.resolve');
 
+    // Statistics
+    Route::get('/statistics', [\App\Http\Controllers\Admin\AdminStatisticsController::class, 'index'])->name('statistics.index');
+
     // Database Utilities (Protected for Admins Only)
     Route::get('/seed-db-now', function () {
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
