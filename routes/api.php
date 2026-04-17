@@ -700,7 +700,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::get('/app-version', function () {
     return response()->json([
-        'latest_build' => 3,
+        'latest_build' => 4,
         'download_url' => 'https://psau-security-production.up.railway.app/psau_parking.apk',
         'force_update' => false
     ]);
