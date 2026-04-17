@@ -25,10 +25,6 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
-        // Auto-reconnect on Railway proxy-induced "MySQL server has gone away" drops.
-        // Laravel will transparently retry the failed query after reconnecting.
-        DB::whenDisconnected(function () {
-            Log::warning('DB connection lost (Railway proxy drop). Reconnecting...');
-        });
+
     }
 }
