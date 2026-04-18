@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../config/api_config.dart';
+import '../security/owner_location_screen.dart';
 
 class PublicQrScanScreen extends StatefulWidget {
   const PublicQrScanScreen({super.key});
@@ -113,10 +114,17 @@ class _PublicQrScanScreenState extends State<PublicQrScanScreen> {
   }
 
   Widget _buildResult() {
-    final vehicle = _result!['vehicle'] as Map<String, dynamic>? ?? {};
-    final owner   = _result!['owner']   as Map<String, dynamic>? ?? {};
-    final status  = _result!['registration_status'] as String? ?? 'unknown';
-    final contact = owner['contact_number'] as String?;
+    final vehicle      = _result!['vehicle']      as Map<String, dynamic>? ?? {};
+    final owner        = _result!['owner']        as Map<String, dynamic>? ?? {};
+    final registration = <String, dynamic>{
+      'status':        _result!['registration_status'],
+      'qr_sticker_id': _result!['qr_sticker_id'],
+    };
+    final status    = _result!['registration_status'] as String? ?? 'unknown';
+    final contact   = owner['contact_number'] as String?;
+    final isOnline  = owner['is_online'] as bool? ?? false;
+    final lastSeen  = owner['last_seen'] as String?;
+    final hasLoc    = owner['current_lat'] != null && owner['current_lng'] != null;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -155,16 +163,102 @@ class _PublicQrScanScreenState extends State<PublicQrScanScreen> {
           _card('Owner Information', [
             _row('Name', owner['name'] ?? '—'),
             if (contact != null) _row('Contact', contact),
-          ]),
-          if (contact != null) ...[
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () => _call(contact),
-              icon: const Icon(Icons.phone),
-              label: const Text('Call Owner'),
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
+            // Location status row
+            Row(
+              children: [
+                const SizedBox(width: 80,
+                  child: Text('Location',
+                    style: TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit', fontSize: 13))),
+                if (hasLoc)
+                  Row(children: [
+                    Icon(Icons.circle,
+                      size: 8,
+                      color: isOnline ? AppTheme.success : AppTheme.textMuted),
+                    const SizedBox(width: 6),
+                    Text(
+                      isOnline ? 'Online now' : (lastSeen != null ? 'Last seen $lastSeen' : 'Offline'),
+                      style: TextStyle(
+                        color: isOnline ? AppTheme.success : AppTheme.textMuted,
+                        fontFamily: 'Outfit', fontWeight: FontWeight.w500, fontSize: 13),
+                    ),
+                  ])
+                else
+                  const Text('Not shared yet',
+                    style: TextStyle(color: AppTheme.warning, fontFamily: 'Outfit',
+                        fontWeight: FontWeight.w500, fontSize: 13)),
+              ],
             ),
-          ],
+          ]),
+          const SizedBox(height: 20),
+
+          // ── Action buttons ────────────────────────────────────────────
+          Column(children: [
+            // View on Map button (full width, primary)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: hasLoc ? AppTheme.info : AppTheme.surfaceCard,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => OwnerLocationScreen(
+                      owner: owner,
+                      vehicle: vehicle,
+                      registration: registration,
+                    ),
+                  ),
+                ),
+                icon: Icon(
+                  hasLoc ? Icons.map : Icons.location_off,
+                  size: 20,
+                  color: hasLoc ? Colors.white : AppTheme.textMuted,
+                ),
+                label: Text(
+                  hasLoc ? 'View on Map & Route' : 'No Location Available',
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontWeight: FontWeight.w600,
+                    color: hasLoc ? Colors.white : AppTheme.textMuted,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Call + Violation row
+            Row(children: [
+              if (contact != null) ...[
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
+                    onPressed: () => _call(contact),
+                    icon: const Icon(Icons.phone, size: 18),
+                    label: const Text('Call Owner', style: TextStyle(fontFamily: 'Outfit')),
+                  ),
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+                  onPressed: () => Navigator.pushNamed(
+                    context, '/security/violation',
+                    arguments: {
+                      'vehicle_id':      vehicle['id'],
+                      'registration_id': registration['id'],
+                      'vehicle':         vehicle,
+                      'owner':           owner,
+                    },
+                  ),
+                  icon: const Icon(Icons.warning_amber_rounded, size: 18),
+                  label: const Text('Violation', style: TextStyle(fontFamily: 'Outfit')),
+                ),
+              ),
+            ]),
+          ]),
         ],
       ),
     );

@@ -102,6 +102,10 @@ Route::get('/scan/{qr_sticker_id}', function ($qr_sticker_id) {
     $vehicle = $registration->vehicle;
     $owner   = $registration->user;
 
+    $lastUpdate = $owner->last_location_update
+        ? \Carbon\Carbon::parse($owner->last_location_update)
+        : null;
+
     return response()->json([
         'registration_status' => $registration->status,
         'school_year'         => $registration->school_year,
@@ -113,8 +117,13 @@ Route::get('/scan/{qr_sticker_id}', function ($qr_sticker_id) {
             'plate_number' => $vehicle->plate_number,
         ],
         'owner' => [
-            'name'           => $owner->name,
-            'contact_number' => $owner->contact_number,
+            'name'                => $owner->name,
+            'contact_number'      => $owner->contact_number,
+            'current_lat'         => $owner->current_lat,
+            'current_lng'         => $owner->current_lng,
+            'last_seen'           => $lastUpdate?->diffForHumans(),
+            'last_seen_time'      => $lastUpdate?->format('M d, Y g:i A'),
+            'is_online'           => $lastUpdate && $lastUpdate->diffInMinutes(now()) <= 5,
         ],
     ]);
 });
