@@ -134,7 +134,7 @@ class _PsauParkingAppState extends State<PsauParkingApp> with WidgetsBindingObse
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(ctx);
-                        UpdateService().downloadAndInstallUpdate(downloadUrl, latestBuild);
+                        UpdateService().downloadAndInstallUpdate(downloadUrl, latestBuild, context: ctx);
                       },
                       style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
                       child: const Text('Update Now', style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600)),
@@ -371,7 +371,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ElevatedButton(
                     onPressed: () {
                       Navigator.pop(ctx);
-                      UpdateService().downloadAndInstallUpdate(downloadUrl, latestBuild);
+                      UpdateService().downloadAndInstallUpdate(downloadUrl, latestBuild, context: ctx);
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
                     child: const Text('Update Now', style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600)),
