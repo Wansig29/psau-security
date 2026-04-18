@@ -52,6 +52,15 @@ Route::post('/crash-report', function (Request $request) {
 // ─── [PUBLIC] Auth ────────────────────────────────────────────────────────────
 
 Route::post('/login', function (Request $request) {
+    // Merge JSON body manually so validation works regardless of Content-Type header
+    // (some Android versions send JSON without application/json, causing 422)
+    if ($request->isJson() || $request->getContent()) {
+        $json = json_decode($request->getContent(), true);
+        if (is_array($json)) {
+            $request->merge($json);
+        }
+    }
+
     $request->validate([
         'email'    => 'required|email',
         'password' => 'required|string',

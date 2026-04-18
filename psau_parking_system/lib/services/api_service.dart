@@ -16,7 +16,11 @@ class ApiService {
       baseUrl:        AppConfig.baseUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 15),
-      headers: {'Accept': 'application/json'},
+      contentType:    'application/json',
+      headers: {
+        'Accept':       'application/json',
+        'Content-Type': 'application/json',
+      },
     ));
 
     // Auto-inject Bearer token
