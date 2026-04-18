@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_theme.dart';
 import '../../providers/auth_provider.dart';
@@ -53,7 +54,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
         ],
       ),
     ) ?? false;
-    if (shouldPop && mounted) Navigator.pop(context);
+    if (shouldPop && mounted) SystemNavigator.pop(); // properly exits to Android home screen
   }
 
   @override

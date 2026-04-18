@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -13,6 +14,7 @@ import '../../models/registration_model.dart';
 import '../../models/sanction_model.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/status_badge.dart';
+import 'vehicle_change_screen.dart';
 
 class UserDashboardScreen extends StatefulWidget {
   const UserDashboardScreen({super.key});
@@ -24,6 +26,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   int _navIndex = 0;
   RegistrationModel? _registration;
   List<SanctionModel> _sanctions = [];
+  bool _hasPendingChange = false;
   bool _loading = true;
   Timer? _bgLocTimer;
 
@@ -71,7 +74,16 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     try {
       final res = await ApiService().get(AppConfig.userDashboard);
       final data = res.data as Map<String, dynamic>;
+
+      // Also fetch vehicle change status
+      bool pendingChange = false;
+      try {
+        final vcRes = await ApiService().get(AppConfig.userVehicleChangeStatus);
+        pendingChange = vcRes.data['has_pending_change'] == true;
+      } catch (_) {}
+
       setState(() {
+        _hasPendingChange = pendingChange;
         _registration = data['registration'] != null
             ? RegistrationModel.fromJson(data['registration'] as Map<String, dynamic>)
             : null;
@@ -98,7 +110,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
         ],
       ),
     ) ?? false;
-    if (shouldPop && mounted) Navigator.pop(context);
+    if (shouldPop && mounted) SystemNavigator.pop(); // properly exits to Android home screen
   }
 
   @override
@@ -322,9 +334,51 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   }
 
   Widget _actions() {
+    final status = _registration?.status?.toLowerCase();
+    
+    // Determine the label and icon for the vehicle action button
+    String vehicleLabel = 'Register Vehicle';
+    IconData vehicleIcon = Icons.directions_car_outlined;
+    if (status == 'approved') {
+      vehicleLabel = 'Change Vehicle';
+      vehicleIcon = Icons.swap_horiz;
+    }
+
     final actions = [
-      _Action('Register Vehicle', Icons.directions_car_outlined, AppTheme.primaryLight,
-          () => Navigator.pushNamed(context, '/user/register-vehicle').then((_) => _load())),
+      _Action(vehicleLabel, vehicleIcon, AppTheme.primaryLight, () {
+        if (_hasPendingChange) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('You already have a pending vehicle change request.'),
+            backgroundColor: AppTheme.warning,
+          ));
+          return;
+        }
+        
+        if (status == 'pending') {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('You have a pending vehicle registration under review.'),
+            backgroundColor: AppTheme.warning,
+          ));
+          return;
+        }
+
+        if (status == 'approved') {
+          // Open Vehicle Change Screen
+          final cv = {
+            'make': _registration!.vehicle?.make,
+            'model': _registration!.vehicle?.model,
+            'color': _registration!.vehicle?.color,
+            'plate_number': _registration!.vehicle?.plateNumber,
+          };
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => VehicleChangeScreen(currentVehicle: cv)),
+          ).then((_) => _load());
+        } else {
+          // Normal Registration
+          Navigator.pushNamed(context, '/user/register-vehicle').then((_) => _load());
+        }
+      }),
       _Action('Update Photo', Icons.camera_alt_outlined, AppTheme.info,
           () => Navigator.pushNamed(context, '/user/profile-photo').then((_) => _load())),
       _Action('Broadcast Location', Icons.location_on_outlined, AppTheme.success,

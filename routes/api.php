@@ -386,6 +386,115 @@ Route::middleware('auth:sanctum')->group(function () {
             return response()->json(['message' => 'Registration submitted successfully.', 'registration_id' => $registration->id], 201);
         });
 
+        // ── Vehicle Change Request Endpoints ─────────────────────────────────
+        Route::get('/vehicle-change/status', function (Request $request) {
+            $user = $request->user();
+            $pending = \App\Models\VehicleChangeRequest::where('user_id', $user->id)
+                ->where('status', 'pending')
+                ->first();
+                
+            return response()->json([
+                'has_pending_change' => $pending !== null,
+                'status' => $pending ? $pending->status : null
+            ]);
+        });
+        
+        Route::post('/vehicle-change/submit', function (Request $request) {
+            $request->validate([
+                'new_make'          => 'required|string|max:255',
+                'new_model'         => 'required|string|max:255',
+                'new_color'         => 'required|string|max:255',
+                'reason'            => 'required|string|max:1000',
+                'doc_vehicle_photo' => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:10240',
+                'doc_or'            => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:10240',
+                'doc_cr'            => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:10240',
+                'doc_cor'           => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:10240',
+                'doc_license'       => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:10240',
+                'doc_school_id'     => 'required|file|mimes:jpeg,png,jpg,heic,heif|max:10240',
+            ]);
+
+            $user = $request->user();
+
+            $activeRegistration = \App\Models\Registration::with('vehicle')
+                ->where('user_id', $user->id)
+                ->whereRaw("LOWER(status) = 'approved'")
+                ->latest()->first();
+
+            if (!$activeRegistration) {
+                return response()->json(['message' => 'No active approved registration found.'], 400);
+            }
+
+            // Prevent duplicate pending requests
+            $pending = \App\Models\VehicleChangeRequest::where('user_id', $user->id)
+                ->where('status', 'pending')->exists();
+
+            if ($pending) {
+                return response()->json(['message' => 'You already have a pending vehicle change request.'], 400);
+            }
+
+            $storeDoc = function ($file, $folder) {
+                $path     = $file->store("vehicle-changes/{$folder}", 'public');
+                $fullPath = storage_path('app/public/' . $path);
+                try {
+                    $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                    $img     = $manager->read($fullPath);
+                    if ($img->width() > 1200) { $img->scale(width: 1200); }
+                    $img->toJpeg(70)->save($fullPath);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('API VehicleChange image compression failed: ' . $e->getMessage());
+                }
+                $data = file_exists($fullPath) ? base64_encode(file_get_contents($fullPath)) : null;
+                return ['path' => $path, 'data' => $data];
+            };
+
+            $fileDefs = [
+                'vehicle_photo' => $request->file('doc_vehicle_photo'),
+                'or'            => $request->file('doc_or'),
+                'cr'            => $request->file('doc_cr'),
+                'cor'           => $request->file('doc_cor'),
+                'license'       => $request->file('doc_license'),
+                'school_id'     => $request->file('doc_school_id'),
+            ];
+
+            $paths = [];
+            $blobs = [];
+            foreach ($fileDefs as $key => $file) {
+                $result = $storeDoc($file, $key);
+                $paths[$key] = $result['path'];
+                $blobs[$key] = $result['data'];
+            }
+
+            $plateNumber = null;
+            try {
+                \Illuminate\Support\Facades\DB::reconnect();
+                $orPath = storage_path('app/public/' . $paths['or']);
+                $ocrText = (new \thiagoalessio\TesseractOCR\TesseractOCR($orPath))->run();
+                if (preg_match('/([A-Z]{2,3}[\s-]?[0-9]{3,4}|[0-9]{3,4}[\s-]?[A-Z]{2,3})/', strtoupper($ocrText), $m)) {
+                    $plateNumber = str_replace([' ', '-'], '', $m[0]);
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('API VehicleChange OCR failed: ' . $e->getMessage());
+            }
+
+            \Illuminate\Support\Facades\DB::reconnect();
+
+            \App\Models\VehicleChangeRequest::create([
+                'user_id'             => $user->id,
+                'old_vehicle_id'      => $activeRegistration->vehicle_id,
+                'old_registration_id' => $activeRegistration->id,
+                'new_make'            => $request->new_make,
+                'new_model'           => $request->new_model,
+                'new_color'           => $request->new_color,
+                'new_plate_number'    => $plateNumber,
+                'reason'              => $request->reason,
+                'document_paths'      => $paths,
+                'image_data'          => $blobs,
+                'status'              => 'pending',
+            ]);
+
+            return response()->json(['message' => 'Vehicle change request submitted successfully.'], 201);
+        });
+
         Route::post('/profile/photo', function (Request $request) {
             $request->validate(['photo' => 'required|image|mimes:jpeg,png,jpg|max:5120']);
             $path = $request->file('photo')->store('profile-photos', 'public');

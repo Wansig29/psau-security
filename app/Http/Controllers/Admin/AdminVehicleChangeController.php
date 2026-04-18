@@ -32,9 +32,9 @@ class AdminVehicleChangeController extends Controller
         }
 
         DB::transaction(function () use ($changeRequest, $request) {
-            // 1. Revoke old registration (mark as superseded)
+            // 1. Void the old registration (permanently revoked once change is approved)
             if ($changeRequest->oldRegistration) {
-                $changeRequest->oldRegistration->update(['status' => 'superseded']);
+                $changeRequest->oldRegistration->update(['status' => 'voided']);
             }
 
             // 2. Create new vehicle record

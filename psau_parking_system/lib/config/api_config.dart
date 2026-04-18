@@ -37,6 +37,8 @@ class AppConfig {
   static const String userProfilePhotoRemove = '/api/user/profile/photo/remove';
   static const String userLocationBroadcast  = '/api/user/location/broadcast';
   static const String userContactUpdate    = '/api/user/contact/update';
+  static const String userVehicleChangeSubmit = '/api/user/vehicle-change/submit';
+  static const String userVehicleChangeStatus = '/api/user/vehicle-change/status';
 
   // ── Security endpoints ─────────────────────────────────────────────────────
   static const String securityDashboard  = '/api/security/dashboard';
