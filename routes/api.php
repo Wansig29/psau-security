@@ -13,10 +13,21 @@ use Illuminate\Support\Facades\Route;
 // ─── [PUBLIC] App Version ─────────────────────────────────────────────────────
 
 Route::get('/app-version', function () {
+    // Dynamically read the build number written by GitHub Actions on every APK build.
+    // This means you NEVER need to manually bump this number again.
+    $versionFile = public_path('build_version.json');
+    $latestBuild = 6; // fallback if file not yet present
+    $versionName = null;
+    if (file_exists($versionFile)) {
+        $data = json_decode(file_get_contents($versionFile), true);
+        $latestBuild = $data['build']   ?? $latestBuild;
+        $versionName = $data['version'] ?? null;
+    }
     return response()->json([
-        'latest_build' => 6, // Bumped to trigger update popup for build 5 users
+        'latest_build' => $latestBuild,
+        'version_name' => $versionName,
         'download_url' => 'https://psau-security-production.up.railway.app/psau_parking.apk',
-        'force_update' => false
+        'force_update' => false,
     ]);
 });
 
