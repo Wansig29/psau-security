@@ -1,7 +1,7 @@
 name: psau_parking_system
 description: PSAU Parking System — Mobile app for vehicle registration, QR verification, and live tracking.
 publish_to: 'none'
-version: 1.0.0+4
+version: 1.0.0+6
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

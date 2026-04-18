@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/app-version', function () {
     return response()->json([
-        'latest_build' => 5, // Incremented to trigger update
+        'latest_build' => 6, // Bumped to trigger update popup for build 5 users
         'download_url' => 'https://psau-security-production.up.railway.app/psau_parking.apk',
         'force_update' => false
     ]);
