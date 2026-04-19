@@ -289,16 +289,16 @@ class _SplashScreenState extends State<SplashScreen>
     const storage = FlutterSecureStorage();
     bool showUpdateDialog = false;
     try {
-      final lastRunStr = await storage.read(key: 'last_run_version');
+      final lastRunStr = await storage.read(key: 'last_run_version').timeout(const Duration(seconds: 2));
       final lastRunVal = lastRunStr != null ? int.tryParse(lastRunStr) : null;
       if (lastRunVal != null && lastRunVal < AppConfig.currentBuildNumber) {
         showUpdateDialog = true;
         await NotificationService().showLocalNotification(
           title: 'Update Successful 🎉',
           body: 'Application has been successfully updated to version ${AppConfig.currentBuildNumber}.',
-        );
+        ).timeout(const Duration(seconds: 2));
       }
-      await storage.write(key: 'last_run_version', value: AppConfig.currentBuildNumber.toString());
+      await storage.write(key: 'last_run_version', value: AppConfig.currentBuildNumber.toString()).timeout(const Duration(seconds: 2));
     } catch (e) {
       debugPrint('Post-update notification failed: $e');
     }
