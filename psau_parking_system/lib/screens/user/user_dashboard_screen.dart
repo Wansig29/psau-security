@@ -335,25 +335,16 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
   Widget _actions() {
     final status = _registration?.status?.toLowerCase();
-    
-    // Determine the label and icon for the vehicle action button
-    String vehicleLabel = 'Register Vehicle';
-    IconData vehicleIcon = Icons.directions_car_outlined;
-    if (status == 'approved') {
-      vehicleLabel = 'Change Vehicle';
-      vehicleIcon = Icons.swap_horiz;
-    }
 
     final actions = [
-      _Action(vehicleLabel, vehicleIcon, AppTheme.primaryLight, () {
-        if (_hasPendingChange) {
+      _Action('Register Vehicle', Icons.directions_car_outlined, AppTheme.primaryLight, () {
+        if (status == 'approved') {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('You already have a pending vehicle change request.'),
+            content: Text('You already have an approved vehicle. Please use "Change Vehicle" instead.'),
             backgroundColor: AppTheme.warning,
           ));
           return;
         }
-        
         if (status == 'pending') {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('You have a pending vehicle registration under review.'),
@@ -361,29 +352,41 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           ));
           return;
         }
-
-        if (status == 'approved') {
-          // Open Vehicle Change Screen
-          final cv = {
-            'make': _registration!.vehicle?.make,
-            'model': _registration!.vehicle?.model,
-            'color': _registration!.vehicle?.color,
-            'plate_number': _registration!.vehicle?.plateNumber,
-          };
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => VehicleChangeScreen(currentVehicle: cv)),
-          ).then((_) => _load());
-        } else {
-          // Normal Registration
-          Navigator.pushNamed(context, '/user/register-vehicle').then((_) => _load());
-        }
+        // Normal Registration
+        Navigator.pushNamed(context, '/user/register-vehicle').then((_) => _load());
       }),
-      _Action('Update Photo', Icons.camera_alt_outlined, AppTheme.info,
+      _Action('Change Vehicle', Icons.swap_horiz, AppTheme.info, () {
+        if (status != 'approved') {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('You must have an approved vehicle first before you can request a vehicle change.'),
+            backgroundColor: AppTheme.warning,
+          ));
+          return;
+        }
+        if (_hasPendingChange) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('You already have a pending vehicle change request.'),
+            backgroundColor: AppTheme.warning,
+          ));
+          return;
+        }
+        // Open Vehicle Change Screen
+        final cv = {
+          'make': _registration!.vehicle?.make,
+          'model': _registration!.vehicle?.model,
+          'color': _registration!.vehicle?.color,
+          'plate_number': _registration!.vehicle?.plateNumber,
+        };
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => VehicleChangeScreen(currentVehicle: cv)),
+        ).then((_) => _load());
+      }),
+      _Action('Update Photo', Icons.camera_alt_outlined, AppTheme.success,
           () => Navigator.pushNamed(context, '/user/profile-photo').then((_) => _load())),
-      _Action('Broadcast Location', Icons.location_on_outlined, AppTheme.success,
+      _Action('Broadcast Location', Icons.location_on_outlined, AppTheme.warning,
           () => Navigator.pushNamed(context, '/user/location')),
-      _Action('Update Contact', Icons.phone_outlined, AppTheme.warning,
+      _Action('Update Contact', Icons.phone_outlined, AppTheme.danger,
           () => Navigator.pushNamed(context, '/user/contact').then((_) => _load())),
     ];
 

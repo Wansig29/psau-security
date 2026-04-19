@@ -287,10 +287,12 @@ class _SplashScreenState extends State<SplashScreen>
 
     // ── Post-update notification (local, no network needed) ─────────────────
     const storage = FlutterSecureStorage();
+    bool showUpdateDialog = false;
     try {
       final lastRunStr = await storage.read(key: 'last_run_version');
       final lastRunVal = lastRunStr != null ? int.tryParse(lastRunStr) : null;
       if (lastRunVal != null && lastRunVal < AppConfig.currentBuildNumber) {
+        showUpdateDialog = true;
         await NotificationService().showLocalNotification(
           title: 'Update Successful 🎉',
           body: 'Application has been successfully updated to version ${AppConfig.currentBuildNumber}.',
@@ -299,6 +301,35 @@ class _SplashScreenState extends State<SplashScreen>
       await storage.write(key: 'last_run_version', value: AppConfig.currentBuildNumber.toString());
     } catch (e) {
       debugPrint('Post-update notification failed: $e');
+    }
+
+    if (!mounted) return;
+
+    if (showUpdateDialog) {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppTheme.surfaceCard,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(children: [
+            Icon(Icons.check_circle, color: AppTheme.success),
+            SizedBox(width: 8),
+            Text('Update Successful!', style: TextStyle(color: Colors.white, fontFamily: 'Outfit', fontSize: 18, fontWeight: FontWeight.bold)),
+          ]),
+          content: const Text(
+            'The app has been successfully installed and updated to the latest version. Welcome back!',
+            style: TextStyle(color: AppTheme.textMuted, fontFamily: 'Outfit', fontSize: 15),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
+              child: const Text('Continue', style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600, color: Colors.white)),
+            ),
+          ],
+        ),
+      );
     }
 
     if (!mounted) return;
