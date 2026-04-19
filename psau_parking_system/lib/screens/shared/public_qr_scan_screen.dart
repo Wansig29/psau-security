@@ -31,7 +31,15 @@ class _PublicQrScanScreenState extends State<PublicQrScanScreen> {
     await _scanner.stop();
 
     try {
-      final res = await ApiService().get(AppConfig.qrScan(qrValue));
+      // Extract the raw ID if the QR code encodes a full web URL
+      String parsedId = qrValue.trim();
+      if (parsedId.contains('/scan/')) {
+        parsedId = parsedId.split('/scan/').last;
+      } else if (parsedId.contains('/')) {
+        parsedId = parsedId.split('/').last;
+      }
+
+      final res = await ApiService().get(AppConfig.qrScan(parsedId));
       setState(() { _result = res.data as Map<String, dynamic>; });
     } catch (e) {
       setState(() { _error = ApiService.errorMessage(e); });
