@@ -4,7 +4,7 @@ class AppConfig {
   // For local dev on emulator:  'http://10.0.2.2:8000'
   // For local dev on device:    'http://192.168.x.x:8000'
 
-  static const int currentBuildNumber = 6;
+  static const int currentBuildNumber = 7;
   static const String appVersionInfo = '/api/app-version';
 
   // ── API Endpoints ──────────────────────────────────────────────────────────
